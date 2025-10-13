@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<a href="{{ back_url }}" class="btn btn-secondary mb-3">&larr; Voltar</a>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h4>Detalhes da Simulação #{{ simulacao.id }}</h4>
+        <p>Iniciada em: {{ simulacao.start_time|date:"d/m/Y H:i" }} por {{ simulacao.user.username }}</p>
+    </div>
+
+    <div class="chat-log">
+        {% for mensagem in simulacao.mensagens.all %}
+            {% if mensagem.sender == 'vendedor_usuario' %}
+                <!-- Mensagem do Usuário (Vendedor) -->
+                <div class="message-wrapper user">
+                    <div class="message-content">
+                        {{ mensagem.message_content|safe|linebreaksbr }}
+                    </div>
+                    <div class="message-avatar" title="Você (Vendedor)">V</div>
+                </div>
+            {% else %}
+                <!-- Mensagem da IA (Cliente) -->
+                <div class="message-wrapper ai">
+                    <div class="message-avatar" title="Cliente (IA)">IA</div>
+                    <div class="message-content">
+                        {# Usamos o filtro 'safe' para renderizar o HTML do Prism.js corretamente #}
+                        {{ mensagem.message_content|safe|linebreaksbr }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

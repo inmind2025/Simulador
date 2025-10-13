@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+{# Adicionando Font Awesome para os ícones, caso ainda não esteja no base.html #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">{{ views.titulo }}</h4>
+                <p class="text-muted mb-0">Sala: {{ sala.nome }}</p>
+            </div>
+            <a href="{% url 'detalhe_sala_admin' sala.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Voltar para a Sala
+            </a>
+        </div>
+
+        <div class="card-body">
+            {% if simulacoes %}
+                <ul class="list-group list-group-flush">
+                    {% for simulacao in simulacoes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ simulacao.initial_prompt_summary|default:"Simulação Genérica" }}</h6>
+                                <small class="text-muted">
+                                    Data: {{ simulacao.start_time|date:"d/m/Y, H:i" }}
+                                </small>
+                            </div>
+                            <a href="{% url 'conversation_detail' simulacao.id %}" class="btn btn-primary btn-sm">
+                                Ver Detalhes
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center p-4">
+                    <p class="text-muted">Nenhuma simulação de atendimento encontrada para este participante nesta sala.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

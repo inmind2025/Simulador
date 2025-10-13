@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+    .chat-container {
+        max-width: 800px;
+        margin: auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 75vh;
+    }
+    .chat-header {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border-bottom: 1px solid #ddd;
+        position: relative;
+    }
+    .chat-history {
+        flex-grow: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .message {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        max-width: 80%;
+    }
+    .message-content {
+        padding: 0.8rem 1rem;
+        border-radius: 18px;
+        line-height: 1.4;
+    }
+    .message.vendedor {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+    .message.vendedor .message-content {
+        background-color: #007bff;
+        color: white;
+        border-top-right-radius: 4px;
+    }
+    .message.cliente-ia {
+        align-self: flex-start;
+    }
+    .message.cliente-ia .message-content {
+        background-color: #e9e9eb;
+        color: #333;
+        border-top-left-radius: 4px;
+    }
+    .message-sender {
+        font-weight: bold;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    .chat-input-area {
+        padding: 1rem;
+        border-top: 1px solid #ddd;
+        background-color: #f8f9fa;
+    }
+    .chat-input-area .input-group {
+        display: flex;
+        align-items: center;
+    }
+    .chat-input-area input {
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        padding: 0.7rem 1rem;
+    }
+    .chat-input-area input:focus {
+        box-shadow: none;
+        border-color: #2575fc;
+    }
+    .chat-input-area .btn-send {
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmEndModal" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);">
+            Finalizar Teste
+        </button>
+        Conversando com {{ personagem.short_name }}
+    </div>
+
+    <div class="chat-history" id="chat-history-display">
+        {% for entry in chat_display %}
+            {% if entry.role == 'user' %}
+                <div class="message vendedor">
+                    <div class="message-content">
+                        <div class="message-sender">Vendedor (Você)</div>
+                        {{ entry.parts.0 }}
+                    </div>
+                </div>
+            {% elif entry.role == 'model' %}
+                <div class="message cliente-ia">
+                    <div class="message-content">
+                        <div class="message-sender">{{ personagem.short_name }}</div>
+                        {{ entry.parts.0 }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="chat-input-area">
+        <div class="input-group">
+            <input type="text" class="form-control" id="vendedor-message" placeholder="Digite sua resposta...">
+            <button class="btn btn-send ms-2" type="button" id="send-button" title="Enviar">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmEndModal" tabindex="-1" aria-labelledby="confirmEndModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="confirmEndModalLabel">Confirmar Encerramento</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Você tem certeza de que deseja finalizar o teste? Seu histórico de conversa será salvo.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <a href="{% url 'reiniciar_simulacao' %}" class="btn btn-primary">Sim, tenho certeza</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sendButton = document.getElementById('send-button');
+    const vendedorMessageInput = document.getElementById('vendedor-message');
+    const chatHistoryDisplay = document.getElementById('chat-history-display');
+
+    function scrollToBottom() {
+        chatHistoryDisplay.scrollTop = chatHistoryDisplay.scrollHeight;
+    }
+
+    function addMessageToChat(role, senderName, message) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `message ${role === 'user' ? 'vendedor' : 'cliente-ia'}`;
+
+        messageWrapper.innerHTML = `
+            <div class="message-content">
+                <div class="message-sender">${senderName}</div>
+                ${message}
+            </div>
+        `;
+        chatHistoryDisplay.appendChild(messageWrapper);
+        scrollToBottom();
+    }
+
+    function handleSendMessage() {
+        const message = vendedorMessageInput.value.trim();
+        if (message) {
+            addMessageToChat('user', 'Vendedor (Você)', message);
+            vendedorMessageInput.value = '';
+
+            fetch("{% url 'enviar_resposta_vendedor' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Erro: ' + data.error);
+                    chatHistoryDisplay.lastChild.remove();
+                } else {
+                    addMessageToChat('model', '{{ personagem.short_name|escapejs }}', data.customer_response);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao enviar mensagem:', error);
+                alert('Ocorreu um erro ao comunicar com o servidor.');
+                chatHistoryDisplay.lastChild.remove();
+            });
+        }
+    }
+
+    sendButton.addEventListener('click', handleSendMessage);
+
+    vendedorMessageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    });
+
+    scrollToBottom();
+});
+</script>
+{% endblock %}

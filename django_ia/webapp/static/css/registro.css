@@ -1,0 +1,98 @@
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+.registro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    min-height: 80vh;
+    background-color: #f4f7f6; /* Light grey background */
+}
+
+.registro-card {
+    background-color: #ffffff;
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    max-width: 550px;
+    border-top: 5px solid #6a11cb; /* Accent color */
+}
+
+.registro-card h1 {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.registro-card .subtitle {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+}
+
+.registro-card .signin-link {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.registro-card .signin-link a {
+    color: #6a11cb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Form styles */
+.registro-card form p {
+    margin-bottom: 1.5rem;
+}
+.registro-card form label {
+    margin-bottom: 0.5rem;
+    display: block;
+    font-weight: 500;
+    color: #555;
+}
+.registro-card form input,
+.registro-card form select {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fdfdff;
+    background-clip: padding-box;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.registro-card form input:focus,
+.registro-card form select:focus {
+    border-color: #6a11cb;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
+}
+
+/* Replacing the default bootstrap button */
+.btn-primary {
+    background: linear-gradient(to right, #6a11cb, #2575fc) !important;
+    border: none !important;
+    color: #fff !important;
+    width: 100%;
+    padding: 0.85rem 1rem !important;
+    border-radius: 10px !important;
+    font-size: 1.1rem !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}

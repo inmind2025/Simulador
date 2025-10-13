@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+    .create-room-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .create-room-header {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    .create-room-header i {
+        font-size: 2.2rem;
+    }
+    .create-room-body {
+        padding: 2rem;
+    }
+    .form-group label {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .form-group input[type="text"], .form-group input[type="number"] {
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        border: 1px solid #ddd;
+    }
+    .form-group input[type="text"]:focus, .form-group input[type="number"]:focus {
+        box-shadow: 0 0 0 0.25rem rgba(37, 117, 252, 0.25);
+        border-color: #2575fc;
+    }
+
+    /* Personagem Cards */
+    .personagens-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    .personagem-card-wrapper {
+        position: relative;
+    }
+    .personagem-card {
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .personagem-card:hover {
+        border-color: #a2d2ff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    .personagem-card.selected {
+        border-color: #2575fc;
+        background-color: #e0f2f7;
+        box-shadow: 0 5px 20px rgba(37, 117, 252, 0.2);
+    }
+    .personagem-card input[type="checkbox"] {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+        width: 20px;
+        height: 20px;
+    }
+    .personagem-card i {
+        font-size: 2.5rem;
+        color: #6a11cb;
+        margin-bottom: 0.8rem;
+    }
+    .personagem-card h5 {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    .personagem-card p {
+        font-size: 0.9rem;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    .form-actions {
+        margin-top: 2rem;
+        text-align: right;
+    }
+    .form-actions .btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-room-container">
+    <div class="create-room-header">
+        <i class="fas fa-edit"></i>
+        <span>{{ views.titulo }}</span>
+    </div>
+
+    <div class="create-room-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-4 form-group">
+                <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+                {{ form.nome }}
+            </div>
+
+            <div class="mb-4 form-group">
+                <label for="{{ form.capacidade_maxima.id_for_label }}">{{ form.capacidade_maxima.label }}</label>
+                {{ form.capacidade_maxima }}
+            </div>
+
+            <div class="mb-4 form-group">
+                <label>{{ form.personagens_disponiveis.label }}</label>
+                <div class="personagens-grid">
+                    {% for personagem in personagens %}
+                        <div class="personagem-card-wrapper">
+                            <label for="id_personagens_disponiveis_{{ forloop.counter0 }}" class="personagem-card {% if personagem in sala.personagens_disponiveis.all %}selected{% endif %}">
+                                <input type="checkbox" name="personagens_disponiveis" value="{{ personagem.id }}" id="id_personagens_disponiveis_{{ forloop.counter0 }}" {% if personagem in sala.personagens_disponiveis.all %}checked{% endif %}>
+                                {% if personagem.perfil_disc == 'dominante' %}
+                                    <i class="fas fa-bolt"></i>
+                                {% elif personagem.perfil_disc == 'influente' %}
+                                    <i class="fas fa-comments"></i>
+                                {% elif personagem.perfil_disc == 'analitico' %}
+                                    <i class="fas fa-microscope"></i>
+                                {% elif personagem.perfil_disc == 'estavel' %}
+                                    <i class="fas fa-shield-alt"></i>
+                                {% endif %}
+                                <h5>{{ personagem.nome_criativo }}</h5>
+                                <p>{{ personagem.descricao }}</p>
+                                <p class="text-muted">Perfil: <strong>{{ personagem.get_perfil_disc_display }}</strong></p>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary me-2">Salvar Alterações</button>
+                <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.personagem-card-wrapper input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            const card = checkbox.closest('.personagem-card');
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            }
+
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+
+            // Make the whole card clickable
+            card.addEventListener('click', function(event) {
+                // Prevent clicking the label from toggling the checkbox twice
+                if (event.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change')); // Trigger change event manually
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

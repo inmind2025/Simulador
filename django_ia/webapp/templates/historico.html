@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if registros %}
+    {% for registro in registros %}
+        <div class=card>
+            <h5 class="card-header"> {{registro.id}} | {{registro.tipo}} | {{registro.pergunta}} </h5>
+            <div class="card-body">
+                {% if registro.tipo == "geral" %}
+                <pre>
+                    {{registro.resposta}}
+                </pre>                
+                {% else %}
+                <pre>
+                    <code class="line-numbers language-{{registro.linguagem}}"> {{registro.resposta}} </code>
+                </pre>
+                {% endif %}
+
+            </div>
+        </div>
+    
+    {% endfor %}
+{% else %}
+<p class="text-center"> Histórico Vazio </p>
+{% endif %}
+    
+
+{% endblock content %}

@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+    .welcome-main-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        padding: 2rem;
+    }
+    .welcome-header-section {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .welcome-header-section h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    .welcome-header-section p {
+        font-size: 1.1rem;
+        color: #666;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Add Room Card */
+    .add-room-card {
+        border: 2px dashed #ccc;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 180px; /* Ensure it has some height */
+    }
+    .add-room-card:hover {
+        border-color: #6a11cb;
+        background-color: #f8f8f8;
+    }
+    .add-room-card i {
+        font-size: 3rem;
+        color: #6a11cb;
+        margin-bottom: 1rem;
+    }
+    .add-room-card span {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    /* Joined Room Cards */
+    .joined-room-card {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-decoration: none; /* Remove sublinhado do link */
+        color: inherit; /* Mantém a cor do texto */
+    }
+    .joined-room-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .joined-room-card .card-icon {
+        font-size: 2.5rem;
+        color: #2575fc;
+        margin-bottom: 15px;
+    }
+    .joined-room-card h5 {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .joined-room-card p {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-main-container">
+    <div class="welcome-header-section">
+        <h1>Olá, {{ user.username }}!</h1>
+        <p>Bem-vindo(a) à sua plataforma de treinamento de vendas. Aqui você pode praticar suas habilidades interagindo com clientes virtuais.</p>
+    </div>
+
+    <h4 class="section-title">Minhas Salas de Treinamento</h4>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="add-room-card" id="addRoomCard" data-bs-toggle="modal" data-bs-target="#enterRoomModal">
+                <i class="fas fa-plus-circle"></i>
+                <span>Entrar em uma Nova Sala</span>
+            </div>
+        </div>
+        {# Removido o room-code-form-container daqui #}
+    </div>
+
+    <div class="row mt-4">
+        {% for sala in user.salas_participando.all %}
+            <div class="col-md-6 mb-4">
+                <a href="{% url 'detalhe_sala_cliente' sala.id %}" class="joined-room-card">
+                    <i class="fas fa-door-open card-icon"></i>
+                    <h5>{{ sala.nome }}</h5>
+                    <p>Admin: {{ sala.administrador.username }}</p>
+                    <p>Participantes: {{ sala.participantes.count }} / {{ sala.capacidade_maxima }}</p>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                    <p>Você ainda não entrou em nenhuma sala de treinamento.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal para Inserir Código da Sala -->
+<div class="modal fade" id="enterRoomModal" tabindex="-1" aria-labelledby="enterRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="enterRoomModalLabel">Entrar em uma Sala</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'entrar_sala' %}" method="post">
+                    {% csrf_token %}
+                    <div class="input-group input-group-lg mb-3">
+                        <input type="text" name="codigo_acesso" class="form-control" placeholder="CÓDIGO DA SALA" maxlength="10" required>
+                        <button class="btn btn-primary" type="submit">Entrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // O card addRoomCard agora apenas dispara o modal via data-bs-toggle
+        // Não precisamos mais de JavaScript para o toggle de visibilidade aqui.
+        // Apenas para garantir que o modal seja focado se necessário.
+
+        // Exemplo de como você poderia interagir com o modal via JS se precisasse:
+        // const myModal = new bootstrap.Modal(document.getElementById('enterRoomModal'));
+        // addRoomCard.addEventListener('click', function() {
+        //     myModal.show();
+        // });
+    });
+</script>
+{% endblock %}

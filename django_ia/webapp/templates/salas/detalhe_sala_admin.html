@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+    .detail-room-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .detail-room-header {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    .detail-room-header i {
+        font-size: 2.2rem;
+    }
+    .detail-room-body {
+        padding: 2rem;
+    }
+    .detail-item {
+        margin-bottom: 1rem;
+    }
+    .detail-item strong {
+        color: #333;
+    }
+    .access-code-box {
+        background-color: #e9ecef;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 1.2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .access-code-box button {
+        background: none;
+        border: none;
+        color: #2575fc;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    .access-code-box button:hover {
+        color: #6a11cb;
+    }
+    .personagens-badges .badge {
+        font-size: 0.9rem;
+        padding: 0.6em 0.9em;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        border-radius: 50px;
+        background-color: #007bff;
+    }
+    .participants-list .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .participants-list .list-group-item:last-child {
+        margin-bottom: 0;
+    }
+    .participants-list .list-group-item a {
+        font-weight: bold;
+    }
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-room-container">
+    <div class="detail-room-header">
+        <i class="fas fa-door-open"></i>
+        <span>{{ views.titulo }}</span>
+    </div>
+
+    <div class="detail-room-body">
+        <div class="mb-4">
+            <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">&larr; Voltar para Minhas Salas</a>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="section-title">Informações da Sala</h4>
+                <div class="detail-item">
+                    <strong>Nome da Sala:</strong> {{ sala.nome }}
+                </div>
+                <div class="detail-item">
+                    <strong>Criada em:</strong> {{ sala.data_criacao|date:"d/m/Y H:i" }}
+                </div>
+                <div class="detail-item">
+                    <strong>Capacidade:</strong> {{ sala.participantes.count }} / {{ sala.capacidade_maxima }}
+                </div>
+                <div class="detail-item">
+                    <strong>Código de Acesso:</strong> 
+                    <span class="access-code-box">
+                        <code>{{ sala.codigo_acesso }}</code>
+                        <button onclick="copyCode('{{ sala.codigo_acesso }}')" title="Copiar Código">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4 class="section-title">Personagens Disponíveis</h4>
+                <div class="personagens-badges">
+                    {% for p in sala.personagens_disponiveis.all %}
+                        <span class="badge bg-primary">{{ p.nome_criativo }} ({{ p.get_perfil_disc_display }})</span>
+                    {% empty %}
+                        <p class="text-muted">Nenhum personagem selecionado para esta sala.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <h4 class="section-title">Participantes ({{ sala.participantes.count }})</h4>
+        <div class="participants-list">
+            <ul class="list-group">
+                {% for participante in sala.participantes.all %}
+                    <li class="list-group-item">
+                        <span>{{ participante.first_name }} {{ participante.last_name }} ({{ participante.username }})</span>
+                        <a href="{% url 'historico_chats_participante' sala_id=sala.id participante_id=participante.id %}" class="btn btn-sm btn-outline-primary">Ver Histórico de Chats</a>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-center text-muted">Nenhum participante entrou na sala ainda.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">Voltar para Minhas Salas</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(function() {
+            alert('Código "' + code + '" copiado para a área de transferência!');
+        }, function(err) {
+            console.error('Erro ao copiar o código: ', err);
+            alert('Não foi possível copiar o código. Por favor, copie manualmente: ' + code);
+        });
+    }
+</script>
+{% endblock %}

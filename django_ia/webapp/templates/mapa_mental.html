@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    @media print {
+        body > *:not(.mapa-print-area) {
+            display: none;
+        }
+        .mapa-print-area {
+            display: block;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="printable-content"> <h2 class="text-center">{{ views.titulo }}</h2>
+        <p class="text-center text-muted">Digite um texto e a I.A irá gerar uma imagem de mapa mental.</p>
+
+        <form method="POST" action="{% url 'mapa_mental' %}"> 
+            {% csrf_token %}
+            <div class="mb-3">
+                <textarea class="form-control" name="texto_mapa" rows="10" placeholder="Cole aqui o texto...">{{ texto_original }}</textarea>
+
+                    <div class="mb-3">
+                        <label for="layout-select" class="form-label">Escolha o Layout do Mapa:</label>
+                        <select class="form-select" name="layout" id="layout-select">
+                            <option value="LR" {% if layout_choice == 'LR' %}selected{% endif %}>Esquerda para a Direita</option>
+                            <option value="TB" {% if layout_choice == 'TB' %}selected{% endif %}>Cima para Baixo</option>
+                            <option value="radial" {% if layout_choice == 'radial' %}selected{% endif %}>Radial (Formato de Teia)</option>
+                        </select>
+                    </div>
+
+                </div>
+
+            <div class="mb-3">
+                <label class="form-label d-block">Escolha o Nível de Detalhe:</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="detalhe" id="detalhe-resumido" value="resumido">
+                    <label class="form-check-label" for="detalhe-resumido">Resumido</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="detalhe" id="detalhe-normal" value="normal" checked>
+                    <label class="form-check-label" for="detalhe-normal">Normal</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="detalhe" id="detalhe-detalhado" value="detalhado">
+                    <label class="form-check-label" for="detalhe-detalhado">Super Detalhado</label>
+                </div>
+            </div>
+
+        
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Gerar Mapa Mental</button>
+        </div>
+    
+    </div>
+
+    {% if mapa_svg %}
+    <div class="mt-5 mapa-print-area">
+        <h3 class="text-center">Seu Mapa Mental</h3>
+
+        <div class="text-center mb-3">
+            <a href="{% url 'download_mapa_pdf' %}" class="btn btn-success">Baixar como PDF</a>
+        </div>
+        
+        <div style="text-align: center; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: white;">
+            {{ mapa_svg|safe }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock content %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% if response %}
+
+        {% with pergunta=code resposta=response %}
+
+            {% include "respostas.html" %}
+        
+        {% endwith %}
+
+    
+    {% else %}
+
+        {% with pergunta="Curiosidades do Mundo" resposta="O mundo está cheio de fatos fascinantes e curiosidades surpreendentes.<br> Por exemplo, a Terra não é uma esfera perfeita, e mais de 70% de sua superfície é coberta por água. <br>O espaço começa a cerca de 100 km acima da superfície, e o planeta tem um núcleo de ferro. <br>Além disso, a Terra é o único planeta conhecido por abrigar vida. " %}
+
+            {% include "respostas.html" %}
+        
+        {% endwith %}
+
+   
+
+    {% endif %}
+
+
+    <form method="POST" action="{% url 'geral' %}"> 
+        {% csrf_token %}
+        <br>
+        <div class "mb-3">
+            <textarea class="form-control" name="code" rows="5" placeholder="Digite uma Instrução para a I.A"> {{code}} </textarea>
+        </div>
+        <br>
+        
+        <br>
+
+        <button type="submit" class="btn btn-secondary">Enviar</button>
+
+    </form>
+
+
+    
+
+{% endblock content %}

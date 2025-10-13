@@ -1,0 +1,125 @@
+/* webapp/static/css/chat.css */
+
+:root {
+    --primary-gradient: linear-gradient(to right, #6a11cb, #2575fc);
+    --user-bg: #f1f3f5; /* Cinza claro para o usuário */
+    --user-text: #212529;
+    --ai-bg: #ffffff; /* Fundo branco para a IA, com borda do gradiente */
+    --ai-text: #333;
+    --container-bg: #f8f9fa;
+    --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.chat-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background-color: var(--container-bg);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    font-family: var(--font-family);
+}
+
+.chat-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.chat-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.chat-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.chat-log {
+    padding: 2rem;
+    background-color: #ffffff;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.message-wrapper {
+    display: flex;
+    margin-bottom: 1.5rem;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.message-content {
+    max-width: 80%;
+    padding: 1rem;
+    border-radius: 12px;
+    position: relative;
+}
+
+/* --- Estilos do Usuário --- */
+.message-wrapper.user {
+    justify-content: flex-end;
+}
+
+.message-wrapper.user .message-avatar {
+    background: #2575fc; /* Azul do gradiente */
+    margin-left: 1rem;
+}
+
+.message-wrapper.user .message-content {
+    background-color: var(--user-bg);
+    color: var(--user-text);
+}
+
+/* --- Estilos da IA --- */
+.message-wrapper.ai {
+    justify-content: flex-start;
+}
+
+.message-wrapper.ai .message-avatar {
+    background: #6a11cb; /* Roxo do gradiente */
+    margin-right: 1rem;
+}
+
+.message-wrapper.ai .message-content {
+    background-color: var(--ai-bg);
+    color: var(--ai-text);
+    border: 1px solid #e9ecef;
+}
+
+/* --- Detalhes e Código --- */
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Estilização para blocos de código usando Prism.js */
+.message-content pre {
+    border-radius: 8px;
+    font-size: 0.9em;
+}
+
+.back-link {
+    display: inline-block;
+    margin: 2rem 0 0 2rem;
+    font-weight: 500;
+    color: #495057;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: #6a11cb;
+}

@@ -1,0 +1,46 @@
+<nav class="navbar bg-dark navbar-expand-lg border-bottom sticky-top" data-bs-theme="dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">I.A</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0"> 
+        {% if user.is_authenticated %}
+          {% if user.profile.role == 'administrador' %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'lista_salas_admin' %}active{% endif %}" 
+                 href="{% url 'lista_salas_admin' %}"> Minhas Salas</a>    
+            </li>
+          {% else %}
+            {# Links para o usuário 'cliente' #}
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'bem_vindo' %}active{% endif %}" href="{% url 'bem_vindo' %}"> Início</a>      
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'historico_simulacoes' %}active{% endif %}" href="{% url 'historico_simulacoes' %}">Meu Histórico</a>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav mb-2 mb-lg-0"> 
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+              <a class="nav-link" href="{% url 'signout' %}">Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+              <a class="nav-link" href="{% url 'signin' %}">Login</a>
+          </li>
+          <li class="nav-item">
+              <a class="nav-link" href="{% url 'registro' %}">Registro</a>
+          </li>
+        {% endif %}
+      </ul>
+
+    </div>
+  </div>
+</nav>

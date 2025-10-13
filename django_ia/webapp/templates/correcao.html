@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% if response %}
+<pre>
+<code class="line-numbers language-{{linguagem}}">
+        {{response}}
+</code>
+</pre>
+    <br>
+    {% else %}
+
+    <pre>
+        <code class="line-numbers language-python">
+        if code == None:
+            print("Não tenho código para exibir")
+        else:
+            print(code)
+        </code>
+    </pre>
+    <br>
+
+    {% endif %}
+
+   
+    {% with placeholder="Digite o código para que a I.A corrija" view_url="correcao" %}
+
+        {% include "code_form.html" %}
+
+    {% endwith %}
+
+    
+
+{% endblock content %}

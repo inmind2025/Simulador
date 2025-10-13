@@ -1,0 +1,27 @@
+<form method="POST" action="{% url view_url %}"> 
+        {% csrf_token %}
+
+        <div class "mb-3">
+            <textarea class="form-control" name="code" rows="5" placeholder="Digite aqui"> {{code}} </textarea>
+        </div>
+        <br>
+        <select class="form-select"  name="linguagem" >
+            <option > Selecione a linguagem de programação</option>
+            {% for linguagem_ in linguagens %}
+                {% if linguagem == linguagem_ %}
+                
+                    <option selected value={{linguagem_}}> {{linguagem_}} </option>
+                
+                {% else %}
+
+                    <option selected value={{linguagem_}}> {{linguagem_}} </option>
+                
+                
+                {% endif %}
+            {% endfor %}
+        </select>
+        <br>
+
+        <button type="submit" class="btn btn-secondary">Enviar</button>
+
+    </form>

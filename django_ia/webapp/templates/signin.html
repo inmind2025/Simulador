@@ -1,0 +1,27 @@
+{% load static %}
+<link href="{% static 'css/login.css' %}" rel="stylesheet" />
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-welcome-container">
+            <h2>Bem-vindo ao seu Ambiente de Treinamento</h2>
+            <p>Aprimore suas habilidades de comunicação com nosso assistente de IA.</p>
+        </div>
+        <div class="login-form-container">
+            <h1>Login</h1>
+            <form action="{% url 'signin' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="username" id="username" placeholder="Usuário" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" id="password" placeholder="Senha" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-login">Entrar</button>
+            </form>
+            <div class="register-link" style="text-align: center; margin-top: 15px;">
+                <p>Não tem uma conta? <a href="{% url 'registro' %}">Cadastre-se</a></p>
+            </div>
+        </div>
+    </div>
+</div>

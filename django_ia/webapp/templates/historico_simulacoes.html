@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .history-card {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: #ffffff;
+        border-radius: 15px;
+        padding: 25px;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        text-decoration: none;
+        display: block;
+        height: 100%;
+        position: relative;
+    }
+    .history-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        color: #ffffff;
+    }
+    .history-card-user {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .history-card-date {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    .history-card-icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        position: absolute;
+        bottom: 15px;
+        right: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="text-center my-4">{{ views.titulo }}</h2>
+
+<div class="row">
+    {% for simulacao in simulacoes %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{% url 'conversation_detail' simulacao.id %}" class="history-card">
+                <div class="history-card-user">{{ simulacao.user.username }}</div>
+                <p class="history-card-date">
+                    Iniciada em: {{ simulacao.start_time|date:"d/m/Y \\à\\s H:i" }}
+                </p>
+                <p>ID da Simulação: {{ simulacao.id }}</p>
+                <div class="history-card-icon">
+                    &#128172; <!-- Speech bubble icon -->
+                </div>
+            </a>
+        </div>
+    {% empty %}
+        <div class="col">
+            <p class="text-center">Nenhuma simulação de atendimento encontrada.</p>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
