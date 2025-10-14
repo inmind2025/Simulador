@@ -1103,7 +1103,7 @@ FECHAMENTO
 	Se não fechar:
 	Exemplos: "Vou deixar para outra hora, obrigado." / "Acho que não vou levar hoje." / "Preciso conversar com minha família antes de decidir." / "Prefiro pensar mais um pouco."
 ________________________________________
-DADOS PESSOAIS de PAULO SANTOS (forneça apenas quando o vendedor pedir)
+DADOS PESSOAIS de PAULO SANTOS forneça apenas quando o vendedor pedir
 	Cadastro novo:
 	Nome: Paulo Santos
 	Idade: 38
