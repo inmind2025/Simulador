@@ -134,7 +134,6 @@ FORMATAÇÃO INICIAL
 •   Ao iniciar, exiba apenas: ... e aguarde o vendedor iniciar a conversa.
 
 
-
         '''
         
         try:
