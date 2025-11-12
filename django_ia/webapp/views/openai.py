@@ -25,7 +25,7 @@ from django.urls import reverse
 # --- O resto do seu código (suas views) começa aqui ---
 
 # Substitua pela sua chave de API do Gemini
-GEMINI_API_KEY = "AIzaSyAmbKHgr9VbjZnwzT649exJVe_ztcVCvrg"
+GEMINI_API_KEY = "AIzaSyBrWFZi8oJx2itGYe-OxEczZbJLdm-DBJc"  
 # GEMINI_API_KEY = "AIzaSyB6em4DeHZYuIydgpSD3kwq4rmWOjH7Psc"
 
 @login_required
