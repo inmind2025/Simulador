@@ -102,6 +102,7 @@ class Sala(models.Model):
     capacidade_maxima = models.PositiveIntegerField(default=20)
     personagens_disponiveis = models.ManyToManyField(Personagem, related_name='salas')
     participantes = models.ManyToManyField(User, related_name='salas_participando', blank=True)
+    notas_liberadas = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.codigo_acesso:
@@ -118,3 +119,38 @@ class Sala(models.Model):
 
     def __str__(self):
         return f'{self.nome} ({self.administrador.username})'
+
+
+class AuditoriaSimulacao(models.Model):
+    """Resultado da auditoria de qualidade de uma simulação pelo Gemini."""
+    simulacao = models.OneToOneField(
+        SimulacaoAtendimento, on_delete=models.CASCADE, related_name='auditoria'
+    )
+    # Método A PONTE (max 5.0)
+    ponte_abordar         = models.FloatField(default=0)   # max 0.6
+    ponte_pesquisar       = models.FloatField(default=0)   # max 0.3
+    ponte_oferecer        = models.FloatField(default=0)   # max 1.2
+    ponte_negociar        = models.FloatField(default=0)   # max 2.0
+    ponte_tomar_iniciativa = models.FloatField(default=0)  # max 0.3
+    ponte_estender        = models.FloatField(default=0)   # max 0.6
+    # Técnicas EA (max 4.0)
+    spin_total            = models.FloatField(default=0)   # max 2.0
+    cbv_total             = models.FloatField(default=0)   # max 2.0
+    # Ortografia e Gramática (max 1.0)
+    ortografia            = models.FloatField(default=1.0)
+    # Totais calculados
+    nota_ponte            = models.FloatField(default=0)
+    nota_ea               = models.FloatField(default=0)
+    nota_total            = models.FloatField(default=0)
+    # Feedback textual da IA
+    feedback              = models.TextField(blank=True)
+    # Lista detalhada de erros de ortografia/gramática
+    erros_ortografia      = models.JSONField(default=list, blank=True)
+    criado_em             = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Auditoria de Simulação"
+
+    def __str__(self):
+        return f"Auditoria #{self.simulacao_id} — {self.nota_total:.1f}/10"
+

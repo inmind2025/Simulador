@@ -4,199 +4,263 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        background-color: #f0f2f5;
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+
+    /* ── Page wrapper ── */
+    .criar-page { max-width: 820px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── Hero header ── */
+    .criar-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        display: flex; align-items: center; gap: 1.2rem;
+        box-shadow: 0 20px 60px rgba(106,17,203,.4);
+        border: 1px solid rgba(255,255,255,.12);
     }
-    .create-room-container {
-        max-width: 900px;
-        margin: 3rem auto;
-        background: #ffffff;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        overflow: hidden;
+    .criar-hero-icon {
+        width: 54px; height: 54px;
+        background: rgba(255,255,255,.15);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #fff; flex-shrink: 0;
     }
-    .create-room-header {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: white;
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
+    .criar-hero h1 { font-size: 1.55rem; font-weight: 700; color: #fff; margin: 0; }
+    .criar-hero p { color: rgba(255,255,255,.7); margin: 0; font-size: .88rem; }
+
+    /* ── Card de formulário ── */
+    .form-card {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        backdrop-filter: blur(10px);
+        margin-bottom: 1.5rem;
     }
-    .create-room-header i {
-        font-size: 2.2rem;
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .5rem;
     }
-    .create-room-body {
-        padding: 2rem;
-    }
-    .form-group label {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-    .form-group input[type="text"], .form-group input[type="number"] {
-        border-radius: 8px;
-        padding: 0.8rem 1rem;
-        border: 1px solid #ddd;
-    }
-    .form-group input[type="text"]:focus, .form-group input[type="number"]:focus {
-        box-shadow: 0 0 0 0.25rem rgba(37, 117, 252, 0.25);
-        border-color: #2575fc;
+    .section-label::after {
+        content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08);
     }
 
-    /* Personagem Cards */
+    /* ── Inputs ── */
+    .field-wrap { margin-bottom: 1.5rem; }
+    .field-wrap label {
+        display: block; font-size: .82rem; font-weight: 600;
+        color: rgba(255,255,255,.65); margin-bottom: .5rem; letter-spacing: .3px;
+    }
+    .field-wrap input {
+        width: 100%;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 12px;
+        padding: .75rem 1rem;
+        color: #fff; font-size: .95rem;
+        transition: all .25s;
+        outline: none;
+    }
+    .field-wrap input::placeholder { color: rgba(255,255,255,.3); }
+    .field-wrap input:focus {
+        border-color: rgba(106,17,203,.7);
+        background: rgba(106,17,203,.12);
+        box-shadow: 0 0 0 3px rgba(106,17,203,.2);
+    }
+    .field-wrap input[type="number"] { -moz-appearance: textfield; }
+    .field-wrap input[type="number"]::-webkit-inner-spin-button { opacity: .4; }
+
+    /* ── Personagem cards ── */
+    .disc-colors { dominante: #f97316; influente: #ec4899; analitico: #3b82f6; estavel: #22c55e; }
     .personagens-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-top: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 1rem;
     }
-    .personagem-card-wrapper {
-        position: relative;
-    }
+    .personagem-card-wrapper { position: relative; }
+    .personagem-card-wrapper input[type="checkbox"] { display: none; }
+
     .personagem-card {
-        background-color: #f8f9fa;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.5rem;
+        background: rgba(255,255,255,.04);
+        border: 1.5px solid rgba(255,255,255,.1);
+        border-radius: 16px;
+        padding: 1.3rem 1rem;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        transition: all .25s ease;
+        display: flex; flex-direction: column; align-items: center; gap: .5rem;
+        height: 100%; position: relative; overflow: hidden;
     }
-    .personagem-card:hover {
-        border-color: #a2d2ff;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    .personagem-card::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(106,17,203,0), rgba(37,117,252,0));
+        transition: all .3s;
     }
-    .personagem-card.selected {
-        border-color: #2575fc;
-        background-color: #e0f2f7;
-        box-shadow: 0 5px 20px rgba(37, 117, 252, 0.2);
+    .personagem-card:hover { border-color: rgba(167,139,250,.4); transform: translateY(-3px); background: rgba(255,255,255,.07); }
+
+    /* estados por perfil */
+    .personagem-card.selected-dominante  { border-color: #f97316; background: rgba(249,115,22,.12);  box-shadow: 0 0 20px rgba(249,115,22,.2); }
+    .personagem-card.selected-influente  { border-color: #ec4899; background: rgba(236,72,153,.12);  box-shadow: 0 0 20px rgba(236,72,153,.2); }
+    .personagem-card.selected-analitico  { border-color: #3b82f6; background: rgba(59,130,246,.12);  box-shadow: 0 0 20px rgba(59,130,246,.2); }
+    .personagem-card.selected-estavel    { border-color: #22c55e; background: rgba(34,197,94,.12);   box-shadow: 0 0 20px rgba(34,197,94,.2); }
+
+    .card-check-icon {
+        position: absolute; top: .6rem; right: .6rem;
+        width: 22px; height: 22px;
+        background: rgba(255,255,255,.08); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .6rem; color: transparent; transition: all .25s;
     }
-    .personagem-card input[type="checkbox"] {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 1;
-        width: 20px;
-        height: 20px;
-    }
-    .personagem-card i {
-        font-size: 2.5rem;
-        color: #6a11cb;
-        margin-bottom: 0.8rem;
-    }
-    .personagem-card h5 {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 0.5rem;
-    }
-    .personagem-card p {
-        font-size: 0.9rem;
-        color: #666;
-        line-height: 1.4;
+    .personagem-card.selected-dominante .card-check-icon,
+    .personagem-card.selected-influente .card-check-icon,
+    .personagem-card.selected-analitico .card-check-icon,
+    .personagem-card.selected-estavel   .card-check-icon {
+        background: rgba(255,255,255,.2); color: #fff;
     }
 
-    .form-actions {
-        margin-top: 2rem;
-        text-align: right;
+    .disc-icon {
+        width: 46px; height: 46px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; color: #fff; margin-bottom: .3rem;
+        flex-shrink: 0;
     }
-    .form-actions .btn {
-        padding: 0.8rem 1.5rem;
-        border-radius: 8px;
-        font-weight: bold;
+    .disc-icon.dominante { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .disc-icon.influente  { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .disc-icon.analitico  { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .disc-icon.estavel    { background: linear-gradient(135deg, #22c55e, #15803d); }
+
+    .personagem-card h6 { font-size: .82rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.3; }
+    .disc-badge {
+        font-size: .68rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+        padding: .2rem .6rem; border-radius: 20px; margin-top: .2rem;
     }
+    .disc-badge.dominante { background: rgba(249,115,22,.2); color: #fb923c; }
+    .disc-badge.influente  { background: rgba(236,72,153,.2); color: #f472b6; }
+    .disc-badge.analitico  { background: rgba(59,130,246,.2);  color: #60a5fa; }
+    .disc-badge.estavel    { background: rgba(34,197,94,.2);   color: #4ade80; }
+
+    /* ── Botões ── */
+    .form-actions { display: flex; gap: .8rem; justify-content: flex-end; flex-wrap: wrap; }
+    .btn-cancelar {
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.7);
+        border-radius: 12px;
+        padding: .7rem 1.5rem;
+        font-weight: 600; font-size: .9rem;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: .5rem;
+        transition: all .25s;
+    }
+    .btn-cancelar:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .btn-salvar {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        border: none; color: #fff;
+        border-radius: 12px;
+        padding: .7rem 1.8rem;
+        font-weight: 700; font-size: .9rem;
+        display: inline-flex; align-items: center; gap: .5rem;
+        transition: all .25s;
+        box-shadow: 0 4px 20px rgba(106,17,203,.4);
+        cursor: pointer;
+    }
+    .btn-salvar:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(106,17,203,.5); color: #fff; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="create-room-container">
-    <div class="create-room-header">
-        <i class="fas fa-plus-circle"></i>
-        <span>{{ views.titulo }}</span>
+<div class="criar-page">
+
+    <!-- Hero -->
+    <div class="criar-hero">
+        <div class="criar-hero-icon"><i class="fas fa-plus-circle"></i></div>
+        <div>
+            <h1>Criar Nova Sala</h1>
+            <p>Configure os detalhes e escolha os personagens disponíveis para os participantes</p>
+        </div>
     </div>
 
-    <div class="create-room-body">
-        <form method="post" novalidate>
-            {% csrf_token %}
-            
-            <div class="mb-4 form-group">
-                <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
-                {{ form.nome }}
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Informações básicas -->
+        <div class="form-card">
+            <div class="section-label"><i class="fas fa-info-circle"></i> Informações da Sala</div>
+
+            <div class="field-wrap">
+                <label for="{{ form.nome.id_for_label }}">Nome da Sala</label>
+                <input type="text" name="nome" id="{{ form.nome.id_for_label }}"
+                       placeholder="Ex: Turma de Vendas — Março 2026"
+                       value="{{ form.nome.value|default_if_none:'' }}" maxlength="100">
             </div>
 
-            <div class="mb-4 form-group">
-                <label for="{{ form.capacidade_maxima.id_for_label }}">{{ form.capacidade_maxima.label }}</label>
-                {{ form.capacidade_maxima }}
+            <div class="field-wrap" style="max-width:260px">
+                <label for="{{ form.capacidade_maxima.id_for_label }}">Nº Máximo de Participantes</label>
+                <input type="number" name="capacidade_maxima" id="{{ form.capacidade_maxima.id_for_label }}"
+                       placeholder="20" min="1"
+                       value="{{ form.capacidade_maxima.value|default_if_none:20 }}">
             </div>
+        </div>
 
-            <div class="mb-4 form-group">
-                <label>{{ form.personagens_disponiveis.label }}</label>
-                <div class="personagens-grid">
-                    {% for personagem in personagens %}
-                        <div class="personagem-card-wrapper">
-                            <label for="id_personagens_disponiveis_{{ forloop.counter0 }}" class="personagem-card {% if personagem in form.personagens_disponiveis.value %}selected{% endif %}">
-                                <input type="checkbox" name="personagens_disponiveis" value="{{ personagem.id }}" id="id_personagens_disponiveis_{{ forloop.counter0 }}" {% if personagem.id in form.personagens_disponiveis.value %}checked{% endif %}>
-                                {% if personagem.perfil_disc == 'dominante' %}
-                                    <i class="fas fa-bolt"></i>
-                                {% elif personagem.perfil_disc == 'influente' %}
-                                    <i class="fas fa-comments"></i>
-                                {% elif personagem.perfil_disc == 'analitico' %}
-                                    <i class="fas fa-microscope"></i>
-                                {% elif personagem.perfil_disc == 'estavel' %}
-                                    <i class="fas fa-shield-alt"></i>
-                                {% endif %}
-                                <h5>{{ personagem.nome_criativo }}</h5>
-                                <p>{{ personagem.descricao }}</p>
-                                <p class="text-muted">Perfil: <strong>{{ personagem.get_perfil_disc_display }}</strong></p>
-                            </label>
+        <!-- Personagens -->
+        <div class="form-card">
+            <div class="section-label"><i class="fas fa-user-secret"></i> Personagens Disponíveis</div>
+
+            <div class="personagens-grid">
+                {% for personagem in personagens %}
+                <div class="personagem-card-wrapper">
+                    <input type="checkbox"
+                           name="personagens_disponiveis"
+                           value="{{ personagem.id }}"
+                           id="pc-{{ personagem.id }}"
+                           {% if personagem.id in form.personagens_disponiveis.value %}checked{% endif %}>
+
+                    <label for="pc-{{ personagem.id }}"
+                           class="personagem-card {% if personagem.id in form.personagens_disponiveis.value %}selected-{{ personagem.perfil_disc }}{% endif %}"
+                           data-perfil="{{ personagem.perfil_disc }}">
+
+                        <div class="card-check-icon"><i class="fas fa-check"></i></div>
+
+                        <div class="disc-icon {{ personagem.perfil_disc }}">
+                            {% if personagem.perfil_disc == 'dominante' %}<i class="fas fa-bolt"></i>
+                            {% elif personagem.perfil_disc == 'influente' %}<i class="fas fa-comments"></i>
+                            {% elif personagem.perfil_disc == 'analitico' %}<i class="fas fa-microscope"></i>
+                            {% elif personagem.perfil_disc == 'estavel' %}<i class="fas fa-shield-alt"></i>
+                            {% endif %}
                         </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary me-2">Criar Sala</button>
-                <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">Cancelar</a>
+                        <h6>{{ personagem.short_name }}</h6>
+                        <span class="disc-badge {{ personagem.perfil_disc }}">{{ personagem.get_perfil_disc_display }}</span>
+                    </label>
+                </div>
+                {% endfor %}
             </div>
-        </form>
-    </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="form-actions">
+            <a href="{% url 'lista_salas_admin' %}" class="btn-cancelar">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+            <button type="submit" class="btn-salvar">
+                <i class="fas fa-check"></i> Criar Sala
+            </button>
+        </div>
+    </form>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('.personagem-card-wrapper input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            const card = checkbox.closest('.personagem-card');
-            if (checkbox.checked) {
-                card.classList.add('selected');
-            }
-
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
-
-            // Make the whole card clickable
-            card.addEventListener('click', function(event) {
-                // Prevent clicking the label from toggling the checkbox twice
-                if (event.target !== checkbox) {
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change')); // Trigger change event manually
-                }
-            });
-        });
+document.querySelectorAll('.personagem-card-wrapper input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', function () {
+        const card = this.nextElementSibling;
+        const perfil = card.dataset.perfil;
+        ['dominante','influente','analitico','estavel'].forEach(p => card.classList.remove('selected-' + p));
+        if (this.checked) card.classList.add('selected-' + perfil);
     });
+});
 </script>
 {% endblock %}

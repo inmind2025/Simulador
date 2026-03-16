@@ -4,6 +4,10 @@ from .views import salas as salas_views
 urlpatterns = [
     path('criar/', salas_views.criar_sala, name='criar_sala'),
     path('', salas_views.lista_salas_admin, name='lista_salas_admin'),
+    path('<int:sala_id>/dashboard/', salas_views.dashboard_sala, name='dashboard_sala'),
+    path('<int:sala_id>/simulacao/<int:simulacao_id>/auditar/', salas_views.auditar_simulacao, name='auditar_simulacao'),
+    path('<int:sala_id>/simulacao/<int:simulacao_id>/imprimir/', salas_views.imprimir_simulacao, name='imprimir_simulacao'),
+    path('<int:sala_id>/toggle-notas/', salas_views.toggle_notas_liberadas, name='toggle_notas_liberadas'),
     path('<int:sala_id>/detalhes/', salas_views.detalhe_sala_admin, name='detalhe_sala_admin'),
     path('<int:sala_id>/editar/', salas_views.editar_sala, name='editar_sala'),
     path('<int:sala_id>/excluir/', salas_views.excluir_sala, name='excluir_sala'),

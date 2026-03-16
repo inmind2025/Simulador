@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+    .container.bg-secondary-subtle > br:first-of-type { display: none; }
+    .container.bg-secondary-subtle > h2 { display: none; }
+
+    .db-page { max-width: 1150px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+    /* ── Hero ── */
+    .db-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        border-radius: 20px; padding: 1.8rem 2rem;
+        margin-bottom: 2rem;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 20px 60px rgba(106,17,203,.35);
+    }
+    .db-hero-left { display: flex; align-items: center; gap: 1rem; }
+    .db-hero-icon { width: 52px; height: 52px; background: rgba(255,255,255,.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; flex-shrink: 0; }
+    .db-hero h1  { font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0; }
+    .db-hero p   { color: rgba(255,255,255,.7); margin: 0; font-size: .85rem; }
+    .db-hero-badge { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); border-radius: 50px; padding: .35rem .9rem; font-size: .78rem; color: #fff; display: flex; align-items: center; gap: .4rem; }
+
+    /* ── Section label ── */
+    .section-label {
+        font-size: .68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* ── KPI cards ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .kpi-card {
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 16px; padding: 1.3rem 1.2rem;
+        display: flex; align-items: flex-start; gap: .9rem;
+        transition: all .25s;
+    }
+    .kpi-card:hover { background: rgba(255,255,255,.1); transform: translateY(-3px); }
+    .kpi-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .kpi-body strong { display: block; font-size: 1.9rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .kpi-body span   { font-size: .77rem; color: rgba(255,255,255,.5); }
+    .kpi-body small  { display: block; font-size: .72rem; margin-top: .3rem; }
+
+    /* kpi color variants */
+    .kpi-purple .kpi-icon { background: rgba(106,17,203,.25); color: #c4b5fd; border: 1px solid rgba(106,17,203,.3); }
+    .kpi-blue   .kpi-icon { background: rgba(37,117,252,.2);  color: #93c5fd; border: 1px solid rgba(37,117,252,.3); }
+    .kpi-green  .kpi-icon { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .kpi-orange .kpi-icon { background: rgba(249,115,22,.15); color: #fb923c; border: 1px solid rgba(249,115,22,.3); }
+    .kpi-pink   .kpi-icon { background: rgba(236,72,153,.15); color: #f472b6; border: 1px solid rgba(236,72,153,.3); }
+    .kpi-teal   .kpi-icon { background: rgba(20,184,166,.15); color: #2dd4bf; border: 1px solid rgba(20,184,166,.3); }
+
+    /* ── 2-col layout ── */
+    .db-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+    @media (max-width: 768px) { .db-cols { grid-template-columns: 1fr; } }
+
+    /* ── Glass panel ── */
+    .glass-panel {
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 18px; padding: 1.4rem;
+    }
+    .glass-panel h3 { font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: 1.1rem; display: flex; align-items: center; gap: .5rem; }
+    .glass-panel h3 i { color: #a78bfa; }
+
+    /* ── Sparkline ── */
+    .sparkline { display: flex; align-items: flex-end; gap: 6px; height: 60px; }
+    .spark-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .spark-bar { width: 100%; background: linear-gradient(180deg, #6a11cb, #2575fc); border-radius: 4px 4px 0 0; min-height: 3px; transition: height .4s ease; }
+    .spark-bar:hover { background: linear-gradient(180deg, #a78bfa, #60a5fa); }
+    .spark-label { font-size: .62rem; color: rgba(255,255,255,.35); white-space: nowrap; }
+    .spark-empty { color: rgba(255,255,255,.25); font-size: .8rem; text-align: center; width: 100%; line-height: 60px; }
+
+    /* ── DISC bars ── */
+    .disc-row { margin-bottom: .75rem; }
+    .disc-row:last-child { margin-bottom: 0; }
+    .disc-header { display: flex; justify-content: space-between; margin-bottom: .3rem; font-size: .78rem; }
+    .disc-label { font-weight: 600; }
+    .disc-val   { color: rgba(255,255,255,.5); }
+    .disc-track { height: 7px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
+    .disc-fill  { height: 100%; border-radius: 4px; transition: width .6s ease; }
+    .disc-d { color: #fb923c; } .disc-fill-d { background: linear-gradient(90deg, #f97316, #ea580c); }
+    .disc-i { color: #f472b6; } .disc-fill-i { background: linear-gradient(90deg, #ec4899, #db2777); }
+    .disc-s { color: #4ade80; } .disc-fill-s { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .disc-a { color: #60a5fa; } .disc-fill-a { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+
+    /* ── Top salas ── */
+    .top-sala-item { display: flex; align-items: center; gap: .8rem; padding: .6rem 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .top-sala-item:last-child { border-bottom: none; }
+    .top-sala-rank { width: 26px; height: 26px; border-radius: 7px; background: rgba(106,17,203,.2); border: 1px solid rgba(106,17,203,.3); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800; color: #a78bfa; flex-shrink: 0; }
+    .top-sala-name { flex: 1; font-size: .85rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-sala-sims { font-size: .75rem; color: rgba(255,255,255,.45); white-space: nowrap; }
+    .top-sala-bar  { width: 60px; height: 5px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+    .top-sala-bar div { height: 100%; background: linear-gradient(90deg, #6a11cb, #2575fc); border-radius: 3px; }
+
+    /* ── Simulações recentes ── */
+    .recent-item { display: flex; align-items: center; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .recent-item:last-child { border-bottom: none; }
+    .recent-avatar { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #6a11cb, #2575fc); display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .recent-info   { flex: 1; min-width: 0; }
+    .recent-user   { font-size: .83rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-meta   { font-size: .72rem; color: rgba(255,255,255,.4); display: flex; align-items: center; gap: .3rem; }
+    .recent-status { font-size: .68rem; font-weight: 700; padding: .18rem .55rem; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .status-done    { background: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.3);  color: #4ade80; }
+    .status-ongoing { background: rgba(251,191,36,.1);  border: 1px solid rgba(251,191,36,.3); color: #fbbf24; }
+
+    /* ── Sala KPI cards ── */
+    /* ── Sala KPI split layout ── */
+    .sala-kpi-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.4rem; align-items: start; }
+    .sala-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .sala-kpi-sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: .85rem; }
+    .skpi-side-card {
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 16px; padding: 1.2rem 1.1rem;
+    }
+    .skpi-side-title { font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .9rem; }
+    .skpi-side-row { display: flex; align-items: center; justify-content: space-between; padding: .45rem 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .skpi-side-row:last-child { border-bottom: none; }
+    .skpi-side-row span { font-size: .8rem; color: rgba(255,255,255,.55); }
+    .skpi-side-row strong { font-size: .95rem; color: #fff; font-weight: 700; }
+    .skpi-side-cta {
+        display: flex; align-items: center; justify-content: center; gap: .5rem;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        color: #fff; font-size: .82rem; font-weight: 700;
+        border-radius: 12px; padding: .75rem 1rem; text-decoration: none;
+        transition: opacity .2s; border: none;
+    }
+    .skpi-side-cta:hover { opacity: .85; color: #fff; text-decoration: none; }
+    @media (max-width: 900px) {
+        .sala-kpi-layout { grid-template-columns: 1fr; }
+        .sala-kpi-sidebar { position: static; flex-direction: row; flex-wrap: wrap; }
+        .skpi-side-card { flex: 1 1 220px; }
+    }
+    .sala-kpi-card {
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 18px; overflow: hidden; transition: all .28s;
+    }
+    .sala-kpi-card:hover { background: rgba(255,255,255,.09); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.35); border-color: rgba(106,17,203,.35); }
+    .sala-kpi-header {
+        background: linear-gradient(135deg, rgba(106,17,203,.4), rgba(37,117,252,.35));
+        padding: 1rem 1.2rem;
+        display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .sala-kpi-name { font-size: .95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sala-kpi-code { font-size: .7rem; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 20px; padding: .18rem .6rem; color: rgba(255,255,255,.75); white-space: nowrap; }
+    .sala-kpi-body { padding: 1rem 1.2rem; }
+    .sala-kpi-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: 1rem; }
+    .skpi-stat { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: .55rem .5rem; text-align: center; }
+    .skpi-stat strong { display: block; font-size: 1.2rem; font-weight: 800; color: #fff; line-height: 1; }
+    .skpi-stat span   { font-size: .65rem; color: rgba(255,255,255,.4); }
+    .sala-occ-label { display: flex; justify-content: space-between; font-size: .72rem; color: rgba(255,255,255,.45); margin-bottom: .3rem; }
+    .sala-occ-track { height: 5px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; margin-bottom: .85rem; }
+    .sala-occ-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6a11cb, #2575fc); transition: width .5s ease; }
+    .sala-occ-fill.warn  { background: linear-gradient(90deg, #f97316, #ea580c); }
+    .sala-occ-fill.full  { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .sala-kpi-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+    .sala-last-act { font-size: .72rem; color: rgba(255,255,255,.35); display: flex; align-items: center; gap: .35rem; }
+    .sala-kpi-actions { display: flex; gap: .45rem; }
+    .skpi-btn {
+        display: inline-flex; align-items: center; gap: .35rem;
+        font-size: .73rem; font-weight: 700; border-radius: 8px; padding: .38rem .75rem;
+        text-decoration: none; transition: all .2s;
+    }
+    .skpi-btn-detail { background: rgba(106,17,203,.25); border: 1px solid rgba(106,17,203,.4); color: #c4b5fd; }
+    .skpi-btn-detail:hover { background: rgba(106,17,203,.5); color: #fff; text-decoration: none; }
+    .skpi-btn-hist   { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.6); }
+    .skpi-btn-hist:hover { background: rgba(255,255,255,.12); color: #fff; text-decoration: none; }
+    .disc-pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .8rem; }
+    .disc-pill { font-size: .62rem; font-weight: 700; padding: .15rem .5rem; border-radius: 20px; }
+    .disc-pill-d { background:rgba(249,115,22,.15); border:1px solid rgba(249,115,22,.3); color:#fb923c; }
+    .disc-pill-i { background:rgba(236,72,153,.15); border:1px solid rgba(236,72,153,.3); color:#f472b6; }
+    .disc-pill-s { background:rgba(34,197,94,.12);  border:1px solid rgba(34,197,94,.3);  color:#4ade80; }
+    .disc-pill-a { background:rgba(59,130,246,.15);  border:1px solid rgba(59,130,246,.3);  color:#60a5fa; }
+
+    .conclusao-wrap { display: flex; align-items: center; justify-content: center; gap: 1.5rem; flex-wrap: wrap; padding: .5rem 0; }
+    .circle-wrap { position: relative; width: 100px; height: 100px; }
+    .circle-bg { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 8; }
+    .circle-progress { fill: none; stroke: url(#circleGrad); stroke-width: 8; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset .8s ease; }
+    .circle-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .circle-pct  { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1; }
+    .circle-sub  { font-size: .65rem; color: rgba(255,255,255,.45); }
+    .conclusao-stats { display: flex; flex-direction: column; gap: .5rem; }
+    .cstat { display: flex; align-items: center; gap: .55rem; font-size: .82rem; }
+    .cstat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cstat-val { font-weight: 700; color: #fff; }
+    .cstat-lbl { color: rgba(255,255,255,.45); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="db-page">
+
+    <!-- Hero -->
+    <div class="db-hero">
+        <div class="db-hero-left">
+            <div class="db-hero-icon"><i class="fas fa-chart-line"></i></div>
+            <div>
+                <h1>Dashboard</h1>
+                <p>Visão geral das suas salas de treinamento</p>
+            </div>
+        </div>
+        <div class="db-hero-badge"><i class="fas fa-user-shield"></i> {{ request.user.get_full_name|default:request.user.username }}</div>
+    </div>
+
+    <!-- ── KPIs principais ── -->
+    <div class="section-label"><i class="fas fa-tachometer-alt"></i> Indicadores gerais</div>
+    <div class="kpi-grid" style="margin-bottom:2rem">
+
+        <div class="kpi-card kpi-purple">
+            <div class="kpi-icon"><i class="fas fa-door-open"></i></div>
+            <div class="kpi-body">
+                <strong>{{ total_salas }}</strong>
+                <span>Salas ativas</span>
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-icon"><i class="fas fa-users"></i></div>
+            <div class="kpi-body">
+                <strong>{{ total_participantes }}</strong>
+                <span>Participantes</span>
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-green">
+            <div class="kpi-icon"><i class="fas fa-comments"></i></div>
+            <div class="kpi-body">
+                <strong>{{ total_simulacoes }}</strong>
+                <span>Simulações totais</span>
+                <small style="color:#4ade80"><i class="fas fa-arrow-up"></i> {{ simulacoes_semana }} esta semana</small>
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-icon"><i class="fas fa-check-double"></i></div>
+            <div class="kpi-body">
+                <strong>{{ simulacoes_concluidas }}</strong>
+                <span>Concluídas</span>
+                <small style="color:#fb923c">{{ taxa_conclusao }}% de conclusão</small>
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-pink">
+            <div class="kpi-icon"><i class="fas fa-comment-dots"></i></div>
+            <div class="kpi-body">
+                <strong>{{ total_mensagens }}</strong>
+                <span>Mensagens trocadas</span>
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-icon"><i class="fas fa-calendar-week"></i></div>
+            <div class="kpi-body">
+                <strong>{{ simulacoes_semana }}</strong>
+                <span>Últimos 7 dias</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Row 1: Sparkline + Taxa conclusão ── -->
+    <div class="db-cols" style="margin-bottom:1.2rem">
+
+        <!-- Atividade diária -->
+        <div class="glass-panel">
+            <h3><i class="fas fa-chart-bar"></i> Atividade — últimos 7 dias</h3>
+            {% with max_val=atividade_diaria|dictsort:"count"|last %}
+            <div class="sparkline">
+                {% if max_val.count == 0 %}
+                <div class="spark-empty">Nenhuma simulação no período</div>
+                {% else %}
+                    {% for dia in atividade_diaria %}
+                    <div class="spark-bar-wrap" title="{{ dia.dia }}: {{ dia.count }} simulações">
+                        {% if max_val.count > 0 %}
+                        <div class="spark-bar" style="height:{% widthratio dia.count max_val.count 56 %}px"></div>
+                        {% endif %}
+                        <div class="spark-label">{{ dia.dia }}</div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endwith %}
+        </div>
+
+        <!-- Taxa de conclusão -->
+        <div class="glass-panel">
+            <h3><i class="fas fa-bullseye"></i> Taxa de conclusão</h3>
+            <div class="conclusao-wrap">
+                <div class="circle-wrap">
+                    <svg viewBox="0 0 100 100" width="100" height="100">
+                        <defs>
+                            <linearGradient id="circleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%"   stop-color="#6a11cb"/>
+                                <stop offset="100%" stop-color="#2575fc"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="circle-bg" cx="50" cy="50" r="42"/>
+                        <circle class="circle-progress" cx="50" cy="50" r="42"
+                            stroke-dasharray="263.9"
+                            stroke-dashoffset="{{ taxa_conclusao|default:0 | floatformat:0 | stringformat:'s' }}"/>
+                    </svg>
+                    <div class="circle-text">
+                        <span class="circle-pct">{{ taxa_conclusao }}%</span>
+                        <span class="circle-sub">conclusão</span>
+                    </div>
+                </div>
+                <div class="conclusao-stats">
+                    <div class="cstat">
+                        <div class="cstat-dot" style="background:#4ade80"></div>
+                        <span class="cstat-val">{{ simulacoes_concluidas }}</span>
+                        <span class="cstat-lbl">concluídas</span>
+                    </div>
+                    <div class="cstat">
+                        <div class="cstat-dot" style="background:#fbbf24"></div>
+                        <span class="cstat-val">{{ total_simulacoes|add:"-"|add:simulacoes_concluidas }}</span>
+                        <span class="cstat-lbl">em andamento / abandonadas</span>
+                    </div>
+                    <div class="cstat">
+                        <div class="cstat-dot" style="background:#a78bfa"></div>
+                        <span class="cstat-val">{{ total_simulacoes }}</span>
+                        <span class="cstat-lbl">total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Row 2: DISC + Top salas ── -->
+    <div class="db-cols" style="margin-bottom:1.2rem">
+
+        <!-- Distribuição DISC -->
+        <div class="glass-panel">
+            <h3><i class="fas fa-puzzle-piece"></i> Perfis DISC em uso</h3>
+            {% with total_disc=disc_counts.dominante|add:disc_counts.influente|add:disc_counts.estavel|add:disc_counts.analitico %}
+            {% if total_disc == 0 %}
+            <p style="color:rgba(255,255,255,.35);font-size:.82rem;text-align:center;padding:1.5rem 0">Nenhum personagem configurado ainda.</p>
+            {% else %}
+            <div class="disc-row">
+                <div class="disc-header">
+                    <span class="disc-label disc-d">Dominante</span>
+                    <span class="disc-val">{{ disc_counts.dominante }}</span>
+                </div>
+                <div class="disc-track"><div class="disc-fill disc-fill-d" style="width:{% widthratio disc_counts.dominante total_disc 100 %}%"></div></div>
+            </div>
+            <div class="disc-row">
+                <div class="disc-header">
+                    <span class="disc-label disc-i">Influente</span>
+                    <span class="disc-val">{{ disc_counts.influente }}</span>
+                </div>
+                <div class="disc-track"><div class="disc-fill disc-fill-i" style="width:{% widthratio disc_counts.influente total_disc 100 %}%"></div></div>
+            </div>
+            <div class="disc-row">
+                <div class="disc-header">
+                    <span class="disc-label disc-s">Estável</span>
+                    <span class="disc-val">{{ disc_counts.estavel }}</span>
+                </div>
+                <div class="disc-track"><div class="disc-fill disc-fill-s" style="width:{% widthratio disc_counts.estavel total_disc 100 %}%"></div></div>
+            </div>
+            <div class="disc-row">
+                <div class="disc-header">
+                    <span class="disc-label disc-a">Analítico</span>
+                    <span class="disc-val">{{ disc_counts.analitico }}</span>
+                </div>
+                <div class="disc-track"><div class="disc-fill disc-fill-a" style="width:{% widthratio disc_counts.analitico total_disc 100 %}%"></div></div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Top salas -->
+        <div class="glass-panel">
+            <h3><i class="fas fa-trophy"></i> Salas mais ativas</h3>
+            {% with max_sim=top_salas.0.num_simulacoes %}
+            {% for sala in top_salas %}
+            <div class="top-sala-item">
+                <div class="top-sala-rank">{{ forloop.counter }}</div>
+                <div class="top-sala-name">{{ sala.nome }}</div>
+                <div class="top-sala-bar">
+                    <div style="width:{% if max_sim > 0 %}{% widthratio sala.num_simulacoes max_sim 100 %}{% else %}0{% endif %}%"></div>
+                </div>
+                <div class="top-sala-sims">{{ sala.num_simulacoes }} sim.</div>
+            </div>
+            {% empty %}
+            <p style="color:rgba(255,255,255,.35);font-size:.82rem;text-align:center;padding:1.5rem 0">Nenhuma sala criada ainda.</p>
+            {% endfor %}
+            {% endwith %}
+        </div>
+
+    </div>
+
+    <!-- ── Simulações recentes ── -->
+    <div class="glass-panel">
+        <h3><i class="fas fa-history"></i> Simulações recentes</h3>
+        {% for sim in simulacoes_recentes %}
+        <div class="recent-item">
+            <div class="recent-avatar">{{ sim.user.username|first|upper }}</div>
+            <div class="recent-info">
+                <div class="recent-user">{{ sim.user.get_full_name|default:sim.user.username }}</div>
+                <div class="recent-meta">
+                    <i class="fas fa-calendar-alt" style="font-size:.6rem"></i>
+                    {{ sim.start_time|date:"d/m/Y H:i" }}
+                    {% if sim.sala %} · <i class="fas fa-door-open" style="font-size:.6rem"></i> {{ sim.sala.nome }}{% endif %}
+                </div>
+            </div>
+            {% if sim.end_time %}
+            <span class="recent-status status-done"><i class="fas fa-check"></i> Concluída</span>
+            {% else %}
+            <span class="recent-status status-ongoing"><i class="fas fa-clock"></i> Andamento</span>
+            {% endif %}
+            <a href="{% url 'conversation_detail' sim.id %}" style="color:#a78bfa;font-size:.78rem;text-decoration:none;margin-left:.3rem" title="Ver conversa">
+                <i class="fas fa-eye"></i>
+            </a>
+        </div>
+        {% empty %}
+        <p style="color:rgba(255,255,255,.35);text-align:center;padding:2rem 0;font-size:.85rem">Nenhuma simulação registrada ainda.</p>
+        {% endfor %}
+    </div>
+
+    <!-- ── KPIs por Sala ── -->
+    <div class="section-label" style="margin-top:2rem"><i class="fas fa-door-open"></i> KPIs por sala</div>
+
+    {% if salas %}
+    <div class="sala-kpi-layout">
+
+        <!-- Coluna esquerda: cards das salas -->
+        <div class="sala-kpi-grid">
+        {% for sala in salas %}
+        {% with occ_pct=sala.num_participantes|default:0 taxa_sala=sala.sims_concluidas %}
+        <div class="sala-kpi-card">
+
+            <!-- Header -->
+            <div class="sala-kpi-header">
+                <div class="sala-kpi-name">{{ sala.nome }}</div>
+                <span class="sala-kpi-code"><i class="fas fa-key" style="font-size:.6rem;opacity:.6"></i> {{ sala.codigo_acesso }}</span>
+            </div>
+
+            <div class="sala-kpi-body">
+
+                <!-- 3 stats -->
+                <div class="sala-kpi-stats">
+                    <div class="skpi-stat">
+                        <strong>{{ sala.num_simulacoes }}</strong>
+                        <span>simulações</span>
+                    </div>
+                    <div class="skpi-stat">
+                        <strong>{{ sala.num_participantes }}</strong>
+                        <span>participantes</span>
+                    </div>
+                    <div class="skpi-stat">
+                        <strong>{{ sala.num_mensagens }}</strong>
+                        <span>mensagens</span>
+                    </div>
+                </div>
+
+                <!-- Ocupação -->
+                <div class="sala-occ-label">
+                    <span>Ocupação</span>
+                    <span>{{ sala.num_participantes }}/{{ sala.capacidade_maxima }}</span>
+                </div>
+                <div class="sala-occ-track">
+                    {% with pct=sala.num_participantes|default:0 %}
+                    <div class="sala-occ-fill {% if pct >= sala.capacidade_maxima %}full{% elif pct >= sala.capacidade_maxima|add:"-2" %}warn{% endif %}"
+                         style="width:{% if sala.capacidade_maxima > 0 %}{% widthratio sala.num_participantes sala.capacidade_maxima 100 %}{% else %}0{% endif %}%">
+                    </div>
+                    {% endwith %}
+                </div>
+
+                <!-- Perfis DISC disponíveis -->
+                {% with personagens=sala.personagens_disponiveis.all %}
+                {% if personagens %}
+                <div class="disc-pills">
+                    {% for p in personagens %}
+                    <span class="disc-pill disc-pill-{{ p.perfil_disc|slice:":1" }}">{{ p.short_name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- Footer -->
+                <div class="sala-kpi-footer">
+                    <div class="sala-last-act">
+                        <i class="fas fa-clock"></i>
+                        {% if sala.ultima_atividade %}
+                            Última ativ. {{ sala.ultima_atividade|date:"d/m/Y H:i" }}
+                        {% else %}
+                            Sem atividade ainda
+                        {% endif %}
+                    </div>
+                    <div class="sala-kpi-actions">
+                        <a href="{% url 'dashboard_sala' sala.id %}" class="skpi-btn skpi-btn-detail">
+                            <i class="fas fa-eye"></i> Detalhe
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+        </div><!-- /sala-kpi-grid -->
+
+        <!-- Coluna direita: sidebar de resumo -->
+        <aside class="sala-kpi-sidebar">
+
+            <div class="skpi-side-card">
+                <div class="skpi-side-title"><i class="fas fa-chart-bar me-1"></i> Resumo geral</div>
+                <div class="skpi-side-row">
+                    <span>Total de salas</span>
+                    <strong>{{ total_salas }}</strong>
+                </div>
+                <div class="skpi-side-row">
+                    <span>Participantes</span>
+                    <strong>{{ total_participantes }}</strong>
+                </div>
+                <div class="skpi-side-row">
+                    <span>Simulações totais</span>
+                    <strong>{{ total_simulacoes }}</strong>
+                </div>
+                <div class="skpi-side-row">
+                    <span>Concluídas</span>
+                    <strong>{{ simulacoes_concluidas }}</strong>
+                </div>
+                <div class="skpi-side-row">
+                    <span>Taxa de conclusão</span>
+                    <strong>{{ taxa_conclusao }}%</strong>
+                </div>
+                <div class="skpi-side-row">
+                    <span>Mensagens trocadas</span>
+                    <strong>{{ total_mensagens }}</strong>
+                </div>
+            </div>
+
+            <div class="skpi-side-card">
+                <div class="skpi-side-title"><i class="fas fa-trophy me-1"></i> Top salas (simulações)</div>
+                {% for s in top_salas %}
+                <div class="skpi-side-row">
+                    <span style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.nome }}</span>
+                    <strong>{{ s.num_simulacoes }}</strong>
+                </div>
+                {% empty %}
+                <p style="font-size:.78rem;color:rgba(255,255,255,.3);margin:0">Sem dados</p>
+                {% endfor %}
+            </div>
+
+            <a href="{% url 'criar_sala' %}" class="skpi-side-cta">
+                <i class="fas fa-plus-circle"></i> Nova sala
+            </a>
+
+        </aside>
+
+    </div><!-- /sala-kpi-layout -->
+
+    {% else %}
+    <div style="text-align:center;padding:3rem;color:rgba(255,255,255,.3)">
+        <i class="fas fa-door-open" style="font-size:2rem;margin-bottom:.8rem;display:block"></i>
+        <p>Nenhuma sala criada. <a href="{% url 'criar_sala' %}" style="color:#a78bfa">Criar primeira sala →</a></p>
+    </div>
+    {% endif %}
+
+</div>
+
+
+// Anima a barra circular de conclusão
+document.addEventListener('DOMContentLoaded', function () {
+    const circle = document.querySelector('.circle-progress');
+    if (!circle) return;
+    const pct   = {{ taxa_conclusao }};
+    const circ  = 2 * Math.PI * 42; // 263.9
+    const offset = circ - (pct / 100) * circ;
+    circle.style.strokeDashoffset = offset;
+});
+</script>
+{% endblock content %}

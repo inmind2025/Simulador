@@ -1,27 +1,86 @@
 {% load static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="{% static 'css/login.css' %}" rel="stylesheet" />
 
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-welcome-container">
-            <h2>Bem-vindo ao seu Ambiente de Treinamento</h2>
-            <p>Aprimore suas habilidades de comunicação com nosso assistente de IA.</p>
-        </div>
-        <div class="login-form-container">
-            <h1>Login</h1>
-            <form action="{% url 'signin' %}" method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <input type="text" name="username" id="username" placeholder="Usuário" class="form-control" required>
+<div class="signin-wrapper">
+
+    <!-- Painel esquerdo — branding -->
+    <div class="signin-brand">
+        <div class="brand-glow"></div>
+        <div class="brand-content">
+            <div class="brand-logo">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h2>Simulador de<br>Atendimento</h2>
+            <p>Treine suas habilidades de vendas com clientes virtuais alimentados por inteligência artificial.</p>
+
+            <div class="brand-features">
+                <div class="brand-feature">
+                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                    <span>Perfis DISC realistas</span>
                 </div>
-                <div class="form-group">
-                    <input type="password" name="password" id="password" placeholder="Senha" class="form-control" required>
+                <div class="brand-feature">
+                    <div class="feature-icon"><i class="fas fa-comments"></i></div>
+                    <span>Diálogos naturais com IA</span>
                 </div>
-                <button type="submit" class="btn btn-login">Entrar</button>
-            </form>
-            <div class="register-link" style="text-align: center; margin-top: 15px;">
-                <p>Não tem uma conta? <a href="{% url 'registro' %}">Cadastre-se</a></p>
+                <div class="brand-feature">
+                    <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                    <span>Histórico de simulações</span>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Painel direito — formulário -->
+    <div class="signin-form-panel">
+        <div class="signin-form-card">
+            <div class="signin-form-header">
+                <h1>Bem-vindo de volta</h1>
+                <p>Entre na sua conta para continuar treinando</p>
+            </div>
+
+            <form action="{% url 'signin' %}" method="post" class="signin-form">
+                {% csrf_token %}
+
+                <div class="input-group-custom">
+                    <span class="input-icon"><i class="fas fa-user"></i></span>
+                    <input type="text" name="username" id="username"
+                           placeholder="Nome de usuário" autocomplete="username" required>
+                </div>
+
+                <div class="input-group-custom">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" name="password" id="password"
+                           placeholder="Senha" autocomplete="current-password" required>
+                    <button type="button" class="toggle-pw" onclick="togglePw()" tabindex="-1">
+                        <i class="fas fa-eye" id="pw-icon"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-entrar">
+                    <span>Entrar</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="signin-footer">
+                <p>Não tem uma conta? <a href="{% url 'registro' %}">Cadastre-se grátis</a></p>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+function togglePw() {
+    const inp  = document.getElementById('password');
+    const icon = document.getElementById('pw-icon');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>

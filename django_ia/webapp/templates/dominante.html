@@ -4,248 +4,253 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        background-color: #f0f2f5;
+    /* DISC: Dominante — laranja */
+    :root { --disc: #f97316; --disc-dark: #ea580c; --disc-rgb: 249,115,22; --navbar-h: 56px; }
+
+    html, body { height: 100%; overflow: hidden; }
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; }
+    .container.bg-secondary-subtle {
+        background: transparent !important;
+        padding: 0 !important; margin: 0 !important;
+        max-width: 100% !important; width: 100% !important;
+    }
+    .container.bg-secondary-subtle > br,
+    .container.bg-secondary-subtle > h2 { display: none; }
+
+    .chat-wrapper {
+        position: fixed; top: var(--navbar-h); left: 0; right: 0; bottom: 0;
+        display: flex; justify-content: center; padding: .75rem;
+        padding-bottom: calc(.75rem + env(safe-area-inset-bottom)); box-sizing: border-box;
     }
     .chat-container {
-        max-width: 800px;
-        margin: auto;
-        background: #ffffff;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 75vh;
+        width: 100%; max-width: 780px;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border-radius: 20px; overflow: hidden;
+        display: flex; flex-direction: column;
+        box-shadow: 0 24px 64px rgba(0,0,0,.5);
     }
     .chat-header {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: white;
-        padding: 1rem;
-        text-align: center;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border-bottom: 1px solid #ddd;
-        position: relative;
+        background: linear-gradient(135deg, rgba(var(--disc-rgb),.85) 0%, rgba(var(--disc-rgb),.6) 100%);
+        padding: .85rem 1rem;
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,.1);
     }
-    .chat-header .reiniciar-btn {
-        position: absolute;
-        top: 50%;
-        right: 1rem;
-        transform: translateY(-50%);
-        background: rgba(255,255,255,0.2);
-        border: none;
-        color: white;
-        border-radius: 5px;
-        padding: 0.3rem 0.8rem;
-        font-size: 0.8rem;
+    .chat-header-center { display: flex; align-items: center; gap: .75rem; flex: 1; min-width: 0; }
+    .char-avatar {
+        width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+        background: rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .95rem; font-weight: 800; color: #fff;
     }
-    .chat-header .reiniciar-btn:hover {
-        background: rgba(255,255,255,0.4);
+    .char-name { font-size: .95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .char-sub  { font-size: .72rem; color: rgba(255,255,255,.65); display: flex; align-items: center; gap: .3rem; }
+    .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; }
+    .btn-end {
+        background: rgba(239,68,68,.2); border: 1px solid rgba(239,68,68,.4);
+        color: #fca5a5; border-radius: 8px; padding: .4rem .85rem;
+        font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .2s;
+        white-space: nowrap; flex-shrink: 0;
     }
+    .btn-end:hover { background: rgba(239,68,68,.35); color: #fff; }
     .chat-history {
-        flex-grow: 1;
-        padding: 1.5rem;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        flex: 1; overflow-y: auto; padding: 1rem;
+        display: flex; flex-direction: column; gap: .75rem; scroll-behavior: smooth;
     }
-    .message {
-        display: flex;
-        align-items: flex-end;
-        gap: 10px;
-        max-width: 80%;
+    .chat-history::-webkit-scrollbar { width: 4px; }
+    .chat-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
+    .message { display: flex; align-items: flex-end; gap: .6rem; max-width: 80%; }
+    @media (max-width: 480px) { .message { max-width: 92%; } }
+    .msg-avatar {
+        width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .7rem; font-weight: 800; color: #fff;
     }
-    .message-content {
-        padding: 0.8rem 1rem;
-        border-radius: 18px;
-        line-height: 1.4;
-    }
-    .message.vendedor {
-        align-self: flex-end;
-        flex-direction: row-reverse;
-    }
+    .message.vendedor    { align-self: flex-end;   flex-direction: row-reverse; }
+    .message.cliente-ia  { align-self: flex-start; }
+    .message.vendedor   .msg-avatar { background: linear-gradient(135deg, #6a11cb, #2575fc); }
+    .message.cliente-ia .msg-avatar { background: linear-gradient(135deg, var(--disc), var(--disc-dark)); }
+    .message-content { padding: .65rem .9rem; border-radius: 16px; line-height: 1.45; font-size: .88rem; }
     .message.vendedor .message-content {
-        background-color: #007bff;
-        color: white;
-        border-top-right-radius: 4px;
-    }
-    .message.cliente-ia {
-        align-self: flex-start;
+        background: linear-gradient(135deg, rgba(106,17,203,.6), rgba(37,117,252,.6));
+        color: #fff; border-top-right-radius: 4px; border: 1px solid rgba(106,17,203,.35);
     }
     .message.cliente-ia .message-content {
-        background-color: #e9e9eb;
-        color: #333;
-        border-top-left-radius: 4px;
+        background: rgba(255,255,255,.08); color: rgba(255,255,255,.9);
+        border-top-left-radius: 4px; border: 1px solid rgba(255,255,255,.1);
     }
-    .message-sender {
-        font-weight: bold;
-        margin-bottom: 5px;
-        font-size: 0.9rem;
-        color: #555;
+    .message-sender { font-size: .72rem; font-weight: 700; margin-bottom: .3rem; opacity: .7; }
+    .message.vendedor   .message-sender { color: #c4b5fd; }
+    .message.cliente-ia .message-sender { color: #fdba74; }
+    .typing-indicator { display: none; align-self: flex-start; }
+    .typing-indicator.visible { display: flex; }
+    .typing-dots {
+        display: flex; gap: 4px; align-items: center; padding: .7rem 1rem;
+        background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 16px; border-top-left-radius: 4px;
     }
+    .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.4); animation: bounce 1.2s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
     .chat-input-area {
-        padding: 1rem;
-        border-top: 1px solid #ddd;
-        background-color: #f8f9fa;
+        padding: .75rem 1rem; border-top: 1px solid rgba(255,255,255,.08);
+        background: rgba(0,0,0,.2); flex-shrink: 0;
     }
-    .chat-input-area .input-group {
-        display: flex;
-        align-items: center;
+    .input-row { display: flex; align-items: center; gap: .6rem; }
+    .chat-input {
+        flex: 1; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+        border-radius: 12px; padding: .7rem 1rem; color: #fff; font-size: 1rem;
+        outline: none; transition: all .22s; resize: none; max-height: 100px;
+        overflow-y: auto; font-family: inherit;
     }
-    .chat-input-area input {
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        padding: 0.7rem 1rem;
+    .chat-input::placeholder { color: rgba(255,255,255,.3); }
+    .chat-input:focus { border-color: rgba(var(--disc-rgb),.6); background: rgba(var(--disc-rgb),.08); box-shadow: 0 0 0 3px rgba(var(--disc-rgb),.15); }
+    .btn-send {
+        width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--disc), var(--disc-dark));
+        color: #fff; border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .9rem; transition: all .22s;
+        box-shadow: 0 4px 12px rgba(var(--disc-rgb),.4);
     }
-    .chat-input-area input:focus {
-        box-shadow: none;
-        border-color: #2575fc;
+    .btn-send:hover  { transform: scale(1.08); box-shadow: 0 6px 18px rgba(var(--disc-rgb),.55); }
+    .btn-send:active { transform: scale(.96); }
+    .btn-send:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .dark-modal .modal-content {
+        background: rgba(15,12,41,.95); border: 1px solid rgba(255,255,255,.12);
+        backdrop-filter: blur(20px); color: #fff; border-radius: 18px;
     }
-    .chat-input-area .btn-send {
-        border-radius: 50%;
-        width: 45px;
-        height: 45px;
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: white;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .dark-modal .modal-header { border-bottom: 1px solid rgba(255,255,255,.08); }
+    .dark-modal .modal-footer { border-top:  1px solid rgba(255,255,255,.08); }
+    .dark-modal .modal-title  { color: #fff; font-weight: 700; }
+    .dark-modal .modal-body   { color: rgba(255,255,255,.7); }
+    .dark-modal .btn-close    { filter: invert(1); }
+    @media (max-width: 576px) {
+        :root { --navbar-h: 54px; }
+        .chat-wrapper { padding: .4rem; padding-bottom: calc(.4rem + env(safe-area-inset-bottom)); }
+        .chat-container { border-radius: 14px; }
+        .char-sub { display: none; }
+        .chat-history { padding: .75rem .7rem; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="chat-container">
-    <div class="chat-header">
-        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmEndModal" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);">
-            Finalizar Teste
-        </button>
-        Conversando com {{ personagem.short_name }}
-    </div>
-
-    <div class="chat-history" id="chat-history-display">
-        {% for entry in chat_display %}
-            {% if entry.role == 'user' %}
-                <div class="message vendedor">
-                    <div class="message-content">
-                        <div class="message-sender">Vendedor (Você)</div>
-                        {{ entry.parts.0 }}
-                    </div>
+<div class="chat-wrapper">
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-header-center">
+                <div class="char-avatar">{{ personagem.short_name|first|upper }}</div>
+                <div>
+                    <div class="char-name">{{ personagem.short_name }}</div>
+                    <div class="char-sub"><span class="online-dot"></span> Simulação ativa · perfil dominante</div>
                 </div>
-            {% elif entry.role == 'model' %}
-                <div class="message cliente-ia">
-                    <div class="message-content">
-                        <div class="message-sender">{{ personagem.short_name }}</div>
-                        {{ entry.parts.0 }}
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
-    </div>
-
-    <div class="chat-input-area">
-        <div class="input-group">
-            <input type="text" class="form-control" id="vendedor-message" placeholder="Digite sua resposta...">
-            <button class="btn btn-send ms-2" type="button" id="send-button" title="Enviar">
-                <i class="fas fa-paper-plane"></i>
+            </div>
+            <button type="button" class="btn-end" data-bs-toggle="modal" data-bs-target="#confirmEndModal">
+                <i class="fas fa-stop-circle"></i> Finalizar
             </button>
+        </div>
+
+        <div class="chat-history" id="chat-history-display">
+            {% for entry in chat_display %}
+                {% if entry.role == 'user' %}
+                    <div class="message vendedor">
+                        <div class="msg-avatar">V</div>
+                        <div class="message-content">
+                            <div class="message-sender">Vendedor (Você)</div>
+                            {{ entry.parts.0 }}
+                        </div>
+                    </div>
+                {% elif entry.role == 'model' %}
+                    <div class="message cliente-ia">
+                        <div class="msg-avatar">{{ personagem.short_name|first|upper }}</div>
+                        <div class="message-content">
+                            <div class="message-sender">{{ personagem.short_name }}</div>
+                            {{ entry.parts.0 }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <div class="message cliente-ia typing-indicator" id="typing-indicator">
+                <div class="msg-avatar">{{ personagem.short_name|first|upper }}</div>
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-row">
+                <textarea class="chat-input" id="vendedor-message" rows="1" placeholder="Digite sua mensagem…"></textarea>
+                <button class="btn-send" type="button" id="send-button" title="Enviar">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-</div>
-
-<!-- Modal de Confirmação -->
-<div class="modal fade" id="confirmEndModal" tabindex="-1" aria-labelledby="confirmEndModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade dark-modal" id="confirmEndModal" tabindex="-1" aria-labelledby="confirmEndModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="confirmEndModalLabel">Confirmar Encerramento</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="confirmEndModalLabel"><i class="fas fa-stop-circle me-2" style="color:#f87171"></i>Finalizar Simulação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
-      <div class="modal-body">
-        Você tem certeza de que deseja finalizar o teste? Seu histórico de conversa será salvo.
-      </div>
+      <div class="modal-body">Tem certeza que deseja encerrar? O histórico desta conversa será salvo automaticamente.</div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <a href="{% url 'reiniciar_simulacao' %}" class="btn btn-primary">Sim, tenho certeza</a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <a href="{% url 'reiniciar_simulacao' %}" class="btn btn-danger">Sim, encerrar</a>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sendButton = document.getElementById('send-button');
-    const vendedorMessageInput = document.getElementById('vendedor-message');
-    const chatHistoryDisplay = document.getElementById('chat-history-display');
+document.addEventListener('DOMContentLoaded', function () {
+    const sendBtn   = document.getElementById('send-button');
+    const inputEl   = document.getElementById('vendedor-message');
+    const historyEl = document.getElementById('chat-history-display');
+    const typingEl  = document.getElementById('typing-indicator');
+    const scrollToBottom = () => historyEl.scrollTop = historyEl.scrollHeight;
 
-    function scrollToBottom() {
-        chatHistoryDisplay.scrollTop = chatHistoryDisplay.scrollHeight;
-    }
+    inputEl.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
 
-    function addMessageToChat(role, senderName, message) {
-        const messageWrapper = document.createElement('div');
-        messageWrapper.className = `message ${role === 'user' ? 'vendedor' : 'cliente-ia'}`;
-
-        messageWrapper.innerHTML = `
-            <div class="message-content">
-                <div class="message-sender">${senderName}</div>
-                ${message}
-            </div>
-        `;
-        chatHistoryDisplay.appendChild(messageWrapper);
+    function addMessage(role, senderName, text) {
+        const w = document.createElement('div');
+        w.className = 'message ' + (role === 'user' ? 'vendedor' : 'cliente-ia');
+        w.innerHTML = `<div class="msg-avatar">${senderName.charAt(0).toUpperCase()}</div>
+            <div class="message-content"><div class="message-sender">${senderName}</div>${text}</div>`;
+        historyEl.insertBefore(w, typingEl);
         scrollToBottom();
     }
 
-    function handleSendMessage() {
-        const message = vendedorMessageInput.value.trim();
-        if (message) {
-            addMessageToChat('user', 'Vendedor (Você)', message);
-            vendedorMessageInput.value = '';
-
-            fetch("{% url 'enviar_resposta_vendedor' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ message: message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Erro: ' + data.error);
-                    // Remove a mensagem otimista se houver erro
-                    chatHistoryDisplay.lastChild.remove();
-                } else {
-                    // A resposta da IA já é adicionada via AJAX
-                    addMessageToChat('model', '{{ personagem.short_name|escapejs }}', data.customer_response);
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao enviar mensagem:', error);
-                alert('Ocorreu um erro ao comunicar com o servidor.');
-                // Remove a mensagem otimista se houver erro
-                chatHistoryDisplay.lastChild.remove();
-            });
-        }
+    function setLoading(on) {
+        sendBtn.disabled = on;
+        typingEl.classList.toggle('visible', on);
+        scrollToBottom();
     }
 
-    sendButton.addEventListener('click', handleSendMessage);
+    function handleSend() {
+        const msg = inputEl.value.trim();
+        if (!msg) return;
+        addMessage('user', 'Vendedor (Você)', msg);
+        inputEl.value = ''; inputEl.style.height = 'auto';
+        setLoading(true);
+        fetch("{% url 'enviar_resposta_vendedor' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ message: msg })
+        })
+        .then(r => r.json())
+        .then(data => { setLoading(false); addMessage('model', '{{ personagem.short_name|escapejs }}', data.error ? data.error : data.customer_response); })
+        .catch(() => { setLoading(false); addMessage('model', 'Erro', 'Falha ao comunicar com o servidor.'); });
+    }
 
-    vendedorMessageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    });
-
-    
-
+    sendBtn.addEventListener('click', handleSend);
+    inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
     scrollToBottom();
 });
 </script>

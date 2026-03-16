@@ -14,6 +14,10 @@
               <a class="nav-link {% if request.resolver_match.url_name == 'lista_salas_admin' %}active{% endif %}" 
                  href="{% url 'lista_salas_admin' %}"> Minhas Salas</a>    
             </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                 href="{% url 'dashboard' %}">Dashboard</a>
+            </li>
           {% else %}
             {# Links para o usuário 'cliente' #}
             <li class="nav-item">
@@ -21,6 +25,9 @@
             </li>
             <li class="nav-item">
               <a class="nav-link {% if request.resolver_match.url_name == 'historico_simulacoes' %}active{% endif %}" href="{% url 'historico_simulacoes' %}">Meu Histórico</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'performance' %}active{% endif %}" href="{% url 'performance' %}">Performance</a>
             </li>
           {% endif %}
         {% endif %}

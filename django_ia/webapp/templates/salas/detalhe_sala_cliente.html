@@ -1,39 +1,213 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+    .container > br:first-of-type { display: none; }
+
+    .sc-page { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── Hero ── */
+    .sc-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        backdrop-filter: blur(12px);
+        border-radius: 20px; padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap;
+        box-shadow: 0 20px 60px rgba(106,17,203,.4);
+        border: 1px solid rgba(255,255,255,.12);
+        position: relative; overflow: hidden;
+    }
+    .sc-hero::after {
+        content: ''; position: absolute; top: -40px; right: -40px;
+        width: 160px; height: 160px; border-radius: 50%;
+        background: rgba(255,255,255,.05);
+    }
+    .sc-hero-icon {
+        width: 60px; height: 60px; background: rgba(255,255,255,.15);
+        border-radius: 16px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; color: #fff; flex-shrink: 0;
+    }
+    .sc-hero-text h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 .25rem; }
+    .sc-hero-text p  { color: rgba(255,255,255,.7); margin: 0; font-size: .88rem; }
+
+    /* ── Stat chips ── */
+    .sc-stats { display: flex; gap: .75rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .sc-stat {
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 12px; padding: .6rem 1rem;
+        display: flex; align-items: center; gap: .55rem;
+        color: rgba(255,255,255,.75); font-size: .82rem;
+    }
+    .sc-stat i { color: #a78bfa; }
+    .sc-stat strong { color: #fff; }
+
+    /* ── Tabs ── */
+    .sc-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+    .sc-tab {
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px; padding: .55rem 1.2rem;
+        color: rgba(255,255,255,.55); font-size: .85rem; font-weight: 600;
+        cursor: pointer; transition: all .22s; display: flex; align-items: center; gap: .45rem;
+    }
+    .sc-tab:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
+    .sc-tab.active {
+        background: linear-gradient(135deg, rgba(106,17,203,.5), rgba(37,117,252,.5));
+        border-color: rgba(106,17,203,.5); color: #fff;
+        box-shadow: 0 4px 16px rgba(106,17,203,.25);
+    }
+
+    /* ── Panel ── */
+    .sc-panel {
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 18px; padding: 2rem;
+        display: none;
+    }
+    .sc-panel.active { display: block; }
+
+    /* ── CTA card ── */
+    .cta-card {
+        background: linear-gradient(135deg, rgba(106,17,203,.25), rgba(37,117,252,.25));
+        border: 1px solid rgba(106,17,203,.35);
+        border-radius: 16px; padding: 2rem; text-align: center;
+        margin-bottom: 1rem;
+    }
+    .cta-card .cta-icon {
+        width: 64px; height: 64px; border-radius: 50%;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; color: #fff; margin: 0 auto 1rem;
+        box-shadow: 0 8px 24px rgba(106,17,203,.4);
+        animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{box-shadow:0 8px 24px rgba(106,17,203,.4)} 50%{box-shadow:0 8px 32px rgba(106,17,203,.7)} }
+    .cta-card h4 { color: #fff; font-weight: 700; margin-bottom: .5rem; }
+    .cta-card p  { color: rgba(255,255,255,.6); font-size: .88rem; margin-bottom: 1.5rem; }
+    .btn-start {
+        display: inline-flex; align-items: center; gap: .55rem;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        color: #fff; border: none; border-radius: 12px; padding: .85rem 2.2rem;
+        font-size: .95rem; font-weight: 700; text-decoration: none;
+        transition: all .25s; box-shadow: 0 6px 20px rgba(106,17,203,.4);
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(106,17,203,.55); color: #fff; text-decoration: none; }
+
+    /* ── Info row ── */
+    .info-row {
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+        border-radius: 10px; padding: .7rem 1rem;
+        display: flex; align-items: center; gap: .5rem;
+        font-size: .8rem; color: rgba(255,255,255,.5); margin-top: .8rem;
+    }
+    .info-row i { color: #a78bfa; }
+
+    /* ── Participant list ── */
+    .participant-item {
+        display: flex; align-items: center; gap: .9rem;
+        padding: .8rem 0;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .participant-item:last-child { border-bottom: none; }
+    .part-avatar {
+        width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .85rem; font-weight: 800; color: #fff;
+    }
+    .part-name { font-size: .88rem; font-weight: 600; color: #fff; line-height: 1.2; }
+    .part-user { font-size: .75rem; color: rgba(255,255,255,.4); }
+
+    /* ── Back button ── */
+    .btn-back {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.7); border-radius: 10px; padding: .55rem 1.2rem;
+        font-size: .85rem; text-decoration: none; transition: all .22s; margin-top: 1.5rem;
+    }
+    .btn-back:hover { background: rgba(255,255,255,.12); color: #fff; text-decoration: none; }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="sc-page">
 
-<h2 class="mb-4">Sala: {{ views.titulo }}</h2>
-
-<div class="card">
-    <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="salaTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="atendimento-tab" data-bs-toggle="tab" data-bs-target="#atendimento" type="button" role="tab" aria-controls="atendimento" aria-selected="true">Iniciar Atendimento</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="participantes-tab" data-bs-toggle="tab" data-bs-target="#participantes" type="button" role="tab" aria-controls="participantes" aria-selected="false">Participantes</button>
-            </li>
-        </ul>
-    </div>
-    <div class="card-body">
-        <div class="tab-content" id="salaTabContent">
-            <div class="tab-pane fade show active" id="atendimento" role="tabpanel" aria-labelledby="atendimento-tab">
-                <h5 class="card-title">Pronto para começar?</h5>
-                <p class="card-text">Clique no botão abaixo para iniciar uma nova simulação. O sistema irá sortear um perfil de cliente para você interagir.</p>
-                <a href="{% url 'iniciar_atendimento_sorteio' sala.id %}" class="btn btn-primary">Iniciar Simulação</a>
-            </div>
-            <div class="tab-pane fade" id="participantes" role="tabpanel" aria-labelledby="participantes-tab">
-                <ul class="list-group">
-                    {% for participante in sala.participantes.all %}
-                        <li class="list-group-item">{{ participante.first_name }} {{ participante.last_name }} ({{ participante.username }})</li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <!-- Hero -->
+    <div class="sc-hero">
+        <div class="sc-hero-icon"><i class="fas fa-door-open"></i></div>
+        <div class="sc-hero-text">
+            <h1>{{ sala.nome }}</h1>
+            <p>Sala de treinamento de vendas · código <code style="background:rgba(255,255,255,.15);padding:.1rem .4rem;border-radius:5px;color:#e0c3fc">{{ sala.codigo_acesso }}</code></p>
         </div>
     </div>
+
+    <!-- Stats -->
+    <div class="sc-stats">
+        <div class="sc-stat"><i class="fas fa-users"></i> <strong>{{ sala.participantes.count }}</strong> participante{{ sala.participantes.count|pluralize:"s" }}</div>
+        <div class="sc-stat"><i class="fas fa-user-secret"></i> <strong>{{ sala.personagens_disponiveis.count }}</strong> perfil{{ sala.personagens_disponiveis.count|pluralize:"is" }} disponíve{{ sala.personagens_disponiveis.count|pluralize:"l,is" }}</div>
+        <div class="sc-stat"><i class="fas fa-shield-alt"></i> Capacidade <strong>{{ sala.capacidade_maxima }}</strong></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="sc-tabs">
+        <button class="sc-tab active" onclick="switchTab('atendimento', this)">
+            <i class="fas fa-play-circle"></i> Iniciar Simulação
+        </button>
+        <button class="sc-tab" onclick="switchTab('participantes', this)">
+            <i class="fas fa-users"></i> Participantes
+        </button>
+    </div>
+
+    <!-- Panel: Iniciar atendimento -->
+    <div class="sc-panel active" id="panel-atendimento">
+        <div class="cta-card">
+            <div class="cta-icon"><i class="fas fa-robot"></i></div>
+            <h4>Pronto para começar?</h4>
+            <p>O sistema sorteia um perfil de cliente DISC aleatório para você praticar suas habilidades de vendas em uma conversa simulada.</p>
+            <a href="{% url 'iniciar_atendimento_sorteio' sala.id %}" class="btn-start">
+                <i class="fas fa-random"></i> Iniciar Simulação
+            </a>
+        </div>
+        {% if sala.personagens_disponiveis.count == 0 %}
+        <div class="info-row">
+            <i class="fas fa-exclamation-triangle"></i>
+            Esta sala ainda não tem perfis de clientes configurados. Aguarde o administrador adicionar personagens.
+        </div>
+        {% else %}
+        <div class="info-row">
+            <i class="fas fa-info-circle"></i>
+            {{ sala.personagens_disponiveis.count }} perfil{{ sala.personagens_disponiveis.count|pluralize:"is" }} disponíve{{ sala.personagens_disponiveis.count|pluralize:"l,is" }} — o cliente será sorteado aleatoriamente ao iniciar.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Panel: Participantes -->
+    <div class="sc-panel" id="panel-participantes">
+        {% for p in sala.participantes.all %}
+        <div class="participant-item">
+            <div class="part-avatar">{{ p.first_name|first|upper|default:p.username|first|upper }}</div>
+            <div>
+                <div class="part-name">{{ p.get_full_name|default:p.username }}</div>
+                <div class="part-user">@{{ p.username }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color:rgba(255,255,255,.4);text-align:center;padding:2rem 0">Nenhum participante nesta sala.</p>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'bem_vindo' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar ao painel</a>
+
 </div>
 
-<a href="{% url 'bem_vindo' %}" class="btn btn-secondary mt-4">Voltar</a>
-
+<script>
+function switchTab(tab, el) {
+    document.querySelectorAll('.sc-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sc-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+}
+</script>
 {% endblock %}

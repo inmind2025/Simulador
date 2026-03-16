@@ -80,7 +80,7 @@ class SignUpForm(forms.ModelForm): # <<<< MUDANÇA AQUI: Agora herda de forms.Mo
     
     role = forms.ChoiceField(
         label="",
-        choices=[('aluno', 'Aluno'), ('administrador', 'Administrador')],
+        choices=[('cliente', 'Cliente'), ('administrador', 'Administrador')],
         widget=forms.Select(
             attrs={
                 "class": "form-control",

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcrição · Simulação #{{ sim.id }} · {{ sim.user.username }}</title>
+<style>
+  /* ── Base ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f7; color: #1a1a2e; font-size: 14px; }
+
+  /* ── Container ── */
+  .page { max-width: 820px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Header ── */
+  .print-header {
+    display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    border-bottom: 3px solid #6a11cb; padding-bottom: 1.2rem; margin-bottom: 1.8rem;
+  }
+  .print-logo { font-size: 1.4rem; font-weight: 900; color: #6a11cb; letter-spacing: -.02em; }
+  .print-logo span { color: #2575fc; }
+  .print-meta { font-size: .78rem; color: #666; line-height: 1.7; text-align: right; }
+  .print-meta strong { color: #1a1a2e; }
+
+  /* ── Botões de controle (não aparecem na impressão) ── */
+  .no-print { display: flex; gap: .6rem; margin-bottom: 1.5rem; }
+  .btn-print {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: #6a11cb; color: #fff; border: none; border-radius: 8px;
+    padding: .5rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-print:hover { background: #5a0db5; }
+  .btn-close {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: #eee; color: #444; border: none; border-radius: 8px;
+    padding: .5rem 1rem; font-size: .82rem; font-weight: 700; cursor: pointer;
+  }
+  .btn-close:hover { background: #ddd; }
+
+  /* ── Seção ── */
+  .section-title {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    color: #888; margin: 1.8rem 0 .8rem; border-bottom: 1px solid #e5e5e5; padding-bottom: .35rem;
+  }
+
+  /* ── Chat ── */
+  .chat-log { display: flex; flex-direction: column; gap: .6rem; }
+  .msg-wrap { display: flex; flex-direction: column; }
+  .msg-wrap.user { align-items: flex-end; }
+  .msg-wrap.ai   { align-items: flex-start; }
+  .msg-bubble {
+    max-width: 72%; padding: .65rem .9rem; border-radius: 14px;
+    font-size: .88rem; line-height: 1.6;
+  }
+  .msg-wrap.user .msg-bubble {
+    background: #6a11cb; color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-wrap.ai .msg-bubble {
+    background: #fff; color: #1a1a2e;
+    border: 1px solid #e5e5e5;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-meta { font-size: .68rem; color: #999; margin-top: .2rem; padding: 0 .3rem; }
+
+  /* ── Auditoria ── */
+  .audit-box {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 14px;
+    overflow: hidden; margin-top: .5rem;
+  }
+  .audit-score-row {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #fff; padding: 1.2rem 1.5rem;
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .audit-score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .audit-score-label { font-size: .78rem; opacity: .75; }
+  .audit-score-badges { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .4rem; }
+  .audit-badge {
+    font-size: .7rem; font-weight: 700; border-radius: 20px;
+    padding: .2rem .65rem; background: rgba(255,255,255,.2); color: #fff;
+  }
+  .audit-body { padding: 1.2rem 1.5rem; }
+  .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .audit-col-title { font-size: .7rem; font-weight: 700; color: #6a11cb; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .5rem; }
+  .audit-row-item { display: flex; justify-content: space-between; align-items: center; padding: .28rem 0; border-bottom: 1px solid #f0f0f0; font-size: .82rem; }
+  .audit-row-item:last-child { border-bottom: none; }
+  .audit-row-item span { color: #555; }
+  .audit-row-item strong { color: #1a1a2e; font-weight: 700; }
+  .audit-feedback-box {
+    background: #f9f5ff; border: 1px solid #e9d8fd; border-radius: 10px;
+    padding: 1rem 1.2rem; margin-top: 1rem; font-size: .83rem; line-height: 1.7; color: #333;
+  }
+  .audit-feedback-box p { margin: 0 0 .5rem; }
+  .audit-feedback-box p:last-child { margin: 0; }
+  .audit-feedback-box strong { color: #6a11cb; }
+  .audit-feedback-box ul, .audit-feedback-box ol { margin: .3rem 0 .5rem 1.2rem; }
+  .audit-feedback-box li { margin-bottom: .2rem; }
+  .erros-list { display: flex; flex-direction: column; gap: .5rem; margin-top: .8rem; }
+  .erro-item {
+    background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px;
+    padding: .55rem .85rem; font-size: .8rem;
+  }
+  .erro-trecho { font-family: monospace; background: #fee2e2; border-radius: 4px; padding: .1rem .4rem; color: #c53030; }
+  .erro-corr   { color: #276749; font-weight: 700; }
+  .erro-tipo   { font-size: .65rem; background: #fed7aa; color: #9c4221; border-radius: 20px; padding: .1rem .45rem; font-weight: 700; }
+
+  /* ── Footer ── */
+  .print-footer { margin-top: 3rem; padding-top: .8rem; border-top: 1px solid #e5e5e5; font-size: .7rem; color: #aaa; text-align: center; }
+
+  /* ── Print media ── */
+  @media print {
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .page { padding: 0; max-width: 100%; }
+    .print-header { page-break-after: avoid; }
+    .audit-box { page-break-inside: avoid; }
+    .msg-bubble { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .audit-score-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="print-header">
+    <div>
+      <div class="print-logo">Simula<span>dor</span></div>
+      <div style="font-size:.78rem;color:#888;margin-top:.2rem">Ramsons · Treinamento de Vendas</div>
+    </div>
+    <div class="print-meta">
+      <strong>Simulação #{{ sim.id }}</strong><br>
+      Consultor: <strong>{{ sim.user.username }}</strong><br>
+      Sala: <strong>{{ sala.nome }}</strong><br>
+      {% if sim.start_time %}Início: <strong>{{ sim.start_time|date:"d/m/Y \à\s H:i" }}</strong><br>{% endif %}
+      {% if sim.end_time %}Término: <strong>{{ sim.end_time|date:"d/m/Y \à\s H:i" }}</strong>{% endif %}
+    </div>
+  </div>
+
+  <!-- Botões de controle -->
+  <div class="no-print">
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <button class="btn-close" onclick="window.close()">✕ Fechar</button>
+  </div>
+
+  <!-- Transcrição -->
+  <div class="section-title">Transcrição da conversa</div>
+
+  {% if msgs %}
+  <div class="chat-log">
+    {% for msg in msgs %}
+    {% if msg.sender == 'vendedor_usuario' %}
+    <div class="msg-wrap user">
+      <div class="msg-bubble">{{ msg.message_content }}</div>
+      <div class="msg-meta">{{ msg.timestamp|date:"H:i" }} · Consultor</div>
+    </div>
+    {% else %}
+    <div class="msg-wrap ai">
+      <div class="msg-bubble">{{ msg.message_content }}</div>
+      <div class="msg-meta">{{ msg.timestamp|date:"H:i" }} · Cliente (IA)</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:#aaa;font-style:italic;font-size:.85rem">Nenhuma mensagem registrada nesta simulação.</p>
+  {% endif %}
+
+  <!-- Auditoria -->
+  {% if auditoria %}
+  <div class="section-title">Resultado da auditoria</div>
+  <div class="audit-box">
+    <div class="audit-score-row">
+      <div>
+        <div class="audit-score-num">{{ auditoria.nota_total }}</div>
+        <div class="audit-score-label">nota total / 10</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;opacity:.8;margin-bottom:.3rem">Distribuição da nota</div>
+        <div class="audit-score-badges">
+          <span class="audit-badge">A PONTE: {{ auditoria.nota_ponte }}/5,0</span>
+          <span class="audit-badge">Técnicas EA: {{ auditoria.nota_ea }}/4,0</span>
+          <span class="audit-badge">Ortografia: {{ auditoria.ortografia }}/1,0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="audit-body">
+      <div class="audit-grid">
+
+        <!-- Método A PONTE -->
+        <div>
+          <div class="audit-col-title">Método A PONTE</div>
+          <div class="audit-row-item"><span>Abordar</span>     <strong>{{ auditoria.ponte_abordar }}/0,6</strong></div>
+          <div class="audit-row-item"><span>Pesquisar</span>   <strong>{{ auditoria.ponte_pesquisar }}/0,3</strong></div>
+          <div class="audit-row-item"><span>Oferecer</span>    <strong>{{ auditoria.ponte_oferecer }}/1,2</strong></div>
+          <div class="audit-row-item"><span>Negociar</span>    <strong>{{ auditoria.ponte_negociar }}/2,0</strong></div>
+          <div class="audit-row-item"><span>Tomar Iniciativa</span><strong>{{ auditoria.ponte_tomar_iniciativa }}/0,3</strong></div>
+          <div class="audit-row-item"><span>Estender</span>    <strong>{{ auditoria.ponte_estender }}/0,6</strong></div>
+        </div>
+
+        <!-- Técnicas EA -->
+        <div>
+          <div class="audit-col-title">Técnicas EA</div>
+          <div class="audit-row-item"><span>SPIN</span><strong>{{ auditoria.spin_total }}/2,0</strong></div>
+          <div class="audit-row-item"><span>CBV</span> <strong>{{ auditoria.cbv_total }}/2,0</strong></div>
+          <div class="audit-col-title" style="margin-top:1rem">Ortografia</div>
+          <div class="audit-row-item"><span>Pontuação</span><strong>{{ auditoria.ortografia }}/1,0</strong></div>
+          {% if auditoria.erros_ortografia %}
+          <div class="audit-row-item"><span>Erros</span><strong>{{ auditoria.erros_ortografia|length }} encontrado{{ auditoria.erros_ortografia|length|pluralize }}</strong></div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      {% if auditoria.erros_ortografia %}
+      <div style="margin-top:1rem">
+        <div class="audit-col-title">Erros de ortografia identificados</div>
+        <div class="erros-list">
+          {% for e in auditoria.erros_ortografia %}
+          <div class="erro-item">
+            <span class="erro-trecho">{{ e.trecho }}</span>
+            → correto: <span class="erro-corr">{{ e.correcao }}</span>
+            &nbsp;<span class="erro-tipo">{{ e.tipo }}</span>
+            <span style="float:right;color:#c53030;font-size:.72rem;font-weight:700">−{{ e.desconto }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if auditoria.feedback %}
+      <div class="audit-col-title" style="margin-top:1.2rem">Feedback da IA</div>
+      <div class="audit-feedback-box" id="feedbackBox">{{ auditoria.feedback }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="print-footer">
+    Gerado em {% now "d/m/Y \à\s H:i" %} · Simulador de Vendas Ramsons
+  </div>
+
+</div>
+
+<script>
+// Formata o feedback da mesma forma que no dashboard
+(function(){
+  var el = document.getElementById('feedbackBox');
+  if (!el) return;
+  var text = el.textContent;
+  el.innerHTML = formatFeedback(text);
+})();
+
+function formatFeedback(text) {
+  if (!text) return '';
+  var s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  var lines = s.split(/\n/);
+  var html = '', inList = false, listType = '';
+  lines.forEach(function(line) {
+    var t = line.trim();
+    if (!t) { if (inList) { html += '</'+listType+'>'; inList=false; } return; }
+    var bullet = t.match(/^[-•]\s+(.+)$/);
+    if (bullet) {
+      if (!inList || listType!='ul') { if(inList) html+='</'+listType+'>'; html+='<ul>'; inList=true; listType='ul'; }
+      html += '<li>'+bullet[1]+'</li>'; return;
+    }
+    var num = t.match(/^\d+\.\s+(.+)$/);
+    if (num) {
+      if (!inList || listType!='ol') { if(inList) html+='</'+listType+'>'; html+='<ol>'; inList=true; listType='ol'; }
+      html += '<li>'+num[1]+'</li>'; return;
+    }
+    if (inList) { html+='</'+listType+'>'; inList=false; }
+    html += '<p>'+t+'</p>';
+  });
+  if (inList) html += '</'+listType+'>';
+  return html;
+}
+</script>
+</body>
+</html>

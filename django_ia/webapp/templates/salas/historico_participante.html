@@ -2,46 +2,173 @@
 {% load static %}
 
 {% block extra_head %}
-{# Adicionando Font Awesome para os ícones, caso ainda não esteja no base.html #}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+    .container.bg-secondary-subtle > br:first-of-type { display: none; }
+    .container.bg-secondary-subtle > h2 { display: none; }
+
+    .hp-page { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    /* ── Back ── */
+    .btn-back {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.7); border-radius: 10px; padding: .5rem 1.1rem;
+        font-size: .83rem; text-decoration: none; transition: all .22s; margin-bottom: 1.5rem;
+    }
+    .btn-back:hover { background: rgba(255,255,255,.13); color: #fff; text-decoration: none; }
+
+    /* ── Hero ── */
+    .hp-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.8) 0%, rgba(37,117,252,.8) 100%);
+        backdrop-filter: blur(12px); border-radius: 18px;
+        padding: 1.6rem 1.8rem; margin-bottom: 1.8rem;
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 16px 48px rgba(106,17,203,.35);
+        display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+    }
+    .hp-avatar {
+        width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+        background: rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; font-weight: 800; color: #fff;
+    }
+    .hp-hero-info { flex: 1; min-width: 0; }
+    .hp-hero-info h2 { font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0 0 .35rem; }
+    .hp-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .hp-chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.18);
+        border-radius: 20px; padding: .22rem .7rem;
+        font-size: .75rem; color: rgba(255,255,255,.85);
+    }
+    .hp-stat {
+        background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+        border-radius: 12px; padding: .55rem 1rem; text-align: center; flex-shrink: 0;
+    }
+    .hp-stat strong { display: block; font-size: 1.5rem; font-weight: 800; color: #fff; line-height: 1; }
+    .hp-stat span   { font-size: .7rem; color: rgba(255,255,255,.65); }
+
+    /* ── Section label ── */
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* ── Cards de simulação ── */
+    .sim-list { display: flex; flex-direction: column; gap: .85rem; }
+
+    .sim-item {
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 14px; padding: 1.1rem 1.3rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        transition: all .25s; position: relative; overflow: hidden;
+    }
+    .sim-item::before {
+        content:''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+        background: linear-gradient(180deg, #6a11cb, #2575fc); opacity: 0; transition: opacity .25s;
+    }
+    .sim-item:hover { background: rgba(255,255,255,.09); border-color: rgba(106,17,203,.35); transform: translateX(4px); }
+    .sim-item:hover::before { opacity: 1; }
+
+    .sim-item-left { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+    .sim-num {
+        width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+        background: rgba(106,17,203,.25); border: 1px solid rgba(106,17,203,.3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .7rem; font-weight: 800; color: #a78bfa;
+    }
+    .sim-title { font-size: .9rem; font-weight: 600; color: #fff; margin-bottom: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
+    .sim-date  { font-size: .75rem; color: rgba(255,255,255,.45); display: flex; align-items: center; gap: .35rem; }
+
+    .btn-detail {
+        display: inline-flex; align-items: center; gap: .4rem;
+        background: linear-gradient(135deg, rgba(106,17,203,.4), rgba(37,117,252,.4));
+        border: 1px solid rgba(106,17,203,.4); color: #c4b5fd;
+        border-radius: 9px; padding: .45rem .9rem;
+        font-size: .78rem; font-weight: 700; text-decoration: none;
+        transition: all .22s; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-detail:hover { background: linear-gradient(135deg, rgba(106,17,203,.65), rgba(37,117,252,.65)); color: #fff; text-decoration: none; }
+
+    /* ── Empty ── */
+    .empty-state {
+        text-align: center; padding: 4rem 1.5rem;
+        background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.1);
+        border-radius: 16px;
+    }
+    .empty-icon {
+        width: 64px; height: 64px; border-radius: 50%;
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: rgba(255,255,255,.2); margin: 0 auto 1rem;
+    }
+    .empty-state h5 { color: rgba(255,255,255,.55); font-weight: 600; margin-bottom: .3rem; }
+    .empty-state p  { font-size: .85rem; color: rgba(255,255,255,.35); margin: 0; }
+</style>
 {% endblock extra_head %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0">{{ views.titulo }}</h4>
-                <p class="text-muted mb-0">Sala: {{ sala.nome }}</p>
-            </div>
-            <a href="{% url 'detalhe_sala_admin' sala.id %}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Voltar para a Sala
-            </a>
-        </div>
+<div class="hp-page">
 
-        <div class="card-body">
-            {% if simulacoes %}
-                <ul class="list-group list-group-flush">
-                    {% for simulacao in simulacoes %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ simulacao.initial_prompt_summary|default:"Simulação Genérica" }}</h6>
-                                <small class="text-muted">
-                                    Data: {{ simulacao.start_time|date:"d/m/Y, H:i" }}
-                                </small>
-                            </div>
-                            <a href="{% url 'conversation_detail' simulacao.id %}" class="btn btn-primary btn-sm">
-                                Ver Detalhes
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <div class="text-center p-4">
-                    <p class="text-muted">Nenhuma simulação de atendimento encontrada para este participante nesta sala.</p>
-                </div>
-            {% endif %}
+    <!-- Voltar -->
+    <a href="{% url 'detalhe_sala_admin' sala.id %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Voltar para a Sala
+    </a>
+
+    <!-- Hero -->
+    <div class="hp-hero">
+        <div class="hp-avatar">{{ participante.first_name|first|upper|default:participante.username|first|upper }}</div>
+        <div class="hp-hero-info">
+            <h2>{{ participante.get_full_name|default:participante.username }}</h2>
+            <div class="hp-chips">
+                <span class="hp-chip"><i class="fas fa-at" style="font-size:.65rem"></i> {{ participante.username }}</span>
+                <span class="hp-chip"><i class="fas fa-door-open" style="font-size:.65rem"></i> {{ sala.nome }}</span>
+            </div>
+        </div>
+        <div class="hp-stat">
+            <strong>{{ simulacoes.count }}</strong>
+            <span>simulaç{{ simulacoes.count|pluralize:"ão,ões" }}</span>
         </div>
     </div>
+
+    <div class="section-label"><i class="fas fa-history"></i> Histórico de simulações</div>
+
+    <!-- Lista -->
+    <div class="sim-list">
+        {% for simulacao in simulacoes %}
+        <div class="sim-item">
+            <div class="sim-item-left">
+                <div class="sim-num">#{{ simulacao.id }}</div>
+                <div>
+                    <div class="sim-title">{{ simulacao.initial_prompt_summary|default:"Simulação Genérica" }}</div>
+                    <div class="sim-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ simulacao.start_time|date:"d/m/Y \à\s H:i" }}
+                        {% if simulacao.end_time %}
+                        &nbsp;·&nbsp;<span style="color:#4ade80"><i class="fas fa-check-circle"></i> Concluída</span>
+                        {% else %}
+                        &nbsp;·&nbsp;<span style="color:#fbbf24"><i class="fas fa-clock"></i> Em andamento</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'conversation_detail' simulacao.id %}" class="btn-detail">
+                <i class="fas fa-eye"></i> Ver detalhes
+            </a>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-comment-slash"></i></div>
+            <h5>Nenhuma simulação encontrada</h5>
+            <p>Este participante ainda não realizou simulações nesta sala.</p>
+        </div>
+        {% endfor %}
+    </div>
+
 </div>
 {% endblock content %}

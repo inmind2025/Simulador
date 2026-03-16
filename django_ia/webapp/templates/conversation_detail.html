@@ -1,36 +1,182 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content %}
-<a href="{{ back_url }}" class="btn btn-secondary mb-3">&larr; Voltar</a>
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+    .container.bg-secondary-subtle > br:first-of-type { display: none; }
+    .container.bg-secondary-subtle > h2 { display: none; }
 
-<div class="chat-container">
-    <div class="chat-header">
-        <h4>Detalhes da Simulação #{{ simulacao.id }}</h4>
-        <p>Iniciada em: {{ simulacao.start_time|date:"d/m/Y H:i" }} por {{ simulacao.user.username }}</p>
+    .cd-page { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    /* ── Back button ── */
+    .btn-back {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.7); border-radius: 10px; padding: .5rem 1.1rem;
+        font-size: .83rem; text-decoration: none; transition: all .22s; margin-bottom: 1.5rem;
+    }
+    .btn-back:hover { background: rgba(255,255,255,.13); color: #fff; text-decoration: none; }
+
+    /* ── Hero card ── */
+    .cd-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.8) 0%, rgba(37,117,252,.8) 100%);
+        backdrop-filter: blur(12px); border-radius: 18px;
+        padding: 1.5rem 1.8rem; margin-bottom: 1.5rem;
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 16px 48px rgba(106,17,203,.35);
+        display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .cd-hero-left { display: flex; align-items: center; gap: 1rem; }
+    .cd-hero-icon {
+        width: 50px; height: 50px; border-radius: 13px;
+        background: rgba(255,255,255,.15);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem; color: #fff; flex-shrink: 0;
+    }
+    .cd-hero h2 { font-size: 1.3rem; font-weight: 800; color: #fff; margin: 0 0 .3rem; }
+    .cd-hero-meta { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .cd-meta-chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+        border-radius: 20px; padding: .22rem .7rem;
+        font-size: .75rem; color: rgba(255,255,255,.85);
+    }
+    .cd-meta-chip i { font-size: .65rem; opacity: .7; }
+    .cd-msg-count {
+        background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+        border-radius: 12px; padding: .5rem .9rem; text-align: center;
+        align-self: flex-start; flex-shrink: 0;
+    }
+    .cd-msg-count strong { display: block; font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1; }
+    .cd-msg-count span   { font-size: .7rem; color: rgba(255,255,255,.65); }
+
+    /* ── Section label ── */
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1rem;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* ── Chat log ── */
+    .chat-log { display: flex; flex-direction: column; gap: .85rem; }
+
+    .message-wrapper { display: flex; align-items: flex-end; gap: .65rem; max-width: 82%; }
+    @media (max-width: 480px) { .message-wrapper { max-width: 94%; } }
+
+    .message-wrapper.user {
+        align-self: flex-end; flex-direction: row-reverse; margin-left: auto;
+    }
+    .message-wrapper.ai  { align-self: flex-start; }
+
+    .message-avatar {
+        width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .72rem; font-weight: 800; color: #fff;
+    }
+    .message-wrapper.user .message-avatar { background: linear-gradient(135deg, #6a11cb, #2575fc); }
+    .message-wrapper.ai  .message-avatar { background: linear-gradient(135deg, #475569, #334155); }
+
+    .message-content {
+        padding: .7rem .95rem; border-radius: 16px;
+        font-size: .875rem; line-height: 1.55;
+    }
+    .message-wrapper.user .message-content {
+        background: linear-gradient(135deg, rgba(106,17,203,.55), rgba(37,117,252,.55));
+        color: #fff; border-top-right-radius: 4px;
+        border: 1px solid rgba(106,17,203,.3);
+    }
+    .message-wrapper.ai  .message-content {
+        background: rgba(255,255,255,.07);
+        color: rgba(255,255,255,.88); border-top-left-radius: 4px;
+        border: 1px solid rgba(255,255,255,.1);
+    }
+
+    /* ── Timestamp ── */
+    .msg-time { font-size: .68rem; color: rgba(255,255,255,.3); margin-top: .3rem; display: block; }
+    .message-wrapper.user  .msg-time { text-align: right; }
+    .message-wrapper.ai    .msg-time { text-align: left; }
+
+    /* ── Neutraliza chat.css do base.html ── */
+    .chat-log { background: transparent !important; max-height: none !important; padding: 0 !important; overflow-y: visible !important; }
+    .message-wrapper { margin-bottom: 0 !important; }
+    .message-wrapper.ai  .message-content { background: rgba(255,255,255,.07) !important; color: rgba(255,255,255,.88) !important; border: 1px solid rgba(255,255,255,.1) !important; }
+    .message-wrapper.user .message-content { background: linear-gradient(135deg, rgba(106,17,203,.55), rgba(37,117,252,.55)) !important; color: #fff !important; border: 1px solid rgba(106,17,203,.3) !important; }
+    .message-wrapper.ai  .message-avatar { background: linear-gradient(135deg, #475569, #334155) !important; border-radius: 9px !important; margin-right: 0 !important; }
+    .message-wrapper.user .message-avatar { background: linear-gradient(135deg, #6a11cb, #2575fc) !important; border-radius: 9px !important; margin-left: 0 !important; }
+
+    .empty-log {
+        text-align: center; padding: 4rem 1rem;
+        color: rgba(255,255,255,.35);
+    }
+    .empty-log i { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cd-page">
+
+    <!-- Voltar -->
+    <a href="{{ back_url }}" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar</a>
+
+    <!-- Hero -->
+    <div class="cd-hero">
+        <div class="cd-hero-left">
+            <div class="cd-hero-icon"><i class="fas fa-comments"></i></div>
+            <div>
+                <h2>Simulação #{{ simulacao.id }}</h2>
+                <div class="cd-hero-meta">
+                    <span class="cd-meta-chip"><i class="fas fa-user"></i> {{ simulacao.user.get_full_name|default:simulacao.user.username }}</span>
+                    <span class="cd-meta-chip"><i class="fas fa-calendar"></i> {{ simulacao.start_time|date:"d/m/Y \à\s H:i" }}</span>
+                    {% if simulacao.sala %}
+                    <span class="cd-meta-chip"><i class="fas fa-door-open"></i> {{ simulacao.sala.nome }}</span>
+                    {% endif %}
+                    {% if simulacao.end_time %}
+                    <span class="cd-meta-chip" style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3);color:#4ade80"><i class="fas fa-check-circle"></i> Concluída</span>
+                    {% else %}
+                    <span class="cd-meta-chip" style="background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3);color:#fbbf24"><i class="fas fa-clock"></i> Em andamento</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="cd-msg-count">
+            <strong>{{ simulacao.mensagens.count }}</strong>
+            <span>mensagen{{ simulacao.mensagens.count|pluralize:"s" }}</span>
+        </div>
     </div>
 
+    <div class="section-label"><i class="fas fa-history"></i> Transcrição da conversa</div>
+
+    <!-- Log de mensagens -->
     <div class="chat-log">
         {% for mensagem in simulacao.mensagens.all %}
             {% if mensagem.sender == 'vendedor_usuario' %}
-                <!-- Mensagem do Usuário (Vendedor) -->
-                <div class="message-wrapper user">
-                    <div class="message-content">
-                        {{ mensagem.message_content|safe|linebreaksbr }}
+                <div style="display:flex;flex-direction:column;align-items:flex-end">
+                    <div class="message-wrapper user">
+                        <div class="message-avatar">V</div>
+                        <div class="message-content">{{ mensagem.message_content|safe|linebreaksbr }}</div>
                     </div>
-                    <div class="message-avatar" title="Você (Vendedor)">V</div>
+                    <span class="msg-time">{{ mensagem.timestamp|date:"H:i" }} · Vendedor</span>
                 </div>
             {% else %}
-                <!-- Mensagem da IA (Cliente) -->
-                <div class="message-wrapper ai">
-                    <div class="message-avatar" title="Cliente (IA)">IA</div>
-                    <div class="message-content">
-                        {# Usamos o filtro 'safe' para renderizar o HTML do Prism.js corretamente #}
-                        {{ mensagem.message_content|safe|linebreaksbr }}
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="message-wrapper ai">
+                        <div class="message-avatar">IA</div>
+                        <div class="message-content">{{ mensagem.message_content|safe|linebreaksbr }}</div>
                     </div>
+                    <span class="msg-time">{{ mensagem.timestamp|date:"H:i" }} · Cliente</span>
                 </div>
             {% endif %}
+        {% empty %}
+            <div class="empty-log">
+                <i class="fas fa-comment-slash"></i>
+                <p>Nenhuma mensagem registrada nesta simulação.</p>
+            </div>
         {% endfor %}
     </div>
+
 </div>
 {% endblock content %}

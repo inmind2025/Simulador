@@ -1,98 +1,144 @@
-body {
-    font-family: 'Poppins', sans-serif;
+/* ── Base ── */
+body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+.container.bg-secondary-subtle { background: transparent !important; }
+.container > br:first-of-type  { display: none; }
+
+/* ── Wrapper ── */
+.registro-wrapper {
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 2rem 1.5rem 4rem;
+    min-height: calc(100vh - 56px);
 }
 
-.registro-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    min-height: 80vh;
-    background-color: #f4f7f6; /* Light grey background */
-}
-
+/* ── Card ── */
 .registro-card {
-    background-color: #ffffff;
-    padding: 3rem;
-    border-radius: 20px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-    width: 100%;
-    max-width: 550px;
-    border-top: 5px solid #6a11cb; /* Accent color */
+    width: 100%; max-width: 560px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 24px;
+    padding: 2.5rem 2.5rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
 }
 
-.registro-card h1 {
-    text-align: center;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #333;
+/* ── Header ── */
+.registro-header { text-align: center; margin-bottom: 2rem; }
+.registro-logo {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    border-radius: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #fff; margin-bottom: 1.2rem;
+    box-shadow: 0 4px 20px rgba(106,17,203,.45);
 }
+.registro-header h1 { font-size: 1.7rem; font-weight: 800; color: #fff; margin-bottom: .3rem; }
+.registro-header p  { font-size: .88rem; color: rgba(255,255,255,.5); }
 
-.registro-card .subtitle {
-    text-align: center;
-    color: #6c757d;
-    margin-bottom: 2.5rem;
-    font-weight: 300;
-}
-
-.registro-card .signin-link {
-    text-align: center;
-    margin-top: 2rem;
-}
-
-.registro-card .signin-link a {
-    color: #6a11cb;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-/* Form styles */
-.registro-card form p {
+/* ── Error banner ── */
+.error-banner {
+    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
+    border-radius: 12px; padding: .75rem 1rem;
+    color: #fca5a5; font-size: .85rem;
+    display: flex; align-items: center; gap: .6rem;
     margin-bottom: 1.5rem;
 }
-.registro-card form label {
-    margin-bottom: 0.5rem;
-    display: block;
-    font-weight: 500;
-    color: #555;
+
+/* ── Campos ── */
+.fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width:480px){ .fields-row { grid-template-columns: 1fr; } }
+
+.field-wrap { margin-bottom: 1.1rem; }
+.field-wrap label {
+    display: block; font-size: .78rem; font-weight: 600;
+    color: rgba(255,255,255,.55); margin-bottom: .45rem; letter-spacing: .4px;
+    text-transform: uppercase;
 }
-.registro-card form input,
-.registro-card form select {
-    display: block;
+
+.input-box { position: relative; display: flex; align-items: center; }
+.input-icon {
+    position: absolute; left: .95rem;
+    color: rgba(255,255,255,.3); font-size: .82rem; pointer-events: none; z-index: 1;
+}
+.input-box input {
     width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
-    background-color: #fdfdff;
-    background-clip: padding-box;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 12px;
+    padding: .78rem 1rem .78rem 2.6rem;
+    color: #fff; font-size: .93rem; outline: none; transition: all .25s;
+}
+.input-box input::placeholder { color: rgba(255,255,255,.28); }
+.input-box input:focus {
+    border-color: rgba(106,17,203,.7);
+    background: rgba(106,17,203,.1);
+    box-shadow: 0 0 0 3px rgba(106,17,203,.2);
+}
+.toggle-pw {
+    position: absolute; right: .85rem;
+    background: none; border: none;
+    color: rgba(255,255,255,.3); font-size: .82rem;
+    cursor: pointer; padding: .2rem; transition: color .2s; z-index: 1;
+}
+.toggle-pw:hover { color: rgba(255,255,255,.65); }
+
+.field-error { font-size: .75rem; color: #f87171; margin-top: .35rem; padding-left: .2rem; }
+
+/* ── Role cards ── */
+.role-cards { display: flex; flex-direction: column; gap: .7rem; }
+
+.role-card {
+    background: rgba(255,255,255,.04);
+    border: 1.5px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: .9rem 1rem;
+    cursor: pointer; transition: all .25s;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative;
+}
+.role-card input[type="radio"] { display: none; }
+.role-card:hover { border-color: rgba(167,139,250,.35); background: rgba(255,255,255,.07); }
+.role-card.selected { border-color: #6a11cb; background: rgba(106,17,203,.15); box-shadow: 0 0 20px rgba(106,17,203,.2); }
+
+.role-card-inner { display: flex; align-items: center; gap: .9rem; }
+.role-icon {
+    width: 40px; height: 40px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem; color: #fff; flex-shrink: 0;
+}
+.role-icon.blue   { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+.role-icon.purple { background: linear-gradient(135deg,#6a11cb,#2575fc); }
+
+.role-title { font-size: .88rem; font-weight: 700; color: #fff; }
+.role-desc  { font-size: .75rem; color: rgba(255,255,255,.45); margin-top: .1rem; }
+
+.role-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; color: transparent; flex-shrink: 0;
+    transition: all .25s;
+}
+.role-card.selected .role-check {
+    background: #6a11cb; border-color: #6a11cb; color: #fff;
 }
 
-.registro-card form input:focus,
-.registro-card form select:focus {
-    border-color: #6a11cb;
-    outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
+/* ── Botão ── */
+.btn-cadastrar {
+    width: 100%; margin-top: 1.5rem;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    border: none; border-radius: 12px;
+    padding: .9rem 1.5rem;
+    color: #fff; font-size: .95rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: .6rem;
+    cursor: pointer; transition: all .25s;
+    box-shadow: 0 4px 20px rgba(106,17,203,.4);
 }
+.btn-cadastrar:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(106,17,203,.55); }
+.btn-cadastrar:active { transform: translateY(0); }
 
-/* Replacing the default bootstrap button */
-.btn-primary {
-    background: linear-gradient(to right, #6a11cb, #2575fc) !important;
-    border: none !important;
-    color: #fff !important;
-    width: 100%;
-    padding: 0.85rem 1rem !important;
-    border-radius: 10px !important;
-    font-size: 1.1rem !important;
-    font-weight: 500 !important;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
+/* ── Rodapé ── */
+.registro-footer {
+    text-align: center; margin-top: 1.8rem;
+    font-size: .87rem; color: rgba(255,255,255,.45);
 }
-
-.btn-primary:hover {
-    opacity: 0.9;
-}
+.registro-footer a { color: #a78bfa; text-decoration: none; font-weight: 600; }
+.registro-footer a:hover { color: #c4b5fd; text-decoration: underline; }

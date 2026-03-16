@@ -4,186 +4,274 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        background-color: #f0f2f5;
-    }
-    .welcome-main-container {
-        max-width: 900px;
-        margin: 3rem auto;
-        background: #ffffff;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        overflow: hidden;
-        padding: 2rem;
-    }
-    .welcome-header-section {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .welcome-header-section h1 {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 0.5rem;
-    }
-    .welcome-header-section p {
-        font-size: 1.1rem;
-        color: #666;
-    }
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
 
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #333;
-        margin-top: 2rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 0.5rem;
-    }
+    .bv-page { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
 
-    /* Add Room Card */
+    /* ── Hero de boas-vindas ── */
+    .bv-hero {
+        border-radius: 24px;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2.5rem;
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 20px 60px rgba(106,17,203,.4);
+    }
+    /* brilhos decorativos */
+    .bv-hero::before {
+        content: '';
+        position: absolute; width: 350px; height: 350px;
+        background: radial-gradient(circle, rgba(255,255,255,.1) 0%, transparent 70%);
+        top: -100px; right: -80px; pointer-events: none;
+    }
+    .bv-hero::after {
+        content: '';
+        position: absolute; width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%);
+        bottom: -60px; left: 40px; pointer-events: none;
+    }
+    .bv-hero-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+    .bv-hero-text {}
+    .bv-greeting {
+        font-size: .8rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+        color: rgba(255,255,255,.6); margin-bottom: .4rem;
+    }
+    .bv-hero h1 { font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0 0 .6rem; }
+    .bv-hero h1 span { color: #e0c3fc; }
+    .bv-hero p { color: rgba(255,255,255,.75); font-size: .95rem; margin: 0; max-width: 480px; line-height: 1.6; }
+
+    .bv-hero-stats { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+    .hero-stat {
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 14px; padding: .8rem 1.2rem;
+        text-align: center; min-width: 90px;
+        backdrop-filter: blur(6px);
+    }
+    .hero-stat-val { font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1; }
+    .hero-stat-lbl { font-size: .7rem; color: rgba(255,255,255,.65); text-transform: uppercase; letter-spacing: .8px; margin-top: .3rem; }
+
+    /* ── Section label ── */
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .6rem;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* ── Grid de salas ── */
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+
+    /* Card "Entrar em nova sala" */
     .add-room-card {
-        border: 2px dashed #ccc;
-        border-radius: 15px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 180px; /* Ensure it has some height */
+        background: rgba(255,255,255,.03);
+        border: 2px dashed rgba(167,139,250,.35);
+        border-radius: 18px; padding: 2rem;
+        text-align: center; cursor: pointer;
+        transition: all .3s ease;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: 175px; gap: .7rem;
     }
     .add-room-card:hover {
-        border-color: #6a11cb;
-        background-color: #f8f8f8;
+        border-color: rgba(167,139,250,.7);
+        background: rgba(106,17,203,.1);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(106,17,203,.2);
     }
-    .add-room-card i {
-        font-size: 3rem;
-        color: #6a11cb;
-        margin-bottom: 1rem;
+    .add-room-card .add-icon {
+        width: 52px; height: 52px;
+        background: rgba(106,17,203,.25);
+        border: 1px solid rgba(167,139,250,.4);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; color: #c4b5fd;
+        transition: all .3s;
     }
-    .add-room-card span {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #333;
+    .add-room-card:hover .add-icon { background: rgba(106,17,203,.45); }
+    .add-room-card span { font-size: .95rem; font-weight: 700; color: rgba(255,255,255,.75); }
+    .add-room-card small { font-size: .78rem; color: rgba(255,255,255,.35); }
+
+    /* Cards de salas participando */
+    .room-card {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 18px; padding: 1.5rem;
+        text-decoration: none; color: inherit;
+        display: flex; flex-direction: column;
+        transition: all .3s ease; position: relative; overflow: hidden;
+    }
+    .room-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #6a11cb, #2575fc);
+        opacity: 0; transition: opacity .3s;
+    }
+    .room-card:hover { transform: translateY(-5px); background: rgba(255,255,255,.09); border-color: rgba(106,17,203,.45); box-shadow: 0 16px 40px rgba(0,0,0,.3); color: inherit; text-decoration: none; }
+    .room-card:hover::before { opacity: 1; }
+
+    .room-card-avatar {
+        width: 46px; height: 46px;
+        background: linear-gradient(135deg,#6a11cb,#2575fc);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: #fff; margin-bottom: 1rem;
+        box-shadow: 0 4px 14px rgba(106,17,203,.4);
+    }
+    .room-card h5 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: .7rem; }
+    .room-card-meta { display: flex; flex-direction: column; gap: .3rem; margin-bottom: 1rem; }
+    .room-card-meta span { font-size: .8rem; color: rgba(255,255,255,.5); display: flex; align-items: center; gap: .45rem; }
+    .room-card-meta span i { color: #a78bfa; width: 12px; text-align: center; }
+
+    .occ-track { height: 4px; background: rgba(255,255,255,.08); border-radius: 50px; overflow: hidden; margin-top: .3rem; }
+    .occ-fill  { height: 100%; border-radius: 50px; background: linear-gradient(90deg,#6a11cb,#2575fc); }
+
+    .room-card-cta {
+        margin-top: auto; padding-top: .9rem;
+        border-top: 1px solid rgba(255,255,255,.07);
+        font-size: .78rem; font-weight: 700;
+        color: #a78bfa; display: flex; align-items: center; gap: .4rem;
     }
 
-    /* Joined Room Cards */
-    .joined-room-card {
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 20px;
-        transition: all 0.3s ease;
-        position: relative;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        text-decoration: none; /* Remove sublinhado do link */
-        color: inherit; /* Mantém a cor do texto */
-    }
-    .joined-room-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-    .joined-room-card .card-icon {
-        font-size: 2.5rem;
-        color: #2575fc;
-        margin-bottom: 15px;
-    }
-    .joined-room-card h5 {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 10px;
-    }
-    .joined-room-card p {
-        font-size: 0.9rem;
-        color: #666;
-        margin-bottom: 5px;
-    }
+    /* ── Empty state ── */
     .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #6c757d;
-        font-size: 1.2rem;
+        grid-column: 1 / -1; text-align: center;
+        padding: 3.5rem 2rem; color: rgba(255,255,255,.35);
     }
+    .empty-icon {
+        width: 70px; height: 70px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem; color: rgba(255,255,255,.25); margin: 0 auto 1.2rem;
+    }
+    .empty-state h5 { color: rgba(255,255,255,.6); font-weight: 600; margin-bottom: .4rem; }
+    .empty-state p  { font-size: .88rem; margin: 0; }
+
+    /* ── Modal dark ── */
+    .modal-content {
+        background: #1e1b4b;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .modal-header {
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        padding: 1.3rem 1.5rem;
+    }
+    .modal-title { color: #fff; font-weight: 700; font-size: 1.05rem; }
+    .btn-close { filter: invert(1) brightness(.6); }
+    .modal-body { padding: 1.5rem; }
+
+    .modal-input-box { position: relative; display: flex; align-items: center; margin-bottom: 1rem; }
+    .modal-input-box .input-icon { position: absolute; left: 1rem; color: rgba(255,255,255,.35); font-size: .85rem; pointer-events: none; }
+    .modal-input-box input {
+        width: 100%;
+        background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+        border-radius: 12px; padding: .85rem 1rem .85rem 2.6rem;
+        color: #fff; font-size: 1rem; letter-spacing: 2px; font-weight: 700;
+        text-transform: uppercase; outline: none; transition: all .25s;
+    }
+    .modal-input-box input::placeholder { color: rgba(255,255,255,.25); letter-spacing: 1px; font-weight: 400; }
+    .modal-input-box input:focus { border-color: rgba(106,17,203,.7); background: rgba(106,17,203,.1); box-shadow: 0 0 0 3px rgba(106,17,203,.2); }
+    .btn-entrar-sala {
+        width: 100%; background: linear-gradient(135deg,#6a11cb,#2575fc);
+        border: none; border-radius: 12px; padding: .85rem;
+        color: #fff; font-weight: 700; font-size: .95rem; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: .5rem;
+        transition: all .25s; box-shadow: 0 4px 18px rgba(106,17,203,.4);
+    }
+    .btn-entrar-sala:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(106,17,203,.55); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="welcome-main-container">
-    <div class="welcome-header-section">
-        <h1>Olá, {{ user.username }}!</h1>
-        <p>Bem-vindo(a) à sua plataforma de treinamento de vendas. Aqui você pode praticar suas habilidades interagindo com clientes virtuais.</p>
-    </div>
+<div class="bv-page">
 
-    <h4 class="section-title">Minhas Salas de Treinamento</h4>
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="add-room-card" id="addRoomCard" data-bs-toggle="modal" data-bs-target="#enterRoomModal">
-                <i class="fas fa-plus-circle"></i>
-                <span>Entrar em uma Nova Sala</span>
+    <!-- Hero -->
+    <div class="bv-hero">
+        <div class="bv-hero-inner">
+            <div class="bv-hero-text">
+                <div class="bv-greeting">Plataforma de Treinamento</div>
+                <h1>Olá, <span>{{ user.username }}</span>! 👋</h1>
+                <p>Bem-vindo(a) de volta. Pratique suas habilidades de vendas interagindo com clientes virtuais alimentados por IA.</p>
             </div>
-        </div>
-        {# Removido o room-code-form-container daqui #}
-    </div>
-
-    <div class="row mt-4">
-        {% for sala in user.salas_participando.all %}
-            <div class="col-md-6 mb-4">
-                <a href="{% url 'detalhe_sala_cliente' sala.id %}" class="joined-room-card">
-                    <i class="fas fa-door-open card-icon"></i>
-                    <h5>{{ sala.nome }}</h5>
-                    <p>Admin: {{ sala.administrador.username }}</p>
-                    <p>Participantes: {{ sala.participantes.count }} / {{ sala.capacidade_maxima }}</p>
-                </a>
-            </div>
-        {% empty %}
-            <div class="col-12">
-                <div class="empty-state">
-                    <i class="fas fa-box-open fa-3x mb-3"></i>
-                    <p>Você ainda não entrou em nenhuma sala de treinamento.</p>
+            <div class="bv-hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-val">{{ user.salas_participando.count }}</div>
+                    <div class="hero-stat-lbl">Salas</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-val">{{ user.simulacoes_atendimento.count }}</div>
+                    <div class="hero-stat-lbl">Simulações</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Salas -->
+    <div class="section-label"><i class="fas fa-door-open"></i> Minhas Salas de Treinamento</div>
+
+    <div class="rooms-grid">
+
+        <!-- Card de entrada -->
+        <div class="add-room-card" data-bs-toggle="modal" data-bs-target="#enterRoomModal">
+            <div class="add-icon"><i class="fas fa-plus"></i></div>
+            <span>Entrar em uma Sala</span>
+            <small>Insira o código de acesso</small>
+        </div>
+
+        <!-- Salas participando -->
+        {% for sala in user.salas_participando.all %}
+        <a href="{% url 'detalhe_sala_cliente' sala.id %}" class="room-card">
+            <div class="room-card-avatar"><i class="fas fa-door-open"></i></div>
+            <h5>{{ sala.nome }}</h5>
+            <div class="room-card-meta">
+                <span><i class="fas fa-user-shield"></i> Admin: {{ sala.administrador.username }}</span>
+                <span><i class="fas fa-users"></i> {{ sala.participantes.count }} / {{ sala.capacidade_maxima }} participantes</span>
+                <span><i class="fas fa-puzzle-piece"></i> {{ sala.personagens_disponiveis.count }} personagen{{ sala.personagens_disponiveis.count|pluralize:"s" }}</span>
+            </div>
+            <div class="occ-track">
+                <div class="occ-fill" style="width:{% widthratio sala.participantes.count sala.capacidade_maxima 100 %}%"></div>
+            </div>
+            <div class="room-card-cta"><i class="fas fa-play-circle"></i> Acessar sala</div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+            <h5>Nenhuma sala ainda</h5>
+            <p>Clique em "Entrar em uma Sala" e insira o código fornecido pelo seu instrutor.</p>
+        </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Modal para Inserir Código da Sala -->
+<!-- Modal dark -->
 <div class="modal fade" id="enterRoomModal" tabindex="-1" aria-labelledby="enterRoomModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="enterRoomModalLabel">Entrar em uma Sala</h5>
+                <h5 class="modal-title" id="enterRoomModalLabel">
+                    <i class="fas fa-key me-2" style="color:#a78bfa"></i>Entrar em uma Sala
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <p style="font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:1.2rem">
+                    Insira o código de 6 dígitos fornecido pelo seu instrutor.
+                </p>
                 <form action="{% url 'entrar_sala' %}" method="post">
                     {% csrf_token %}
-                    <div class="input-group input-group-lg mb-3">
-                        <input type="text" name="codigo_acesso" class="form-control" placeholder="CÓDIGO DA SALA" maxlength="10" required>
-                        <button class="btn btn-primary" type="submit">Entrar</button>
+                    <div class="modal-input-box">
+                        <span class="input-icon"><i class="fas fa-hashtag"></i></span>
+                        <input type="text" name="codigo_acesso" placeholder="ABC123"
+                               maxlength="10" autocomplete="off" required>
                     </div>
+                    <button type="submit" class="btn-entrar-sala">
+                        <i class="fas fa-sign-in-alt"></i> Entrar na Sala
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // O card addRoomCard agora apenas dispara o modal via data-bs-toggle
-        // Não precisamos mais de JavaScript para o toggle de visibilidade aqui.
-        // Apenas para garantir que o modal seja focado se necessário.
-
-        // Exemplo de como você poderia interagir com o modal via JS se precisasse:
-        // const myModal = new bootstrap.Modal(document.getElementById('enterRoomModal'));
-        // addRoomCard.addEventListener('click', function() {
-        //     myModal.show();
-        // });
-    });
-</script>
 {% endblock %}

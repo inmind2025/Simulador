@@ -4,169 +4,339 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        background-color: #f0f2f5;
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+
+    .detalhe-page { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── Hero ── */
+    .detalhe-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+        box-shadow: 0 20px 60px rgba(106,17,203,.4);
+        border: 1px solid rgba(255,255,255,.12);
     }
-    .detail-room-container {
-        max-width: 900px;
-        margin: 3rem auto;
-        background: #ffffff;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        overflow: hidden;
+    .detalhe-hero-left { display: flex; align-items: center; gap: 1.2rem; }
+    .detalhe-hero-icon {
+        width: 54px; height: 54px;
+        background: rgba(255,255,255,.15);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #fff; flex-shrink: 0;
     }
-    .detail-room-header {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: white;
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
+    .detalhe-hero h1 { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 0; }
+    .detalhe-hero p  { color: rgba(255,255,255,.7); margin: 0; font-size: .87rem; }
+    .btn-voltar {
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.2);
+        color: #fff; border-radius: 12px;
+        padding: .55rem 1.2rem; font-size: .85rem; font-weight: 600;
+        text-decoration: none; display: inline-flex; align-items: center; gap: .45rem;
+        transition: all .25s; white-space: nowrap;
     }
-    .detail-room-header i {
-        font-size: 2.2rem;
+    .btn-voltar:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+    /* ── Stats rápidas ── */
+    .stats-row { display: flex; gap: 1rem; margin-bottom: 1.8rem; flex-wrap: wrap; }
+    .stat-card {
+        flex: 1; min-width: 150px;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 16px; padding: 1.2rem 1.5rem;
+        backdrop-filter: blur(8px);
+        display: flex; align-items: center; gap: 1rem;
     }
-    .detail-room-body {
-        padding: 2rem;
+    .stat-card-icon {
+        width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
     }
-    .detail-item {
-        margin-bottom: 1rem;
+    .stat-card-icon.purple { background: linear-gradient(135deg,#6a11cb,#2575fc); color:#fff; }
+    .stat-card-icon.green  { background: linear-gradient(135deg,#22c55e,#15803d); color:#fff; }
+    .stat-card-icon.orange { background: linear-gradient(135deg,#f97316,#ea580c); color:#fff; }
+    .stat-card-value { font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1; }
+    .stat-card-label { font-size: .72rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .8px; margin-top: .15rem; }
+
+    /* ── Grid 2 col ── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; margin-bottom: 1.5rem; }
+    @media(max-width:640px){ .detail-grid { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .glass-card {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 18px; padding: 1.5rem;
+        backdrop-filter: blur(10px);
     }
-    .detail-item strong {
-        color: #333;
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .5rem;
     }
-    .access-code-box {
-        background-color: #e9ecef;
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-family: monospace;
-        font-size: 1.2rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* Info rows */
+    .info-row { display: flex; align-items: flex-start; gap: .8rem; padding: .7rem 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .info-row:last-child { border-bottom: none; }
+    .info-row-icon { width:32px; height:32px; border-radius:8px; background:rgba(167,139,250,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#a78bfa; font-size:.8rem; }
+    .info-row-label { font-size:.72rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.6px; }
+    .info-row-value { font-size:.9rem; color:#fff; font-weight:500; margin-top:.1rem; }
+
+    /* Código de acesso */
+    .codigo-row { display:flex; align-items:center; gap:.8rem; }
+    .codigo-badge-lg {
+        font-family:'Courier New',monospace; font-size:1.2rem; font-weight:800; letter-spacing:4px;
+        background:rgba(106,17,203,.3); border:1px solid rgba(106,17,203,.5);
+        color:#c4b5fd; padding:.45rem 1rem; border-radius:10px;
     }
-    .access-code-box button {
-        background: none;
-        border: none;
-        color: #2575fc;
-        cursor: pointer;
-        font-size: 1rem;
+    .btn-copy {
+        background:rgba(167,139,250,.15); border:1px solid rgba(167,139,250,.3);
+        color:#c4b5fd; border-radius:8px; padding:.4rem .75rem; font-size:.8rem;
+        cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.35rem;
     }
-    .access-code-box button:hover {
-        color: #6a11cb;
+    .btn-copy:hover { background:rgba(167,139,250,.25); color:#fff; }
+
+    /* Barra de ocupação */
+    .occ-label { display:flex; justify-content:space-between; font-size:.75rem; color:rgba(255,255,255,.45); margin-bottom:.4rem; }
+    .occ-track { height:6px; background:rgba(255,255,255,.07); border-radius:50px; overflow:hidden; }
+    .occ-fill  { height:100%; border-radius:50px; background:linear-gradient(90deg,#6a11cb,#2575fc); transition:width .6s ease; }
+
+    /* Personagens */
+    .disc-chip {
+        display:inline-flex; align-items:center; gap:.5rem;
+        border-radius:10px; padding:.5rem .9rem; font-size:.82rem; font-weight:600; margin:.3rem .3rem 0 0;
+        border:1px solid;
     }
-    .personagens-badges .badge {
-        font-size: 0.9rem;
-        padding: 0.6em 0.9em;
-        margin-right: 5px;
-        margin-bottom: 5px;
-        border-radius: 50px;
-        background-color: #007bff;
+    .disc-chip.dominante { background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); color:#fb923c; }
+    .disc-chip.influente  { background:rgba(236,72,153,.12); border-color:rgba(236,72,153,.4); color:#f472b6; }
+    .disc-chip.analitico  { background:rgba(59,130,246,.12);  border-color:rgba(59,130,246,.4);  color:#60a5fa; }
+    .disc-chip.estavel    { background:rgba(34,197,94,.12);   border-color:rgba(34,197,94,.4);   color:#4ade80; }
+
+    /* Participantes */
+    .participant-row {
+        display:flex; align-items:center; justify-content:space-between; gap:1rem;
+        padding:.85rem 1rem; border-radius:12px;
+        background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+        margin-bottom:.6rem; transition:all .2s;
     }
-    .participants-list .list-group-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.8rem 1.25rem;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    .participant-row:hover { background:rgba(255,255,255,.08); border-color:rgba(167,139,250,.3); }
+    .participant-row:last-child { margin-bottom:0; }
+    .participant-avatar {
+        width:36px; height:36px; border-radius:50%;
+        background:linear-gradient(135deg,#6a11cb,#2575fc);
+        display:flex; align-items:center; justify-content:center;
+        font-size:.85rem; font-weight:700; color:#fff; flex-shrink:0;
     }
-    .participants-list .list-group-item:last-child {
-        margin-bottom: 0;
+    .participant-info { flex:1; }
+    .participant-name { font-size:.9rem; font-weight:600; color:#fff; }
+    .participant-user { font-size:.75rem; color:rgba(255,255,255,.45); }
+    .btn-historico {
+        background:rgba(106,17,203,.2); border:1px solid rgba(106,17,203,.4);
+        color:#c4b5fd; border-radius:8px; padding:.35rem .85rem; font-size:.78rem; font-weight:600;
+        text-decoration:none; display:inline-flex; align-items:center; gap:.35rem;
+        transition:all .2s; white-space:nowrap;
     }
-    .participants-list .list-group-item a {
-        font-weight: bold;
+    .btn-historico:hover { background:rgba(106,17,203,.4); color:#fff; }
+
+    .empty-list { text-align:center; padding:2rem; color:rgba(255,255,255,.35); font-size:.88rem; }
+    .empty-list i { display:block; font-size:1.8rem; margin-bottom:.6rem; opacity:.4; }
+
+    /* Ações finais */
+    .actions-bar { display:flex; gap:.8rem; justify-content:flex-end; flex-wrap:wrap; margin-top:1.5rem; }
+    .btn-editar {
+        background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+        color:rgba(255,255,255,.8); border-radius:12px; padding:.65rem 1.4rem;
+        font-size:.88rem; font-weight:600; text-decoration:none;
+        display:inline-flex; align-items:center; gap:.45rem; transition:all .25s;
     }
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #333;
-        margin-top: 2rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 0.5rem;
+    .btn-editar:hover { background:rgba(255,255,255,.14); color:#fff; }
+    .btn-excluir {
+        background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3);
+        color:#f87171; border-radius:12px; padding:.65rem 1.4rem;
+        font-size:.88rem; font-weight:600; cursor:pointer;
+        display:inline-flex; align-items:center; gap:.45rem; transition:all .25s;
     }
+    .btn-excluir:hover { background:rgba(248,113,113,.2); color:#fca5a5; }
+
+    /* Toast */
+    .copy-toast {
+        position:fixed; bottom:2rem; right:2rem;
+        background:#1e1b4b; border:1px solid rgba(167,139,250,.3);
+        color:#c4b5fd; border-radius:12px;
+        padding:.75rem 1.2rem; font-size:.85rem;
+        display:flex; align-items:center; gap:.5rem;
+        box-shadow:0 10px 30px rgba(0,0,0,.4);
+        opacity:0; transform:translateY(10px); transition:all .3s; z-index:9999; pointer-events:none;
+    }
+    .copy-toast.show { opacity:1; transform:translateY(0); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="detail-room-container">
-    <div class="detail-room-header">
-        <i class="fas fa-door-open"></i>
-        <span>{{ views.titulo }}</span>
+<div class="detalhe-page">
+
+    <!-- Hero -->
+    <div class="detalhe-hero">
+        <div class="detalhe-hero-left">
+            <div class="detalhe-hero-icon"><i class="fas fa-door-open"></i></div>
+            <div>
+                <h1>{{ sala.nome }}</h1>
+                <p>Detalhes e gestão da sala de treinamento</p>
+            </div>
+        </div>
+        <a href="{% url 'lista_salas_admin' %}" class="btn-voltar">
+            <i class="fas fa-arrow-left"></i> Minhas Salas
+        </a>
     </div>
 
-    <div class="detail-room-body">
-        <div class="mb-4">
-            <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">&larr; Voltar para Minhas Salas</a>
+    <!-- Stats rápidas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-card-icon purple"><i class="fas fa-users"></i></div>
+            <div>
+                <div class="stat-card-value">{{ sala.participantes.count }}</div>
+                <div class="stat-card-label">Participantes</div>
+            </div>
         </div>
-        <div class="row">
-            <div class="col-md-6">
-                <h4 class="section-title">Informações da Sala</h4>
-                <div class="detail-item">
-                    <strong>Nome da Sala:</strong> {{ sala.nome }}
+        <div class="stat-card">
+            <div class="stat-card-icon green"><i class="fas fa-user-check"></i></div>
+            <div>
+                <div class="stat-card-value">{{ sala.capacidade_maxima }}</div>
+                <div class="stat-card-label">Capacidade</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon orange"><i class="fas fa-puzzle-piece"></i></div>
+            <div>
+                <div class="stat-card-value">{{ sala.personagens_disponiveis.count }}</div>
+                <div class="stat-card-label">Personagens</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid info + personagens -->
+    <div class="detail-grid">
+
+        <!-- Informações -->
+        <div class="glass-card">
+            <div class="section-label"><i class="fas fa-info-circle"></i> Informações</div>
+
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fas fa-tag"></i></div>
+                <div>
+                    <div class="info-row-label">Nome da Sala</div>
+                    <div class="info-row-value">{{ sala.nome }}</div>
                 </div>
-                <div class="detail-item">
-                    <strong>Criada em:</strong> {{ sala.data_criacao|date:"d/m/Y H:i" }}
+            </div>
+
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                    <div class="info-row-label">Criada em</div>
+                    <div class="info-row-value">{{ sala.data_criacao|date:"d/m/Y \à\s H:i" }}</div>
                 </div>
-                <div class="detail-item">
-                    <strong>Capacidade:</strong> {{ sala.participantes.count }} / {{ sala.capacidade_maxima }}
+            </div>
+
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fas fa-chart-bar"></i></div>
+                <div>
+                    <div class="info-row-label">Ocupação</div>
+                    <div class="info-row-value" style="margin-bottom:.5rem">{{ sala.participantes.count }} / {{ sala.capacidade_maxima }}</div>
+                    <div class="occ-track">
+                        <div class="occ-fill" style="width:{% widthratio sala.participantes.count sala.capacidade_maxima 100 %}%"></div>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <strong>Código de Acesso:</strong> 
-                    <span class="access-code-box">
-                        <code>{{ sala.codigo_acesso }}</code>
-                        <button onclick="copyCode('{{ sala.codigo_acesso }}')" title="Copiar Código">
-                            <i class="fas fa-copy"></i>
+            </div>
+
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fas fa-key"></i></div>
+                <div>
+                    <div class="info-row-label">Código de Acesso</div>
+                    <div class="codigo-row" style="margin-top:.4rem">
+                        <span class="codigo-badge-lg">{{ sala.codigo_acesso }}</span>
+                        <button class="btn-copy" onclick="copiarCodigo('{{ sala.codigo_acesso }}')">
+                            <i class="fas fa-copy"></i> Copiar
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personagens -->
+        <div class="glass-card">
+            <div class="section-label"><i class="fas fa-user-secret"></i> Personagens Disponíveis</div>
+            <div>
+                {% for p in sala.personagens_disponiveis.all %}
+                    <span class="disc-chip {{ p.perfil_disc }}">
+                        {% if p.perfil_disc == 'dominante' %}<i class="fas fa-bolt"></i>
+                        {% elif p.perfil_disc == 'influente' %}<i class="fas fa-comments"></i>
+                        {% elif p.perfil_disc == 'analitico' %}<i class="fas fa-microscope"></i>
+                        {% elif p.perfil_disc == 'estavel' %}<i class="fas fa-shield-alt"></i>
+                        {% endif %}
+                        {{ p.short_name }}
                     </span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <h4 class="section-title">Personagens Disponíveis</h4>
-                <div class="personagens-badges">
-                    {% for p in sala.personagens_disponiveis.all %}
-                        <span class="badge bg-primary">{{ p.nome_criativo }} ({{ p.get_perfil_disc_display }})</span>
-                    {% empty %}
-                        <p class="text-muted">Nenhum personagem selecionado para esta sala.</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <h4 class="section-title">Participantes ({{ sala.participantes.count }})</h4>
-        <div class="participants-list">
-            <ul class="list-group">
-                {% for participante in sala.participantes.all %}
-                    <li class="list-group-item">
-                        <span>{{ participante.first_name }} {{ participante.last_name }} ({{ participante.username }})</span>
-                        <a href="{% url 'historico_chats_participante' sala_id=sala.id participante_id=participante.id %}" class="btn btn-sm btn-outline-primary">Ver Histórico de Chats</a>
-                    </li>
                 {% empty %}
-                    <li class="list-group-item text-center text-muted">Nenhum participante entrou na sala ainda.</li>
+                    <div class="empty-list"><i class="fas fa-ghost"></i> Nenhum personagem selecionado.</div>
                 {% endfor %}
-            </ul>
-        </div>
-
-        <div class="text-center mt-4">
-            <a href="{% url 'lista_salas_admin' %}" class="btn btn-secondary">Voltar para Minhas Salas</a>
+            </div>
         </div>
     </div>
+
+    <!-- Participantes -->
+    <div class="glass-card" style="margin-bottom:1.5rem">
+        <div class="section-label"><i class="fas fa-users"></i> Participantes ({{ sala.participantes.count }})</div>
+
+        {% for participante in sala.participantes.all %}
+        <div class="participant-row">
+            <div class="participant-avatar">{{ participante.username|first|upper }}</div>
+            <div class="participant-info">
+                <div class="participant-name">
+                    {% if participante.first_name %}{{ participante.first_name }} {{ participante.last_name }}
+                    {% else %}{{ participante.username }}{% endif %}
+                </div>
+                <div class="participant-user">@{{ participante.username }}</div>
+            </div>
+            <a href="{% url 'historico_chats_participante' sala_id=sala.id participante_id=participante.id %}" class="btn-historico">
+                <i class="fas fa-history"></i> Ver Histórico
+            </a>
+        </div>
+        {% empty %}
+        <div class="empty-list">
+            <i class="fas fa-user-slash"></i>
+            Nenhum participante entrou na sala ainda.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Ações -->
+    <div class="actions-bar">
+        <a href="{% url 'editar_sala' sala.id %}" class="btn-editar">
+            <i class="fas fa-pen"></i> Editar Sala
+        </a>
+        <form action="{% url 'excluir_sala' sala.id %}" method="post" style="margin:0"
+              onsubmit="return confirm('Excluir a sala \"{{ sala.nome }}\"? Esta ação não pode ser desfeita.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-excluir">
+                <i class="fas fa-trash-alt"></i> Excluir Sala
+            </button>
+        </form>
+    </div>
+
 </div>
 
+<!-- Toast -->
+<div class="copy-toast" id="copyToast"><i class="fas fa-check-circle"></i> Código copiado!</div>
+
 <script>
-    function copyCode(code) {
-        navigator.clipboard.writeText(code).then(function() {
-            alert('Código "' + code + '" copiado para a área de transferência!');
-        }, function(err) {
-            console.error('Erro ao copiar o código: ', err);
-            alert('Não foi possível copiar o código. Por favor, copie manualmente: ' + code);
-        });
-    }
+function copiarCodigo(codigo) {
+    navigator.clipboard.writeText(codigo).then(() => {
+        const t = document.getElementById('copyToast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    });
+}
 </script>
 {% endblock %}

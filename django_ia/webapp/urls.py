@@ -1,5 +1,6 @@
 from django.urls import path, include
 from webapp.views import openai, autenticacao
+from webapp.views import salas as salas_views
 
 urlpatterns = [
     path('salas/', include('webapp.salas_urls')),
@@ -19,7 +20,9 @@ urlpatterns = [
     path('signin', autenticacao.signin, name='signin'),
     path('signout', autenticacao.signout, name='signout'),
     path('registro/', autenticacao.signup, name='registro'),
+    path('performance/', openai.performance, name='performance'),
     path('historico', openai.historico, name='historico'),
     path('historico/simulacoes/', openai.historico_simulacoes, name='historico_simulacoes'),
     path('historico/simulacao/<int:simulacao_id>/', openai.conversation_detail, name='conversation_detail'),
+    path('dashboard/', salas_views.dashboard, name='dashboard'),
 ]

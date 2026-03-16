@@ -15,7 +15,7 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from webapp.models import Registros, SimulacaoAtendimento, MensagemSimulacao, Sala, Personagem
+from webapp.models import Registros, SimulacaoAtendimento, MensagemSimulacao, Sala, Personagem, AuditoriaSimulacao
 from django.utils import timezone # Importe para usar timezone.now() na view de reiniciar
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse 
@@ -636,6 +636,143 @@ def reiniciar_simulacao(request):
     messages.info(request, "Simulação finalizada com sucesso!") # Mensagem para o usuário
 
     return redirect('bem_vindo')
+
+@login_required
+def performance(request):
+    """Página de performance individual do aluno (vendedor/cliente)."""
+    import datetime as _dt
+    from collections import Counter
+
+    user = request.user
+    sims = SimulacaoAtendimento.objects.filter(user=user).order_by('start_time').select_related('sala')
+    total_sims = sims.count()
+    sims_concluidas = sims.filter(end_time__isnull=False).count()
+    taxa_conclusao = round((sims_concluidas / total_sims * 100) if total_sims else 0)
+
+    total_msgs = MensagemSimulacao.objects.filter(
+        simulacao__user=user, sender='vendedor_usuario'
+    ).count()
+
+    # Auditorias do aluno — apenas de salas que liberaram as notas
+    auditorias = AuditoriaSimulacao.objects.filter(
+        simulacao__user=user,
+        simulacao__sala__notas_liberadas=True,
+    ).select_related('simulacao').order_by('simulacao__start_time')
+
+    notas = [a.nota_total for a in auditorias]
+    media_nota = round(sum(notas) / len(notas), 1) if notas else None
+    melhor_nota = max(notas) if notas else None
+    ultima_nota = notas[-1] if notas else None
+
+    # Evolução cronológica de notas (para gráfico)
+    evolucao = [
+        {
+            'data': a.simulacao.start_time.strftime('%d/%m'),
+            'nota': a.nota_total,
+            'sim_id': a.simulacao_id,
+        }
+        for a in auditorias
+    ]
+
+    # Médias por critério (para radar/barras)
+    if auditorias:
+        n = len(auditorias)
+        criterios = {
+            'Abordar':     round(sum(a.ponte_abordar for a in auditorias) / n, 2),
+            'Pesquisar':   round(sum(a.ponte_pesquisar for a in auditorias) / n, 2),
+            'Oferecer':    round(sum(a.ponte_oferecer for a in auditorias) / n, 2),
+            'Negociar':    round(sum(a.ponte_negociar for a in auditorias) / n, 2),
+            'Iniciativa':  round(sum(a.ponte_tomar_iniciativa for a in auditorias) / n, 2),
+            'Estender':    round(sum(a.ponte_estender for a in auditorias) / n, 2),
+            'SPIN':        round(sum(a.spin_total for a in auditorias) / n, 2),
+            'CBV':         round(sum(a.cbv_total for a in auditorias) / n, 2),
+        }
+        maximos = {
+            'Abordar': 0.6, 'Pesquisar': 0.3, 'Oferecer': 1.2, 'Negociar': 2.0,
+            'Iniciativa': 0.3, 'Estender': 0.6, 'SPIN': 2.0, 'CBV': 2.0,
+        }
+        criterios_pct = {k: round((v / maximos[k] * 100)) for k, v in criterios.items()}
+    else:
+        criterios = {}
+        criterios_pct = {}
+
+    # Erros ortográficos mais frequentes
+    erros_counter = Counter()
+    for a in auditorias:
+        for e in (a.erros_ortografia or []):
+            if isinstance(e, dict) and e.get('trecho'):
+                erros_counter[e['trecho']] += 1
+    erros_frequentes = [{'trecho': t, 'count': c} for t, c in erros_counter.most_common(10)]
+
+    # Salas que o aluno participa + ranking dentro de cada sala
+    salas_data = []
+    for sala in user.salas_participando.all():
+        sims_sala = sims.filter(sala=sala)
+        audits_sala = AuditoriaSimulacao.objects.filter(simulacao__sala=sala, simulacao__user=user)
+        notas_sala = [a.nota_total for a in audits_sala]
+        media_sala = round(sum(notas_sala) / len(notas_sala), 1) if notas_sala else None
+
+        # Posição no ranking da sala
+        posicao = None
+        if media_sala is not None:
+            # Médias de todos os participantes da sala
+            from django.db.models import Avg
+            from django.db.models import FloatField
+            medias_participantes = []
+            for p in sala.participantes.all():
+                m = AuditoriaSimulacao.objects.filter(
+                    simulacao__sala=sala, simulacao__user=p
+                ).aggregate(media=Avg('nota_total'))['media']
+                if m is not None:
+                    medias_participantes.append(round(m, 1))
+            medias_participantes.sort(reverse=True)
+            try:
+                posicao = medias_participantes.index(media_sala) + 1
+            except ValueError:
+                posicao = None
+
+        salas_data.append({
+            'sala': sala,
+            'total_sims': sims_sala.count(),
+            'concluidas': sims_sala.filter(end_time__isnull=False).count(),
+            'auditorias': audits_sala.count(),
+            'media': media_sala,
+            'posicao': posicao,
+        })
+
+    # Auditorias detalhadas para exibição ao aluno (mais recentes primeiro)
+    auditorias_detalhes = list(auditorias.order_by('-simulacao__start_time'))
+
+    # Últimas 5 simulações com notas
+    ultimas_sims = []
+    for s in sims.order_by('-start_time')[:10]:
+        try:
+            aud = s.auditoria
+        except Exception:
+            aud = None
+        msgs_count = MensagemSimulacao.objects.filter(simulacao=s, sender='vendedor_usuario').count()
+        ultimas_sims.append({'sim': s, 'auditoria': aud, 'msgs': msgs_count})
+
+    context = {
+        'views': {'id': 'performance', 'titulo': 'Minha Performance'},
+        'total_sims': total_sims,
+        'sims_concluidas': sims_concluidas,
+        'taxa_conclusao': taxa_conclusao,
+        'total_msgs': total_msgs,
+        'media_nota': media_nota,
+        'melhor_nota': melhor_nota,
+        'ultima_nota': ultima_nota,
+        'total_auditorias': len(notas),
+        'evolucao': evolucao,
+        'criterios': criterios,
+        'criterios_pct': criterios_pct,
+        'erros_frequentes': erros_frequentes,
+        'salas_data': salas_data,
+        'ultimas_sims': ultimas_sims,
+        'auditorias_detalhes': auditorias_detalhes,
+    }
+    return render(request, 'performance.html', context)
+
 
 def historico(request):
     # Verifica se o usuário tem um perfil e qual é a sua função

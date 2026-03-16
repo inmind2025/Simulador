@@ -1,0 +1,647 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height:100vh; color:#fff; }
+  .container.bg-secondary-subtle { background: transparent !important; box-shadow: none !important; }
+  .container.bg-secondary-subtle > h2,
+  .container.bg-secondary-subtle > br { display: none !important; }
+
+  .perf-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+  /* ── Topbar ── */
+  .perf-topbar { display:flex; align-items:center; gap:1rem; margin-bottom:2rem; }
+  .perf-greeting { flex:1; }
+  .perf-greeting-name { font-size:1.5rem; font-weight:900; color:#fff; }
+  .perf-greeting-sub  { font-size:.82rem; color:rgba(255,255,255,.4); margin-top:.1rem; }
+  .perf-avatar-big {
+    width:54px; height:54px; border-radius:50%;
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem; font-weight:900; color:#fff; flex-shrink:0;
+  }
+
+  /* ── Section label ── */
+  .perf-section {
+    display:flex; align-items:center; gap:.7rem;
+    font-size:.72rem; font-weight:700; color:rgba(255,255,255,.4);
+    text-transform:uppercase; letter-spacing:.08em; margin:2rem 0 1rem;
+  }
+  .perf-section::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.07); }
+
+  /* ── Glass panel ── */
+  .glass { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:18px; overflow:hidden; }
+  .glass-header { padding:.85rem 1.2rem; border-bottom:1px solid rgba(255,255,255,.06); font-size:.8rem; font-weight:700; color:rgba(255,255,255,.65); display:flex; align-items:center; gap:.5rem; }
+  .glass-body { padding:1.1rem 1.2rem; }
+
+  /* ── KPI cards ── */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:.9rem; }
+  .kpi-card {
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:1.1rem 1rem;
+    display:flex; flex-direction:column; gap:.3rem; transition:all .25s;
+  }
+  .kpi-card:hover { background:rgba(255,255,255,.09); transform:translateY(-3px); }
+  .kpi-icon { font-size:1.05rem; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:.2rem; }
+  .kpi-val   { font-size:1.8rem; font-weight:900; color:#fff; line-height:1; }
+  .kpi-label { font-size:.7rem; color:rgba(255,255,255,.4); }
+  .kpi-sub   { font-size:.65rem; color:rgba(255,255,255,.22); }
+
+  /* ── Two col layout ── */
+  .two-col { display:grid; grid-template-columns:1fr 340px; gap:1.2rem; align-items:start; }
+  @media(max-width:860px){ .two-col { grid-template-columns:1fr; } }
+
+  /* ── Evolução chart ── */
+  .evol-chart { display:flex; align-items:flex-end; gap:6px; height:90px; padding:0 .2rem; }
+  .evol-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; }
+  .evol-bar { width:100%; border-radius:5px 5px 0 0; min-height:4px; transition:opacity .2s; }
+  .evol-bar:hover { opacity:.75; }
+  .evol-label { font-size:.58rem; color:rgba(255,255,255,.3); white-space:nowrap; }
+  .evol-val   { font-size:.6rem; color:rgba(255,255,255,.55); font-weight:700; }
+  .evol-empty { color:rgba(255,255,255,.2); font-size:.82rem; text-align:center; padding:2rem 0; }
+
+  /* ── Critérios bar ── */
+  .crit-list { display:flex; flex-direction:column; gap:.6rem; }
+  .crit-item { display:flex; align-items:center; gap:.7rem; }
+  .crit-name { font-size:.78rem; color:rgba(255,255,255,.55); width:80px; flex-shrink:0; }
+  .crit-track { flex:1; height:7px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
+  .crit-fill  { height:100%; border-radius:4px; transition:width .7s ease; }
+  .crit-val   { font-size:.75rem; font-weight:700; color:#fff; width:36px; text-align:right; flex-shrink:0; }
+
+  /* ── Nota badges ── */
+  .nota-badge { font-size:.78rem; font-weight:700; border-radius:8px; padding:.2rem .55rem; display:inline-flex; align-items:center; gap:.1rem; }
+  .nota-high { background:rgba(34,197,94,.15);  color:#4ade80; }
+  .nota-mid  { background:rgba(249,115,22,.15); color:#fb923c; }
+  .nota-low  { background:rgba(239,68,68,.15);  color:#f87171; }
+
+  /* ── Erros frequentes ── */
+  .erro-pill {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.2);
+    border-radius:20px; padding:.25rem .7rem; font-size:.75rem; color:#fca5a5;
+  }
+  .erro-pill .cnt { background:rgba(239,68,68,.25); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:.62rem; font-weight:900; color:#fff; }
+  .erros-cloud { display:flex; flex-wrap:wrap; gap:.5rem; }
+
+  /* ── Salas table ── */
+  .salas-table { width:100%; border-collapse:collapse; }
+  .salas-table th { font-size:.63rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.3); font-weight:700; padding:.5rem .7rem; border-bottom:1px solid rgba(255,255,255,.07); text-align:left; }
+  .salas-table td { font-size:.82rem; color:rgba(255,255,255,.7); padding:.6rem .7rem; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+  .salas-table tr:last-child td { border-bottom:none; }
+  .salas-table tr:hover td { background:rgba(255,255,255,.03); }
+
+  /* ── Últimas simulações ── */
+  .sim-row { display:flex; align-items:center; gap:.8rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .sim-row:last-child { border-bottom:none; }
+  .sim-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#6a11cb,#2575fc); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .sim-info { flex:1; min-width:0; }
+  .sim-sala { font-size:.82rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sim-date { font-size:.68rem; color:rgba(255,255,255,.35); }
+  .sim-badge { font-size:.65rem; font-weight:700; padding:.16rem .45rem; border-radius:8px; }
+  .sim-done { background:rgba(34,197,94,.15); color:#4ade80; }
+  .sim-open { background:rgba(249,115,22,.15); color:#fb923c; }
+
+  /* ── Score circle ── */
+  .score-circle-wrap { display:flex; flex-direction:column; align-items:center; gap:.5rem; }
+  .score-circle-label { font-size:.72rem; color:rgba(255,255,255,.4); }
+
+  /* ── Rank badge ── */
+  .rank-badge {
+    display:inline-flex; align-items:center; gap:.3rem;
+    font-size:.72rem; font-weight:700; border-radius:20px; padding:.2rem .6rem;
+    background:rgba(106,17,203,.2); border:1px solid rgba(106,17,203,.3); color:#c4b5fd;
+  }
+  .rank-badge.gold   { background:rgba(251,191,36,.15); border-color:rgba(251,191,36,.3); color:#fbbf24; }
+  .rank-badge.silver { background:rgba(148,163,184,.12); border-color:rgba(148,163,184,.25); color:#94a3b8; }
+  .rank-badge.bronze { background:rgba(205,124,47,.15); border-color:rgba(205,124,47,.3); color:#cd7c2f; }
+
+  /* ── Empty state ── */
+  .empty-state { text-align:center; padding:3rem 1.5rem; color:rgba(255,255,255,.25); }
+  .empty-state i { font-size:2rem; display:block; margin-bottom:.8rem; }
+  .empty-state p { font-size:.85rem; }
+  /* ── Audit cards ── */
+  .audit-list { display:flex; flex-direction:column; gap:.8rem; margin-top:.2rem; }
+  .audit-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; transition:border-color .2s; }
+  .audit-card:hover { border-color:rgba(106,17,203,.4); }
+  .audit-card-header {
+    display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; cursor:pointer;
+    transition:background .2s;
+  }
+  .audit-card-header:hover { background:rgba(255,255,255,.03); }
+  .audit-sala-avatar {
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.9rem; font-weight:800; color:#fff;
+  }
+  .audit-meta { flex:1; min-width:0; }
+  .audit-sala-name { font-size:.88rem; font-weight:700; color:#fff; }
+  .audit-date { font-size:.68rem; color:rgba(255,255,255,.35); margin-top:.15rem; }
+  .audit-scores { display:flex; gap:.8rem; flex-shrink:0; }
+  .ascore { display:flex; flex-direction:column; align-items:center; gap:.15rem; background:rgba(255,255,255,.05); border-radius:10px; padding:.35rem .7rem; min-width:60px; }
+  .ascore-label { font-size:.58rem; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.35); }
+  .ascore-val { font-size:.95rem; font-weight:800; color:#fff; }
+  .ascore-val small { font-size:.55rem; opacity:.5; }
+  .ascore-total { background:rgba(106,17,203,.2); border:1px solid rgba(106,17,203,.3); }
+  .ascore-high { background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.25); }
+  .ascore-high .ascore-val { color:#4ade80; }
+  .ascore-mid  { background:rgba(250,204,21,.12); border:1px solid rgba(250,204,21,.25); }
+  .ascore-mid  .ascore-val { color:#facc15; }
+  .ascore-low  { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.2); }
+  .ascore-low  .ascore-val { color:#f87171; }
+  .audit-chevron { color:rgba(255,255,255,.3); font-size:.8rem; transition:transform .3s; flex-shrink:0; }
+  .audit-card.open .audit-chevron { transform:rotate(180deg); }
+
+  .audit-card-body { padding:1.2rem; border-top:1px solid rgba(255,255,255,.06); }
+  .audit-section-title { font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.3); font-weight:700; margin-bottom:.6rem; display:flex; align-items:center; gap:.4rem; }
+  .audit-section-title i { color:#7c3aed; }
+
+  .audit-crit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.6rem; }
+  .acrit { background:rgba(255,255,255,.03); border-radius:10px; padding:.6rem .8rem; }
+  .acrit-name { font-size:.68rem; color:rgba(255,255,255,.45); margin-bottom:.4rem; font-weight:600; }
+  .acrit-bar-wrap { height:5px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; margin-bottom:.3rem; }
+  .acrit-bar { height:100%; background:linear-gradient(90deg,#6a11cb,#2575fc); border-radius:4px; width:0%; transition:width .6s ease; }
+  .acrit-bar.acrit-bar-low { background:linear-gradient(90deg,#ef4444,#f97316); }
+  .acrit-val { font-size:.75rem; font-weight:700; color:#fff; }
+  .acrit-val small { opacity:.4; font-weight:400; }
+
+  .err-arrow { color:rgba(255,255,255,.25); font-size:.65rem; }
+
+  .audit-feedback-text {
+    background:rgba(0,0,0,.2); border-radius:10px; padding:1rem 1.1rem;
+    font-size:.82rem; color:rgba(255,255,255,.7); line-height:1.65;
+    white-space:pre-wrap; border-left:3px solid #7c3aed;
+    margin-top:.4rem;
+  }
+
+  .pdf-link-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.25);
+    color:#fca5a5; border-radius:8px; padding:.4rem .9rem;
+    font-size:.75rem; font-weight:600; text-decoration:none;
+    transition:background .2s;
+  }
+  .pdf-link-btn:hover { background:rgba(239,68,68,.2); color:#fca5a5; }
+
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="perf-page">
+
+  <!-- ── Topbar ── -->
+  <div class="perf-topbar">
+    <div class="perf-avatar-big">{{ request.user.username|slice:":1"|upper }}</div>
+    <div class="perf-greeting">
+      <div class="perf-greeting-name">Olá, {{ request.user.username }} 👋</div>
+      <div class="perf-greeting-sub">Aqui está um resumo da sua performance nas simulações de vendas.</div>
+    </div>
+  </div>
+
+  <!-- ══ KPIs ══ -->
+  <div class="perf-section"><i class="fas fa-tachometer-alt"></i> Resumo geral</div>
+  <div class="kpi-grid">
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(106,17,203,.25)"><i class="fas fa-play-circle" style="color:#a78bfa"></i></div>
+      <div class="kpi-val">{{ total_sims }}</div>
+      <div class="kpi-label">Simulações realizadas</div>
+      <div class="kpi-sub">{{ sims_concluidas }} concluídas</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(34,197,94,.15)"><i class="fas fa-check-circle" style="color:#4ade80"></i></div>
+      <div class="kpi-val">{{ taxa_conclusao }}%</div>
+      <div class="kpi-label">Taxa de conclusão</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(249,115,22,.15)"><i class="fas fa-comment-dots" style="color:#fb923c"></i></div>
+      <div class="kpi-val">{{ total_msgs }}</div>
+      <div class="kpi-label">Mensagens enviadas</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(96,165,250,.15)"><i class="fas fa-clipboard-check" style="color:#60a5fa"></i></div>
+      <div class="kpi-val">{{ total_auditorias }}</div>
+      <div class="kpi-label">Simulações auditadas</div>
+    </div>
+
+    <div class="kpi-card" style="border-color:rgba(106,17,203,.25)">
+      <div class="kpi-icon" style="background:rgba(106,17,203,.2)"><i class="fas fa-graduation-cap" style="color:#a78bfa"></i></div>
+      <div class="kpi-val" style="color:{% if media_nota %}{% if media_nota >= 7 %}#4ade80{% elif media_nota >= 5 %}#fb923c{% else %}#f87171{% endif %}{% else %}rgba(255,255,255,.3){% endif %}">
+        {% if media_nota %}{{ media_nota }}{% else %}—{% endif %}
+      </div>
+      <div class="kpi-label">Média geral <span style="opacity:.5">/ 10</span></div>
+      {% if melhor_nota %}<div class="kpi-sub">Melhor nota: {{ melhor_nota }}</div>{% endif %}
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(236,72,153,.15)"><i class="fas fa-star" style="color:#f472b6"></i></div>
+      <div class="kpi-val" style="color:{% if ultima_nota %}{% if ultima_nota >= 7 %}#4ade80{% elif ultima_nota >= 5 %}#fb923c{% else %}#f87171{% endif %}{% else %}rgba(255,255,255,.3){% endif %}">
+        {% if ultima_nota %}{{ ultima_nota }}{% else %}—{% endif %}
+      </div>
+      <div class="kpi-label">Última nota</div>
+    </div>
+
+  </div>
+
+  <!-- ══ EVOLUÇÃO + CRITÉRIOS ══ -->
+  <div class="perf-section"><i class="fas fa-chart-line"></i> Evolução e desempenho</div>
+  <div class="two-col">
+
+    <!-- Evolução cronológica -->
+    <div class="glass">
+      <div class="glass-header"><i class="fas fa-chart-bar"></i> Evolução das notas</div>
+      <div class="glass-body">
+        {% if evolucao %}
+        <div class="evol-chart" id="evolChart">
+          {% for e in evolucao %}
+          <div class="evol-bar-wrap" title="Simulação #{{ e.sim_id }} · {{ e.data }} · {{ e.nota }}/10">
+            <div class="evol-val">{{ e.nota }}</div>
+            <div class="evol-bar"
+                 data-nota="{{ e.nota }}"
+                 style="background:{% if e.nota >= 7 %}linear-gradient(180deg,#22c55e,#16a34a){% elif e.nota >= 5 %}linear-gradient(180deg,#f97316,#ea580c){% else %}linear-gradient(180deg,#ef4444,#dc2626){% endif %};height:4px">
+            </div>
+            <div class="evol-label">{{ e.data }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="evol-empty">
+          <i class="fas fa-chart-bar" style="font-size:1.5rem;display:block;margin-bottom:.5rem;opacity:.4"></i>
+          Nenhuma auditoria realizada ainda.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Score de conclusão circular -->
+    <div class="glass">
+      <div class="glass-header"><i class="fas fa-percentage"></i> Taxa de conclusão</div>
+      <div class="glass-body" style="display:flex;flex-direction:column;align-items:center;gap:.6rem">
+        <svg width="110" height="110" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
+          <circle cx="50" cy="50" r="42" fill="none"
+            stroke="url(#perfGrad)" stroke-width="9" stroke-linecap="round"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9"
+            transform="rotate(-90 50 50)" id="perf-circle"/>
+          <defs>
+            <linearGradient id="perfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#6a11cb"/>
+              <stop offset="100%" stop-color="#2575fc"/>
+            </linearGradient>
+          </defs>
+          <text x="50" y="55" text-anchor="middle" fill="#fff" font-size="18" font-weight="900">{{ taxa_conclusao }}%</text>
+        </svg>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.4)">{{ sims_concluidas }} de {{ total_sims }} simulações</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ CRITÉRIOS ══ -->
+  {% if criterios_pct %}
+  <div class="perf-section" style="margin-top:1.5rem"><i class="fas fa-sliders-h"></i> Desempenho por critério (média)</div>
+  <div class="glass">
+    <div class="glass-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 2rem">
+        {% for nome, pct in criterios_pct.items %}
+        <div class="crit-item">
+          <span class="crit-name">{{ nome }}</span>
+          <div class="crit-track">
+            <div class="crit-fill"
+                 style="width:0%;background:{% if pct >= 70 %}linear-gradient(90deg,#22c55e,#16a34a){% elif pct >= 40 %}linear-gradient(90deg,#f97316,#ea580c){% else %}linear-gradient(90deg,#ef4444,#dc2626){% endif %}"
+                 data-w="{{ pct }}"></div>
+          </div>
+          <span class="crit-val">{{ pct }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ══ SALAS + RANKING ══ -->
+  {% if salas_data %}
+  <div class="perf-section"><i class="fas fa-door-open"></i> Desempenho por sala</div>
+  <div class="glass">
+    <div class="glass-body" style="padding:0">
+      <table class="salas-table">
+        <thead>
+          <tr>
+            <th>Sala</th>
+            <th style="text-align:center">Sims</th>
+            <th style="text-align:center">Concluídas</th>
+            <th style="text-align:center">Auditadas</th>
+            <th style="text-align:center">Média</th>
+            <th style="text-align:center">Posição</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sd in salas_data %}
+          <tr>
+            <td style="font-weight:700;color:#fff">{{ sd.sala.nome }}</td>
+            <td style="text-align:center">{{ sd.total_sims }}</td>
+            <td style="text-align:center">{{ sd.concluidas }}</td>
+            <td style="text-align:center">{{ sd.auditorias }}</td>
+            <td style="text-align:center">
+              {% if sd.media is not None %}
+                <span class="nota-badge {% if sd.media >= 7 %}nota-high{% elif sd.media >= 5 %}nota-mid{% else %}nota-low{% endif %}">
+                  {{ sd.media }}<small style="font-size:.6rem;opacity:.7">/10</small>
+                </span>
+              {% else %}
+                <span style="color:rgba(255,255,255,.2);font-size:.72rem">—</span>
+              {% endif %}
+            </td>
+            <td style="text-align:center">
+              {% if sd.posicao %}
+                <span class="rank-badge {% if sd.posicao == 1 %}gold{% elif sd.posicao == 2 %}silver{% elif sd.posicao == 3 %}bronze{% endif %}">
+                  {% if sd.posicao == 1 %}🥇{% elif sd.posicao == 2 %}🥈{% elif sd.posicao == 3 %}🥉{% else %}<i class="fas fa-hashtag" style="font-size:.6rem"></i>{% endif %}
+                  {{ sd.posicao }}º
+                </span>
+              {% else %}
+                <span style="color:rgba(255,255,255,.2);font-size:.72rem">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ══ ERROS FREQUENTES + ÚLTIMAS SIMS ══ -->
+  <div class="perf-section"><i class="fas fa-history"></i> Histórico recente</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem" class="bottom-grid">
+
+    <!-- Últimas simulações -->
+    <div class="glass">
+      <div class="glass-header"><i class="fas fa-list-alt"></i> Últimas simulações</div>
+      <div class="glass-body">
+        {% for item in ultimas_sims %}
+        <div class="sim-row">
+          <div class="sim-avatar">{{ item.sim.user.username|slice:":1"|upper }}</div>
+          <div class="sim-info">
+            <div class="sim-sala">{{ item.sim.sala.nome|default:"—" }}</div>
+            <div class="sim-date">{{ item.sim.start_time|date:"d/m/Y · H:i" }} · {{ item.msgs }} msg{{ item.msgs|pluralize }}</div>
+          </div>
+          <span class="sim-badge {% if item.sim.end_time %}sim-done{% else %}sim-open{% endif %}">
+            {% if item.sim.end_time %}✓{% else %}⏳{% endif %}
+          </span>
+          {% if item.auditoria %}
+            <span class="nota-badge {% if item.auditoria.nota_total >= 7 %}nota-high{% elif item.auditoria.nota_total >= 5 %}nota-mid{% else %}nota-low{% endif %}">
+              {{ item.auditoria.nota_total }}<small style="font-size:.6rem;opacity:.7">/10</small>
+            </span>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state">
+          <i class="fas fa-history"></i>
+          <p>Nenhuma simulação ainda.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Erros ortográficos frequentes -->
+    <div class="glass">
+      <div class="glass-header"><i class="fas fa-spell-check"></i> Erros ortográficos mais comuns</div>
+      <div class="glass-body">
+        {% if erros_frequentes %}
+        <div class="erros-cloud">
+          {% for e in erros_frequentes %}
+          <div class="erro-pill">
+            <span class="cnt">{{ e.count }}</span>
+            <span style="font-family:monospace">{{ e.trecho }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <p style="font-size:.72rem;color:rgba(255,255,255,.25);margin-top:1rem">Palavras que aparecem com mais frequência nos seus relatórios de ortografia.</p>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-check-double" style="color:#4ade80"></i>
+          <p>Nenhum erro ortográfico registrado ainda.<br><span style="font-size:.75rem">Ótimo trabalho!</span></p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ MINHAS AVALIAÇÕES ══ -->
+  <div class="perf-section" style="margin-top:2rem"><i class="fas fa-clipboard-check"></i> Minhas avaliações</div>
+  {% if auditorias_detalhes %}
+  <div class="audit-list">
+    {% for a in auditorias_detalhes %}
+    {% with sim=a.simulacao %}
+    <div class="audit-card" id="audit-card-{{ a.id }}">
+
+      <!-- Header clicável -->
+      <div class="audit-card-header" onclick="toggleAudit({{ a.id }})">
+        <div class="audit-sala-avatar">{{ sim.sala.nome|slice:":1"|upper }}</div>
+        <div class="audit-meta">
+          <div class="audit-sala-name">{{ sim.sala.nome|default:"—" }}</div>
+          <div class="audit-date">{{ sim.start_time|date:"d/m/Y · H:i" }}</div>
+        </div>
+        <div class="audit-scores">
+          <div class="ascore">
+            <span class="ascore-label">A PONTE</span>
+            <span class="ascore-val">{{ a.nota_ponte }}</span>
+          </div>
+          <div class="ascore">
+            <span class="ascore-label">Técnicas EA</span>
+            <span class="ascore-val">{{ a.nota_ea }}</span>
+          </div>
+          <div class="ascore ascore-total {% if a.nota_total >= 7 %}ascore-high{% elif a.nota_total >= 5 %}ascore-mid{% else %}ascore-low{% endif %}">
+            <span class="ascore-label">Nota final</span>
+            <span class="ascore-val">{{ a.nota_total }}<small>/10</small></span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-down audit-chevron"></i>
+      </div>
+
+      <!-- Body expansível -->
+      <div class="audit-card-body" id="audit-body-{{ a.id }}" style="display:none">
+
+        <!-- Critérios A PONTE -->
+        <div class="audit-section-title"><i class="fas fa-bridge"></i> Método A PONTE</div>
+        <div class="audit-crit-grid">
+          <div class="acrit">
+            <div class="acrit-name">Abordar</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_abordar }}" data-max="0.6"></div></div>
+            <div class="acrit-val">{{ a.ponte_abordar }} <small>/ 0.6</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Pesquisar</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_pesquisar }}" data-max="0.3"></div></div>
+            <div class="acrit-val">{{ a.ponte_pesquisar }} <small>/ 0.3</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Oferecer</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_oferecer }}" data-max="1.2"></div></div>
+            <div class="acrit-val">{{ a.ponte_oferecer }} <small>/ 1.2</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Negociar</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_negociar }}" data-max="2.0"></div></div>
+            <div class="acrit-val">{{ a.ponte_negociar }} <small>/ 2.0</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Iniciativa</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_tomar_iniciativa }}" data-max="0.3"></div></div>
+            <div class="acrit-val">{{ a.ponte_tomar_iniciativa }} <small>/ 0.3</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Estender</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.ponte_estender }}" data-max="0.6"></div></div>
+            <div class="acrit-val">{{ a.ponte_estender }} <small>/ 0.6</small></div>
+          </div>
+        </div>
+
+        <!-- Técnicas EA -->
+        <div class="audit-section-title" style="margin-top:1rem"><i class="fas fa-brain"></i> Técnicas EA</div>
+        <div class="audit-crit-grid">
+          <div class="acrit">
+            <div class="acrit-name">SPIN</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.spin_total }}" data-max="2.0"></div></div>
+            <div class="acrit-val">{{ a.spin_total }} <small>/ 2.0</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">CBV</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar" style="width:0%" data-score="{{ a.cbv_total }}" data-max="2.0"></div></div>
+            <div class="acrit-val">{{ a.cbv_total }} <small>/ 2.0</small></div>
+          </div>
+          <div class="acrit">
+            <div class="acrit-name">Ortografia</div>
+            <div class="acrit-bar-wrap"><div class="acrit-bar {% if a.ortografia < 0.5 %}acrit-bar-low{% endif %}" style="width:0%" data-score="{{ a.ortografia }}" data-max="1.0"></div></div>
+            <div class="acrit-val">{{ a.ortografia }} <small>/ 1.0</small></div>
+          </div>
+        </div>
+
+        <!-- Erros ortografia -->
+        {% if a.erros_ortografia %}
+        <div class="audit-section-title" style="margin-top:1rem"><i class="fas fa-spell-check"></i> Erros de ortografia/gramática</div>
+        <div class="erros-cloud" style="margin-top:.6rem">
+          {% for e in a.erros_ortografia %}
+          <div class="erro-pill" title="{{ e.tipo|default:'' }} — desconto: -{{ e.desconto|default:0 }}">
+            <span class="cnt">-{{ e.desconto|default:0 }}</span>
+            <span style="font-family:monospace">{{ e.trecho }}</span>
+            <span class="err-arrow">→</span>
+            <span style="color:#4ade80;font-family:monospace">{{ e.correcao }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Feedback IA -->
+        {% if a.feedback %}
+        <div class="audit-section-title" style="margin-top:1rem"><i class="fas fa-robot"></i> Feedback da IA</div>
+        <div class="audit-feedback-text" id="fb-{{ a.id }}">{{ a.feedback }}</div>
+        {% endif %}
+
+        <!-- Link para PDF -->
+        <div style="margin-top:1.2rem;text-align:right">
+          <a href="{% url 'imprimir_simulacao' sim.sala.id sim.id %}" target="_blank" class="pdf-link-btn">
+            <i class="fas fa-file-pdf"></i> Ver conversa completa
+          </a>
+        </div>
+
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass" style="padding:2rem;text-align:center;color:rgba(255,255,255,.35)">
+    <i class="fas fa-lock" style="font-size:2rem;display:block;margin-bottom:.8rem;color:rgba(106,17,203,.5)"></i>
+    <div style="font-size:.95rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem">Avaliações ainda não liberadas</div>
+    <div style="font-size:.78rem">Aguarde seu instrutor liberar as notas para você visualizar o feedback das suas simulações.</div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Anima barras de evolução
+  var bars = document.querySelectorAll('.evol-bar[data-nota]');
+  bars.forEach(function(bar) {
+    var nota = parseFloat(bar.getAttribute('data-nota'));
+    var pct = (nota / 10) * 80; // max 80px de altura
+    setTimeout(function() { bar.style.height = Math.max(pct, 4) + 'px'; }, 100);
+  });
+
+  // Anima barras de critérios
+  document.querySelectorAll('.crit-fill[data-w]').forEach(function(el) {
+    var w = el.getAttribute('data-w');
+    setTimeout(function() { el.style.width = w + '%'; }, 200);
+  });
+
+  // Toggle cards de auditoria
+  window.toggleAudit = function(id) {
+    var card = document.getElementById('audit-card-' + id);
+    var body = document.getElementById('audit-body-' + id);
+    var isOpen = card.classList.contains('open');
+    if (isOpen) {
+      card.classList.remove('open');
+      body.style.display = 'none';
+    } else {
+      card.classList.add('open');
+      body.style.display = 'block';
+      // Anima barras de critérios dentro deste card
+      body.querySelectorAll('.acrit-bar[data-score]').forEach(function(bar) {
+        var score = parseFloat(bar.getAttribute('data-score'));
+        var max   = parseFloat(bar.getAttribute('data-max'));
+        var pct   = max > 0 ? Math.round((score / max) * 100) : 0;
+        setTimeout(function() { bar.style.width = pct + '%'; }, 50);
+      });
+      // Formata feedback
+      var fb = document.getElementById('fb-' + id);
+      if (fb && !fb._formatted) {
+        fb.innerHTML = formatFeedbackPerf(fb.textContent);
+        fb._formatted = true;
+      }
+    }
+  };
+
+  function formatFeedbackPerf(text) {
+    var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    esc = esc.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    var lines = esc.split('\n');
+    var html = '';
+    var inUl = false, inOl = false;
+    lines.forEach(function(line) {
+      var trimmed = line.trim();
+      if (/^\*\s+/.test(trimmed) || /^-\s+/.test(trimmed)) {
+        if (!inUl) { html += '<ul style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inUl = true; }
+        if (inOl) { html += '</ol>'; inOl = false; }
+        html += '<li>' + trimmed.replace(/^[\*\-]\s+/, '') + '</li>';
+      } else if (/^\d+\.\s/.test(trimmed)) {
+        if (!inOl) { html += '<ol style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inOl = true; }
+        if (inUl) { html += '</ul>'; inUl = false; }
+        html += '<li>' + trimmed.replace(/^\d+\.\s/, '') + '</li>';
+      } else {
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (inOl) { html += '</ol>'; inOl = false; }
+        if (trimmed === '') { html += '<br>'; }
+        else html += '<p style="margin:.2rem 0">' + trimmed + '</p>';
+      }
+    });
+    if (inUl) html += '</ul>';
+    if (inOl) html += '</ol>';
+    return html;
+  }
+  var circle = document.getElementById('perf-circle');
+  if (circle) {
+    var pct = {{ taxa_conclusao }};
+    var circ = 2 * Math.PI * 42;
+    var offset = circ - (pct / 100) * circ;
+    setTimeout(function() { circle.style.strokeDashoffset = offset; circle.style.transition = 'stroke-dashoffset .9s ease'; }, 100);
+  }
+});
+</script>
+{% endblock content %}

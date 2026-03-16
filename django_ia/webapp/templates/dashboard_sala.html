@@ -1,0 +1,1149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  /* ── Background dark ── */
+  body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; color: #fff; }
+
+  /* ── Reset container herdado do base ── */
+  .container.bg-secondary-subtle { background: transparent !important; box-shadow: none !important; }
+  .container.bg-secondary-subtle > h2,
+  .container.bg-secondary-subtle > br { display: none !important; }
+
+  /* ── Page ── */
+  .ds-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+  /* ── Topbar ── */
+  .ds-topbar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .ds-back {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .8rem; color: rgba(255,255,255,.45);
+    text-decoration: none; transition: color .2s;
+  }
+  .ds-back:hover { color: #fff; text-decoration: none; }
+  .ds-room-badge {
+    background: linear-gradient(135deg, rgba(106,17,203,.5), rgba(37,117,252,.4));
+    border: 1px solid rgba(106,17,203,.4); border-radius: 12px;
+    padding: .55rem 1.1rem;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .ds-room-name { font-size: 1.2rem; font-weight: 800; color: #fff; }
+  .ds-room-code { font-size: .72rem; background: rgba(255,255,255,.12); border-radius: 20px; padding: .2rem .65rem; color: rgba(255,255,255,.6); }
+  .ds-actions { margin-left: auto; display: flex; gap: .5rem; }
+  .ds-action-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .78rem; font-weight: 700; border-radius: 10px; padding: .45rem .9rem;
+    text-decoration: none; transition: all .2s;
+  }
+  .ds-action-btn-detail { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.65); }
+  .ds-action-btn-detail:hover { background:rgba(255,255,255,.13); color:#fff; text-decoration:none; }
+  .ds-toggle-notas {
+    background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); color:#fca5a5;
+    cursor:pointer; transition:all .25s;
+  }
+  .ds-toggle-notas:hover { background:rgba(239,68,68,.2); }
+  .ds-toggle-notas.ds-toggle-on {
+    background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.3); color:#4ade80;
+  }
+  .ds-toggle-notas.ds-toggle-on:hover { background:rgba(34,197,94,.2); }
+
+  /* ── Section label ── */
+  .ds-section { display:flex; align-items:center; gap:.7rem; font-size:.75rem; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.08em; margin:2rem 0 1rem; }
+  .ds-section::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.07); }
+
+  /* ── KPI Cards row ── */
+  .ds-kpi-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:.9rem; }
+  .ds-kpi {
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:1.1rem 1rem;
+    display:flex; flex-direction:column; gap:.35rem;
+    transition: all .25s;
+  }
+  .ds-kpi:hover { background:rgba(255,255,255,.09); transform:translateY(-3px); }
+  .ds-kpi-icon { font-size:1.1rem; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:.2rem; }
+  .ds-kpi-val { font-size:1.75rem; font-weight:900; color:#fff; line-height:1; }
+  .ds-kpi-label { font-size:.7rem; color:rgba(255,255,255,.4); }
+  .ds-kpi-sub { font-size:.68rem; color:rgba(255,255,255,.25); margin-top:.1rem; }
+
+  /* ── Two-col main layout ── */
+  .ds-main { display:grid; grid-template-columns:1fr 290px; gap:1.3rem; align-items:start; }
+  @media(max-width:900px) { .ds-main { grid-template-columns:1fr; } }
+
+  /* ── Glass panel ── */
+  .ds-panel {
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:18px; overflow:hidden;
+  }
+  .ds-panel-header {
+    padding:.85rem 1.2rem; border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:.8rem; font-weight:700; color:rgba(255,255,255,.65);
+    display:flex; align-items:center; gap:.5rem;
+  }
+  .ds-panel-body { padding:1rem 1.2rem; }
+
+  /* ── Sparkline ── */
+  .spark-bars { display:flex; align-items:flex-end; gap:4px; height:64px; }
+  .spark-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .spark-bar { width:100%; border-radius:4px 4px 0 0; min-height:3px; background:linear-gradient(180deg,#6a11cb,#2575fc); transition:height .5s ease; }
+  .spark-label { font-size:.58rem; color:rgba(255,255,255,.3); white-space:nowrap; }
+
+  /* ── Participant table ── */
+  .ptable { width:100%; border-collapse:collapse; }
+  .ptable th { font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.3); font-weight:700; padding:.5rem .6rem; border-bottom:1px solid rgba(255,255,255,.07); text-align:left; }
+  .ptable td { font-size:.82rem; color:rgba(255,255,255,.75); padding:.6rem .6rem; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+  .ptable tr:last-child td { border-bottom:none; }
+  .ptable tr:hover td { background:rgba(255,255,255,.03); }
+  .p-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#6a11cb,#2575fc); display:inline-flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; color:#fff; }
+  .rate-badge { font-size:.7rem; font-weight:700; border-radius:8px; padding:.18rem .5rem; }
+  .rate-high { background:rgba(34,197,94,.15); color:#4ade80; }
+  .rate-mid  { background:rgba(249,115,22,.15); color:#fb923c; }
+  .rate-low  { background:rgba(239,68,68,.15);  color:#f87171; }
+  .p-link { font-size:.72rem; color:#a78bfa; text-decoration:none; }
+  .p-link:hover { color:#c4b5fd; text-decoration:underline; }
+
+  /* ── Recent sims ── */
+  .sim-row { display:flex; align-items:center; gap:.8rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .sim-row:last-child { border-bottom:none; }
+  .sim-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#6a11cb,#2575fc); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .sim-user { font-size:.82rem; font-weight:700; color:#fff; }
+  .sim-date { font-size:.7rem; color:rgba(255,255,255,.35); }
+  .sim-badge { font-size:.65rem; font-weight:700; padding:.16rem .45rem; border-radius:8px; margin-left:auto; white-space:nowrap; }
+  .sim-badge-done { background:rgba(34,197,94,.15); color:#4ade80; }
+  .sim-badge-open { background:rgba(249,115,22,.15); color:#fb923c; }
+
+  /* ── DISC sidebar ── */
+  .disc-row { display:flex; align-items:center; gap:.7rem; padding:.4rem 0; }
+  .disc-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .disc-name { font-size:.78rem; color:rgba(255,255,255,.55); flex:1; }
+  .disc-count { font-size:.78rem; font-weight:700; color:#fff; }
+  .disc-track { height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:.15rem; }
+  .disc-fill  { height:100%; border-radius:2px; }
+
+  /* ── Nota badge ── */
+  .nota-badge { font-size:.78rem; font-weight:700; border-radius:8px; padding:.2rem .55rem; display:inline-flex; align-items:center; gap:.1rem; }
+  .nota-high { background:rgba(34,197,94,.15);  color:#4ade80; }
+  .nota-mid  { background:rgba(249,115,22,.15); color:#fb923c; }
+  .nota-low  { background:rgba(239,68,68,.15);  color:#f87171; }
+
+  /* ── Performance section ── */
+  .perf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.9rem; margin-bottom:1.4rem; }
+  .perf-kpi {
+    background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:1.1rem 1rem; text-align:center; transition:all .25s;
+  }
+  .perf-kpi:hover { background:rgba(255,255,255,.09); transform:translateY(-3px); }
+  .perf-kpi-val { font-size:2rem; font-weight:900; color:#fff; line-height:1; }
+  .perf-kpi-label { font-size:.7rem; color:rgba(255,255,255,.4); margin-top:.3rem; }
+
+  .perf-two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
+  @media(max-width:700px){ .perf-two-col { grid-template-columns:1fr; } }
+
+  .rank-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.5rem; }
+  .rank-item {
+    display:flex; align-items:center; gap:.75rem;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
+    border-radius:12px; padding:.6rem .85rem; transition:background .2s;
+  }
+  .rank-item:hover { background:rgba(255,255,255,.08); }
+  .rank-num { font-size:.75rem; font-weight:900; color:rgba(255,255,255,.3); width:18px; text-align:center; flex-shrink:0; }
+  .rank-num.gold   { color:#fbbf24; }
+  .rank-num.silver { color:#94a3b8; }
+  .rank-num.bronze { color:#cd7c2f; }
+  .rank-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#6a11cb,#2575fc); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .rank-name { font-size:.82rem; font-weight:700; color:#fff; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-val { font-size:.82rem; font-weight:700; }
+
+  .notas-aluno-table { width:100%; border-collapse:collapse; }
+  .notas-aluno-table th { font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.3); font-weight:700; padding:.5rem .8rem; border-bottom:1px solid rgba(255,255,255,.07); text-align:left; }
+  .notas-aluno-table td { font-size:.82rem; padding:.6rem .8rem; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; color:rgba(255,255,255,.7); }
+  .notas-aluno-table tr:last-child td { border-bottom:none; }
+  .notas-aluno-table tr:hover td { background:rgba(255,255,255,.03); }
+  .mini-nota-list { display:flex; flex-wrap:wrap; gap:.3rem; }
+  .mini-nota { font-size:.65rem; font-weight:700; padding:.1rem .38rem; border-radius:6px; }
+
+  /* ── Seção alunos individuais ── */
+  .aluno-cards { display:flex; flex-direction:column; gap:.85rem; }
+  .aluno-card {
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+    border-radius:18px; overflow:hidden; transition:border-color .2s;
+  }
+  .aluno-card:hover { border-color:rgba(106,17,203,.35); }
+  .aluno-card-header {
+    display:flex; align-items:center; gap:.85rem;
+    padding:.9rem 1.2rem; cursor:pointer;
+    background:rgba(255,255,255,.03);
+    border-bottom:1px solid transparent; transition:all .2s;
+  }
+  .aluno-card.open .aluno-card-header { border-bottom-color:rgba(255,255,255,.06); background:rgba(106,17,203,.12); }
+  .aluno-avatar { width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6a11cb,#2575fc);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:900;color:#fff;flex-shrink:0; }
+  .aluno-name { font-size:.92rem; font-weight:800; color:#fff; }
+  .aluno-sub  { font-size:.68rem; color:rgba(255,255,255,.35); margin-top:.1rem; }
+  .aluno-kpi-row { display:flex; gap:.6rem; flex-wrap:wrap; margin-left:auto; align-items:center; }
+  .akpi { text-align:center; background:rgba(255,255,255,.05); border-radius:10px; padding:.35rem .65rem; min-width:52px; }
+  .akpi strong { display:block; font-size:.95rem; font-weight:900; color:#fff; line-height:1; }
+  .akpi span   { font-size:.6rem; color:rgba(255,255,255,.35); }
+  .aluno-chevron { color:rgba(255,255,255,.3); transition:transform .25s; flex-shrink:0; font-size:.85rem; }
+  .aluno-card.open .aluno-chevron { transform:rotate(180deg); }
+
+  .aluno-card-body { display:none; padding:1rem 1.2rem; }
+  .aluno-card.open .aluno-card-body { display:block; }
+
+  .sim-table { width:100%; border-collapse:collapse; }
+  .sim-table th { font-size:.62rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.3); font-weight:700; padding:.4rem .6rem; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; }
+  .sim-table td { font-size:.8rem; padding:.55rem .6rem; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; color:rgba(255,255,255,.65); }
+  .sim-table tr:last-child td { border-bottom:none; }
+  .sim-table tr:hover td { background:rgba(255,255,255,.03); }
+
+  .reaudit-btn {
+    display:inline-flex; align-items:center; gap:.3rem;
+    font-size:.68rem; font-weight:700; border-radius:7px; padding:.22rem .55rem;
+    background:rgba(106,17,203,.2); border:1px solid rgba(106,17,203,.3); color:#c4b5fd;
+    cursor:pointer; transition:all .2s;
+  }
+  .reaudit-btn:hover { background:rgba(106,17,203,.45); color:#fff; }
+  .reaudit-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .sim-msgs-badge { font-size:.68rem; background:rgba(255,255,255,.07); border-radius:8px; padding:.15rem .45rem; color:rgba(255,255,255,.5); }
+
+  .pdf-btn {
+    display:inline-flex; align-items:center; gap:.3rem;
+    font-size:.68rem; font-weight:700; border-radius:7px; padding:.22rem .55rem;
+    background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.2); color:#fca5a5;
+    text-decoration:none; transition:all .2s;
+  }
+  .pdf-btn:hover { background:rgba(239,68,68,.25); color:#fff; text-decoration:none; }
+  .audit-btn {
+    display:inline-flex; align-items:center; gap:.35rem;
+    font-size:.72rem; font-weight:700; border-radius:8px; padding:.28rem .65rem;
+    background:rgba(106,17,203,.2); border:1px solid rgba(106,17,203,.35); color:#c4b5fd;
+    cursor:pointer; transition:all .2s;
+  }
+  .audit-btn:hover  { background:rgba(106,17,203,.45); color:#fff; }
+  .audit-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  /* ── Modal de auditoria ── */
+  .audit-modal-overlay {
+    display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:1rem;
+  }
+  .audit-modal-overlay.open { display:flex; }
+  .audit-modal {
+    background:linear-gradient(145deg,#1a1535,#0f0c29);
+    border:1px solid rgba(106,17,203,.35); border-radius:20px;
+    width:100%; max-width:560px; max-height:90vh; overflow-y:auto;
+    padding:1.8rem;
+  }
+  .audit-modal-title { font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:1.2rem; display:flex; align-items:center; gap:.6rem; }
+  .audit-score-big { font-size:3rem; font-weight:900; color:#fff; text-align:center; line-height:1; }
+  .audit-score-label { font-size:.75rem; color:rgba(255,255,255,.4); text-align:center; margin-bottom:1.2rem; }
+  .audit-section-title { font-size:.7rem; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.08em; margin:.9rem 0 .45rem; }
+  .audit-row { display:flex; justify-content:space-between; align-items:center; padding:.3rem 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.8rem; }
+  .audit-row:last-child { border-bottom:none; }
+  .audit-row span { color:rgba(255,255,255,.6); }
+  .audit-row strong { color:#fff; font-weight:700; }
+  .audit-feedback { font-size:.83rem; color:rgba(255,255,255,.7); line-height:1.75; background:rgba(255,255,255,.04); border-radius:10px; padding:1rem 1.1rem; margin-top:.5rem; }
+  .audit-feedback p { margin:0 0 .55rem 0; }
+  .audit-feedback p:last-child { margin-bottom:0; }
+  .audit-feedback strong { color:#c4b5fd; }
+  .audit-feedback ul,.audit-feedback ol { margin:.3rem 0 .55rem 1.2rem; padding:0; }
+  .audit-feedback li { margin-bottom:.25rem; }
+  .audit-feedback .fb-section { font-weight:700; color:#a78bfa; display:block; margin-top:.7rem; margin-bottom:.2rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; }
+  .audit-feedback .fb-section:first-child { margin-top:0; }
+  .audit-close-btn { width:100%; margin-top:1.2rem; padding:.65rem; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:rgba(255,255,255,.6); font-weight:700; font-size:.82rem; cursor:pointer; }
+  .audit-close-btn:hover { background:rgba(255,255,255,.12); color:#fff; }
+
+  /* Erros de ortografia */
+  .erro-list { display:flex; flex-direction:column; gap:.55rem; margin-top:.4rem; }
+  .erro-card {
+    background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2);
+    border-radius:10px; padding:.65rem .85rem;
+  }
+  .erro-trecho {
+    font-size:.82rem; color:#fca5a5; font-family:monospace;
+    background:rgba(239,68,68,.12); border-radius:6px; padding:.2rem .5rem;
+    display:inline-block; margin-bottom:.35rem; word-break:break-word;
+  }
+  .erro-correcao { font-size:.78rem; color:rgba(255,255,255,.55); margin-bottom:.25rem; }
+  .erro-correcao strong { color:#4ade80; }
+  .erro-meta { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.4rem; }
+  .erro-tipo { font-size:.65rem; font-weight:700; background:rgba(249,115,22,.15); color:#fb923c; border-radius:20px; padding:.15rem .55rem; }
+  .erro-desconto { font-size:.7rem; color:#f87171; font-weight:700; }
+  .no-erros { font-size:.82rem; color:#4ade80; display:flex; align-items:center; gap:.45rem; padding:.5rem 0; }
+
+  /* ── Banner pendentes ── */
+  .audit-banner {
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(249,115,22,.1));
+    border:1px solid rgba(239,68,68,.3); border-radius:16px;
+    padding:1rem 1.4rem; margin-bottom:1.6rem;
+  }
+  .audit-banner-icon { font-size:1.3rem; flex-shrink:0; }
+  .audit-banner-text { flex:1; min-width:0; }
+  .audit-banner-title { font-size:.92rem; font-weight:800; color:#fca5a5; }
+  .audit-banner-sub   { font-size:.75rem; color:rgba(255,255,255,.45); margin-top:.15rem; }
+  .audit-all-btn {
+    display:inline-flex; align-items:center; gap:.45rem;
+    font-size:.8rem; font-weight:700; border-radius:10px;
+    padding:.55rem 1.1rem; cursor:pointer; border:none; transition:all .2s;
+    background:linear-gradient(135deg,#6a11cb,#2575fc); color:#fff;
+    white-space:nowrap;
+  }
+  .audit-all-btn:hover { opacity:.85; transform:translateY(-1px); }
+  .audit-all-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .audit-progress-bar {
+    width:100%; height:5px; background:rgba(255,255,255,.08);
+    border-radius:3px; overflow:hidden; margin-top:.6rem; display:none;
+  }
+  .audit-progress-fill {
+    height:100%; background:linear-gradient(90deg,#6a11cb,#2575fc);
+    border-radius:3px; width:0%; transition:width .4s ease;
+  }
+  .persona-item { display:flex; align-items:center; gap:.6rem; }
+  .persona-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .persona-name { font-size:.8rem; color:rgba(255,255,255,.7); }
+  .persona-disc { font-size:.65rem; font-weight:700; border-radius:8px; padding:.12rem .4rem; }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="ds-page">
+
+  <!-- ── Topbar ── -->
+  <div class="ds-topbar">
+    <a href="{% url 'dashboard' %}" class="ds-back"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <div class="ds-room-badge">
+      <i class="fas fa-door-open" style="color:#a78bfa"></i>
+      <span class="ds-room-name">{{ sala.nome }}</span>
+      <span class="ds-room-code"><i class="fas fa-key" style="font-size:.55rem;opacity:.6"></i> {{ sala.codigo_acesso }}</span>
+    </div>
+    <div class="ds-actions">
+      <!-- Toggle: liberar notas para alunos -->
+      <button class="ds-action-btn ds-toggle-notas {% if sala.notas_liberadas %}ds-toggle-on{% endif %}"
+              id="btn-toggle-notas"
+              onclick="toggleNotas({{ sala.id }})"
+              title="{% if sala.notas_liberadas %}Notas visíveis para os alunos — clique para ocultar{% else %}Notas ocultas para os alunos — clique para liberar{% endif %}">
+        <i class="fas {% if sala.notas_liberadas %}fa-eye{% else %}fa-eye-slash{% endif %}" id="toggle-notas-icon"></i>
+        <span id="toggle-notas-label">{% if sala.notas_liberadas %}Notas liberadas{% else %}Liberar notas{% endif %}</span>
+      </button>
+      <a href="{% url 'detalhe_sala_admin' sala.id %}" class="ds-action-btn ds-action-btn-detail">
+        <i class="fas fa-cog"></i> Gerenciar sala
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Banner: simulações pendentes de auditoria ── -->
+  {% if sims_pendentes_ids %}
+  <div class="audit-banner" id="audit-banner">
+    <div class="audit-banner-icon">⚠️</div>
+    <div class="audit-banner-text">
+      <div class="audit-banner-title" id="banner-title">
+        {{ sims_pendentes_ids|length }} simulação{{ sims_pendentes_ids|length|pluralize }} sem auditoria
+      </div>
+      <div class="audit-banner-sub">Clique em "Auditar todos" para que a IA avalie cada simulação concluída automaticamente.</div>
+      <div class="audit-progress-bar" id="audit-progress-bar">
+        <div class="audit-progress-fill" id="audit-progress-fill"></div>
+      </div>
+    </div>
+    <button class="audit-all-btn" id="audit-all-btn"
+            onclick="auditarTodos({{ sala.id }}, {{ sims_pendentes_ids|safe }})">
+      <i class="fas fa-robot"></i> Auditar todos
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- ══ SEÇÃO 1: KPIs CONSOLIDADOS ══ -->
+  <div class="ds-section"><i class="fas fa-tachometer-alt"></i> Indicadores da sala</div>
+  <div class="ds-kpi-row" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr))">
+
+    <div class="ds-kpi">
+      <div class="ds-kpi-icon" style="background:rgba(106,17,203,.25)"><i class="fas fa-play-circle" style="color:#a78bfa"></i></div>
+      <div class="ds-kpi-val">{{ total_sims }}</div>
+      <div class="ds-kpi-label">Simulações totais</div>
+      <div class="ds-kpi-sub">{{ sims_semana }} esta semana</div>
+    </div>
+
+    <div class="ds-kpi">
+      <div class="ds-kpi-icon" style="background:rgba(34,197,94,.15)"><i class="fas fa-check-circle" style="color:#4ade80"></i></div>
+      <div class="ds-kpi-val">{{ sims_concluidas }}</div>
+      <div class="ds-kpi-label">Concluídas</div>
+      <div class="ds-kpi-sub">{{ taxa_conclusao }}% de conclusão</div>
+    </div>
+
+    <div class="ds-kpi">
+      <div class="ds-kpi-icon" style="background:rgba(37,117,252,.2)"><i class="fas fa-users" style="color:#60a5fa"></i></div>
+      <div class="ds-kpi-val">{{ participantes_stats|length }}</div>
+      <div class="ds-kpi-label">Participantes</div>
+      <div class="ds-kpi-sub">/ {{ sala.capacidade_maxima }} vagas</div>
+    </div>
+
+    <div class="ds-kpi">
+      <div class="ds-kpi-icon" style="background:rgba(249,115,22,.15)"><i class="fas fa-comment-dots" style="color:#fb923c"></i></div>
+      <div class="ds-kpi-val">{{ total_mensagens }}</div>
+      <div class="ds-kpi-label">Interações totais</div>
+    </div>
+
+    <div class="ds-kpi" style="border-color:rgba(106,17,203,.25)">
+      <div class="ds-kpi-icon" style="background:rgba(106,17,203,.2)"><i class="fas fa-graduation-cap" style="color:#a78bfa"></i></div>
+      <div class="ds-kpi-val" style="color:{% if media_turma %}{% if media_turma >= 7 %}#4ade80{% elif media_turma >= 5 %}#fb923c{% else %}#f87171{% endif %}{% else %}rgba(255,255,255,.3){% endif %}">
+        {% if media_turma %}{{ media_turma }}{% else %}—{% endif %}
+      </div>
+      <div class="ds-kpi-label">Média da turma <span style="opacity:.5">/ 10</span></div>
+    </div>
+
+    <div class="ds-kpi">
+      <div class="ds-kpi-icon" style="background:rgba(96,165,250,.15)"><i class="fas fa-clipboard-check" style="color:#60a5fa"></i></div>
+      <div class="ds-kpi-val">{{ total_auditorias }}</div>
+      <div class="ds-kpi-label">Auditorias feitas</div>
+    </div>
+
+  </div>
+
+  <!-- ══ SEÇÃO 2: VISÃO GERAL (2 colunas) ══ -->
+  <div class="ds-section" style="margin-top:2rem"><i class="fas fa-chart-line"></i> Visão geral</div>
+  <div class="ds-main">
+
+    <!-- Coluna principal -->
+    <div style="display:flex;flex-direction:column;gap:1.2rem">
+
+      <!-- Sparkline -->
+      <div class="ds-panel">
+        <div class="ds-panel-header"><i class="fas fa-chart-bar"></i> Atividade — últimos 7 dias</div>
+        <div class="ds-panel-body">
+          {% with max_day=atividade_diaria|dictsort:"count"|last %}
+          {% with max_val=max_day.count %}
+          <div class="spark-bars" id="spark-bars">
+            {% for dia in atividade_diaria %}
+            <div class="spark-bar-wrap">
+              <div class="spark-bar"
+                   data-h="{% if max_val > 0 %}{% widthratio dia.count max_val 56 %}{% else %}3{% endif %}"
+                   style="height:3px"
+                   title="{{ dia.dia }}: {{ dia.count }} simulações">
+              </div>
+              <span class="spark-label">{{ dia.dia }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endwith %}
+          {% endwith %}
+        </div>
+      </div>
+
+      <!-- Rankings lado a lado -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+        <div class="ds-panel">
+          <div class="ds-panel-header"><i class="fas fa-trophy" style="color:#fbbf24"></i> Ranking — Notas</div>
+          <div class="ds-panel-body">
+            {% if ranking_notas %}
+            <ul class="rank-list">
+              {% for ps in ranking_notas %}
+              <li class="rank-item">
+                <span class="rank-num {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</span>
+                <div class="rank-avatar">{{ ps.user.username|slice:":1"|upper }}</div>
+                <span class="rank-name">{{ ps.user.username }}</span>
+                <span class="rank-val {% if ps.media_nota >= 7 %}nota-high{% elif ps.media_nota >= 5 %}nota-mid{% else %}nota-low{% endif %}">
+                  {{ ps.media_nota }}<small style="font-size:.6rem;opacity:.6">/10</small>
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color:rgba(255,255,255,.25);font-size:.82rem;margin:0;text-align:center;padding:1rem">
+              <i class="fas fa-robot" style="display:block;font-size:1.3rem;margin-bottom:.4rem"></i>
+              Nenhuma auditoria ainda.
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="ds-panel">
+          <div class="ds-panel-header"><i class="fas fa-comments" style="color:#fb923c"></i> Ranking — Interações</div>
+          <div class="ds-panel-body">
+            {% if ranking_interacoes %}
+            <ul class="rank-list">
+              {% for ps in ranking_interacoes %}
+              {% if ps.mensagens > 0 %}
+              <li class="rank-item">
+                <span class="rank-num {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</span>
+                <div class="rank-avatar">{{ ps.user.username|slice:":1"|upper }}</div>
+                <span class="rank-name">{{ ps.user.username }}</span>
+                <span class="rank-val" style="color:#fff">{{ ps.mensagens }}<small style="font-size:.6rem;color:rgba(255,255,255,.4)"> msgs</small></span>
+              </li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color:rgba(255,255,255,.25);font-size:.82rem;margin:0;text-align:center;padding:1rem">Nenhuma interação registrada.</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /rankings -->
+
+      <!-- Simulações recentes -->
+      <div class="ds-panel">
+        <div class="ds-panel-header"><i class="fas fa-history"></i> Simulações recentes</div>
+        <div class="ds-panel-body">
+          {% for sim in simulacoes_recentes %}
+          <div class="sim-row" id="sim-row-{{ sim.id }}">
+            <div class="sim-avatar">{{ sim.user.username|slice:":1"|upper }}</div>
+            <div style="flex:1;min-width:0">
+              <div class="sim-user">{{ sim.user.username }}</div>
+              <div class="sim-date">{{ sim.start_time|date:"d/m/Y · H:i" }}</div>
+            </div>
+            <span class="sim-badge {% if sim.end_time %}sim-badge-done{% else %}sim-badge-open{% endif %}">
+              {% if sim.end_time %}Concluída{% else %}Em andamento{% endif %}
+            </span>
+            {% if sim.auditoria %}
+              <span class="nota-badge {% if sim.auditoria.nota_total >= 7 %}nota-high{% elif sim.auditoria.nota_total >= 5 %}nota-mid{% else %}nota-low{% endif %}"
+                    style="cursor:pointer" title="{{ sim.auditoria.feedback|truncatechars:120 }}"
+                    onclick="abrirAuditoria({{ sim.id }})">
+                {{ sim.auditoria.nota_total }}<small style="font-size:.6rem;opacity:.7">/10</small>
+              </span>
+            {% elif sim.end_time %}
+              <button class="audit-btn" id="audit-btn-{{ sim.id }}"
+                      onclick="rodarAuditoria({{ sala.id }}, {{ sim.id }})">
+                <i class="fas fa-robot"></i> Auditar
+              </button>
+            {% endif %}
+          </div>
+          {% empty %}
+          <p style="color:rgba(255,255,255,.25);font-size:.82rem;margin:0">Nenhuma simulação ainda.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div><!-- /coluna principal -->
+
+    <!-- Sidebar direita -->
+    <aside style="display:flex;flex-direction:column;gap:1rem;position:sticky;top:80px">
+
+      <!-- Taxa conclusão circular -->
+      <div class="ds-panel">
+        <div class="ds-panel-header"><i class="fas fa-percentage"></i> Taxa de conclusão</div>
+        <div class="ds-panel-body" style="display:flex;flex-direction:column;align-items:center;gap:.6rem">
+          <svg width="110" height="110" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
+            <circle cx="50" cy="50" r="42" fill="none"
+              stroke="url(#taxaGrad)" stroke-width="9" stroke-linecap="round"
+              stroke-dasharray="263.9" stroke-dashoffset="263.9"
+              transform="rotate(-90 50 50)" id="taxa-circle"/>
+            <defs>
+              <linearGradient id="taxaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#6a11cb"/>
+                <stop offset="100%" stop-color="#2575fc"/>
+              </linearGradient>
+            </defs>
+            <text x="50" y="55" text-anchor="middle" fill="#fff" font-size="18" font-weight="900">{{ taxa_conclusao }}%</text>
+          </svg>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.4)">{{ sims_concluidas }} de {{ total_sims }} simulações</div>
+        </div>
+      </div>
+
+      <!-- DISC -->
+      <div class="ds-panel">
+        <div class="ds-panel-header"><i class="fas fa-brain"></i> Perfis DISC na sala</div>
+        <div class="ds-panel-body">
+          {% with d=disc_counts.dominante i=disc_counts.influente s=disc_counts.estavel a=disc_counts.analitico %}
+          <div class="disc-row">
+            <div class="disc-dot" style="background:#f97316"></div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between"><span class="disc-name">Dominante</span><span class="disc-count">{{ d }}</span></div>
+              <div class="disc-track"><div class="disc-fill" style="width:{% widthratio d disc_total 100 %}%;background:#f97316"></div></div>
+            </div>
+          </div>
+          <div class="disc-row">
+            <div class="disc-dot" style="background:#ec4899"></div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between"><span class="disc-name">Influente</span><span class="disc-count">{{ i }}</span></div>
+              <div class="disc-track"><div class="disc-fill" style="width:{% widthratio i disc_total 100 %}%;background:#ec4899"></div></div>
+            </div>
+          </div>
+          <div class="disc-row">
+            <div class="disc-dot" style="background:#22c55e"></div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between"><span class="disc-name">Estável</span><span class="disc-count">{{ s }}</span></div>
+              <div class="disc-track"><div class="disc-fill" style="width:{% widthratio s disc_total 100 %}%;background:#22c55e"></div></div>
+            </div>
+          </div>
+          <div class="disc-row">
+            <div class="disc-dot" style="background:#3b82f6"></div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between"><span class="disc-name">Analítico</span><span class="disc-count">{{ a }}</span></div>
+              <div class="disc-track"><div class="disc-fill" style="width:{% widthratio a disc_total 100 %}%;background:#3b82f6"></div></div>
+            </div>
+          </div>
+          {% endwith %}
+        </div>
+      </div>
+
+      <!-- Personagens -->
+      <div class="ds-panel">
+        <div class="ds-panel-header"><i class="fas fa-user-friends"></i> Personagens disponíveis</div>
+        <div class="ds-panel-body">
+          <div class="persona-list">
+            {% for p in personagens %}
+            {% if p.perfil_disc == 'dominante' %}{% with color="#f97316" bg="rgba(249,115,22,.15)" tc="#fb923c" label="D" %}
+            <div class="persona-item"><div class="persona-dot" style="background:{{ color }}"></div><span class="persona-name">{{ p.short_name }}</span><span class="persona-disc" style="background:{{ bg }};color:{{ tc }}">{{ label }}</span></div>
+            {% endwith %}{% elif p.perfil_disc == 'influente' %}{% with color="#ec4899" bg="rgba(236,72,153,.15)" tc="#f472b6" label="I" %}
+            <div class="persona-item"><div class="persona-dot" style="background:{{ color }}"></div><span class="persona-name">{{ p.short_name }}</span><span class="persona-disc" style="background:{{ bg }};color:{{ tc }}">{{ label }}</span></div>
+            {% endwith %}{% elif p.perfil_disc == 'estavel' %}{% with color="#22c55e" bg="rgba(34,197,94,.12)" tc="#4ade80" label="S" %}
+            <div class="persona-item"><div class="persona-dot" style="background:{{ color }}"></div><span class="persona-name">{{ p.short_name }}</span><span class="persona-disc" style="background:{{ bg }};color:{{ tc }}">{{ label }}</span></div>
+            {% endwith %}{% else %}{% with color="#3b82f6" bg="rgba(59,130,246,.15)" tc="#60a5fa" label="A" %}
+            <div class="persona-item"><div class="persona-dot" style="background:{{ color }}"></div><span class="persona-name">{{ p.short_name }}</span><span class="persona-disc" style="background:{{ bg }};color:{{ tc }}">{{ label }}</span></div>
+            {% endwith %}{% endif %}
+            {% empty %}
+            <p style="color:rgba(255,255,255,.25);font-size:.8rem;margin:0">Nenhum personagem.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div><!-- /ds-main -->
+
+  <!-- ══ SEÇÃO 3: KPIs INDIVIDUAIS ══ -->
+  <div class="ds-section" style="margin-top:2.5rem"><i class="fas fa-user-graduate"></i> KPIs individuais por aluno</div>
+
+  {% if participantes_stats %}
+  <script>var _auditCache = {};</script>
+  <div class="aluno-cards">
+    {% for ps in participantes_stats %}
+    <div class="aluno-card" id="aluno-card-{{ ps.user.id }}">
+
+      <!-- Header clicável -->
+      <div class="aluno-card-header" onclick="toggleAluno({{ ps.user.id }})">
+        <div class="aluno-avatar">{{ ps.user.username|slice:":1"|upper }}</div>
+        <div>
+          <div class="aluno-name">{{ ps.user.username }}</div>
+          <div class="aluno-sub">
+            {% if ps.ultima %}Última atividade {{ ps.ultima|date:"d/m/Y" }}{% else %}Sem atividade{% endif %}
+          </div>
+        </div>
+
+        <!-- KPIs rápidos -->
+        <div class="aluno-kpi-row">
+          <div class="akpi">
+            <strong>{{ ps.total_sims }}</strong>
+            <span>simulações</span>
+          </div>
+          <div class="akpi">
+            <strong>{{ ps.mensagens }}</strong>
+            <span>interações</span>
+          </div>
+          <div class="akpi">
+            <strong>{{ ps.qtd_auditorias }}</strong>
+            <span>auditadas</span>
+          </div>
+          {% if ps.media_nota is not None %}
+          <div class="akpi" style="background:{% if ps.media_nota >= 7 %}rgba(34,197,94,.15){% elif ps.media_nota >= 5 %}rgba(249,115,22,.15){% else %}rgba(239,68,68,.15){% endif %}">
+            <strong style="color:{% if ps.media_nota >= 7 %}#4ade80{% elif ps.media_nota >= 5 %}#fb923c{% else %}#f87171{% endif %}">{{ ps.media_nota }}</strong>
+            <span>média</span>
+          </div>
+          {% else %}
+          <div class="akpi" style="opacity:.4">
+            <strong>—</strong>
+            <span>média</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <i class="fas fa-chevron-down aluno-chevron"></i>
+      </div>
+
+      <!-- Body expansível -->
+      <div class="aluno-card-body">
+        {% if ps.sims_lista %}
+        <table class="sim-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data / Hora</th>
+              <th style="text-align:center">Interações</th>
+              <th style="text-align:center">Status</th>
+              <th style="text-align:center">Nota</th>
+              <th style="text-align:center">Auditoria</th>
+              <th style="text-align:center">PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in ps.sims_lista %}
+            <tr id="aluno-sim-row-{{ item.sim.id }}">
+              <td style="color:rgba(255,255,255,.3);font-size:.72rem">#{{ item.sim.id }}</td>
+              <td>{{ item.sim.start_time|date:"d/m/Y · H:i" }}</td>
+              <td style="text-align:center">
+                <span class="sim-msgs-badge">{{ item.msgs }} msgs</span>
+              </td>
+              <td style="text-align:center">
+                {% if item.sim.end_time %}
+                  <span style="font-size:.7rem;color:#4ade80;font-weight:700">✓ Concluída</span>
+                {% else %}
+                  <span style="font-size:.7rem;color:#fb923c;font-weight:700">⏳ Aberta</span>
+                {% endif %}
+              </td>
+              <td style="text-align:center" id="aluno-nota-{{ item.sim.id }}">
+                {% if item.auditoria %}
+                  <span class="nota-badge {% if item.auditoria.nota_total >= 7 %}nota-high{% elif item.auditoria.nota_total >= 5 %}nota-mid{% else %}nota-low{% endif %}"
+                        style="cursor:pointer" onclick="abrirAuditoriaFromCache({{ item.sim.id }})">
+                    {{ item.auditoria.nota_total }}<small style="font-size:.58rem;opacity:.7">/10</small>
+                  </span>
+                {% else %}
+                  <span style="color:rgba(255,255,255,.2);font-size:.72rem">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:center" id="aluno-audit-btn-{{ item.sim.id }}">
+                {% if item.sim.end_time %}
+                  <button class="reaudit-btn" onclick="rodarAuditoriaAluno({{ sala.id }}, {{ item.sim.id }}, this)"
+                          title="{% if item.auditoria %}Refazer auditoria{% else %}Auditar{% endif %}">
+                    <i class="fas fa-{% if item.auditoria %}redo{% else %}robot{% endif %}"></i>
+                    {% if item.auditoria %}Refazer{% else %}Auditar{% endif %}
+                  </button>
+                {% else %}
+                  <span style="color:rgba(255,255,255,.2);font-size:.7rem">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:center">
+                {% if item.msgs > 0 %}
+                  <a href="{% url 'imprimir_simulacao' sala.id item.sim.id %}" target="_blank" class="pdf-btn" title="Abrir transcrição para imprimir / salvar como PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                  </a>
+                {% else %}
+                  <span style="color:rgba(255,255,255,.2);font-size:.7rem">—</span>
+                {% endif %}
+              </td>
+            </tr>
+
+            {% if item.auditoria %}
+            <script>
+            _auditCache[{{ item.sim.id }}] = {
+              nota_total: {{ item.auditoria.nota_total }},
+              nota_ponte: {{ item.auditoria.nota_ponte }},
+              nota_ea:    {{ item.auditoria.nota_ea }},
+              ortografia: {{ item.auditoria.ortografia }},
+              feedback:   "{{ item.auditoria.feedback|escapejs }}",
+              erros_ortografia: {{ item.auditoria.erros_ortografia|default:"[]"|safe }},
+              detalhe: {
+                abordar:          {{ item.auditoria.ponte_abordar }},
+                pesquisar:        {{ item.auditoria.ponte_pesquisar }},
+                oferecer:         {{ item.auditoria.ponte_oferecer }},
+                negociar:         {{ item.auditoria.ponte_negociar }},
+                tomar_iniciativa: {{ item.auditoria.ponte_tomar_iniciativa }},
+                estender:         {{ item.auditoria.ponte_estender }},
+                spin:             {{ item.auditoria.spin_total }},
+                cbv:              {{ item.auditoria.cbv_total }},
+              }
+            };
+            </script>
+            {% endif %}
+
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p style="color:rgba(255,255,255,.3);font-size:.82rem;margin:0">Este aluno ainda não realizou simulações.</p>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:2.5rem;color:rgba(255,255,255,.25)">
+    <i class="fas fa-user-graduate" style="font-size:2rem;display:block;margin-bottom:.6rem"></i>
+    Nenhum participante nesta sala ainda.
+  </div>
+  {% endif %}
+
+</div><!-- /ds-page -->
+
+<!-- ── Modal de Auditoria ── -->
+<div class="audit-modal-overlay" id="auditModal">
+  <div class="audit-modal">
+    <div class="audit-modal-title"><i class="fas fa-robot" style="color:#a78bfa"></i> Resultado da Auditoria</div>
+    <div class="audit-score-big" id="modal-nota">—</div>
+    <div class="audit-score-label">nota total / 10</div>
+
+    <div class="audit-section-title">Método A PONTE</div>
+    <div id="modal-ponte"></div>
+
+    <div class="audit-section-title">Técnicas EA</div>
+    <div id="modal-ea"></div>
+
+    <div class="audit-section-title">
+      Ortografia &amp; Gramática
+      <span id="modal-ort-score" style="margin-left:.5rem;font-size:.8rem;font-weight:700"></span>
+    </div>
+    <div id="modal-ort"></div>
+    <div id="modal-erros"></div>
+
+    <div class="audit-section-title">Feedback da IA</div>
+    <div class="audit-feedback" id="modal-feedback"></div>
+
+    <button class="audit-close-btn" onclick="fecharAuditModal()">Fechar</button>
+  </div>
+</div>
+
+<script>
+// _auditCache already declared above (before aluno-cards loop)
+
+{% for sim in simulacoes_recentes %}
+{% if sim.auditoria %}
+_auditCache[{{ sim.id }}] = {
+  nota_total:  {{ sim.auditoria.nota_total }},
+  nota_ponte:  {{ sim.auditoria.nota_ponte }},
+  nota_ea:     {{ sim.auditoria.nota_ea }},
+  ortografia:  {{ sim.auditoria.ortografia }},
+  feedback:    '',
+  erros_ortografia: {{ sim.auditoria.erros_ortografia|default:"[]"|safe }},
+  detalhe: {
+    abordar:         {{ sim.auditoria.ponte_abordar }},
+    pesquisar:       {{ sim.auditoria.ponte_pesquisar }},
+    oferecer:        {{ sim.auditoria.ponte_oferecer }},
+    negociar:        {{ sim.auditoria.ponte_negociar }},
+    tomar_iniciativa:{{ sim.auditoria.ponte_tomar_iniciativa }},
+    estender:        {{ sim.auditoria.ponte_estender }},
+    spin:            {{ sim.auditoria.spin_total }},
+    cbv:             {{ sim.auditoria.cbv_total }},
+  }
+};
+{% endif %}
+{% endfor %}
+
+// Feedback como variáveis separadas para evitar problema de escape
+{% for sim in simulacoes_recentes %}{% if sim.auditoria %}
+_auditCache[{{ sim.id }}].feedback = "{{ sim.auditoria.feedback|default:''|escapejs }}";
+{% endif %}{% endfor %}
+
+function abrirAuditoria(simId) {
+  var d = _auditCache[simId];
+  if (!d) return;
+  document.getElementById('modal-nota').textContent = d.nota_total.toFixed(1);
+
+  var ponte = [
+    ['Abordar',           d.detalhe.abordar,          0.6],
+    ['Pesquisar',         d.detalhe.pesquisar,         0.3],
+    ['Oferecer',          d.detalhe.oferecer,          1.2],
+    ['Negociar',          d.detalhe.negociar,          2.0],
+    ['Tomar Iniciativa',  d.detalhe.tomar_iniciativa,  0.3],
+    ['Estender',          d.detalhe.estender,          0.6],
+  ];
+  document.getElementById('modal-ponte').innerHTML =
+    '<div class="audit-row"><span>Total PONTE</span><strong>' + d.nota_ponte.toFixed(2) + ' / 5,0</strong></div>' +
+    ponte.map(function(r){ return '<div class="audit-row" style="padding-left:.8rem"><span style="font-size:.75rem">' + r[0] + '</span><span style="color:#fff;font-size:.75rem">' + r[1].toFixed(2) + ' / ' + r[2] + '</span></div>'; }).join('');
+
+  document.getElementById('modal-ea').innerHTML =
+    '<div class="audit-row"><span>Total EA</span><strong>' + d.nota_ea.toFixed(2) + ' / 4,0</strong></div>' +
+    '<div class="audit-row" style="padding-left:.8rem"><span style="font-size:.75rem">SPIN</span><span style="color:#fff;font-size:.75rem">' + d.detalhe.spin.toFixed(2) + ' / 2,0</span></div>' +
+    '<div class="audit-row" style="padding-left:.8rem"><span style="font-size:.75rem">CBV</span><span style="color:#fff;font-size:.75rem">' + d.detalhe.cbv.toFixed(2) + ' / 2,0</span></div>';
+
+  // Ortografia score
+  document.getElementById('modal-ort-score').textContent = d.ortografia.toFixed(2) + ' / 1,0';
+  document.getElementById('modal-ort-score').style.color = d.ortografia >= 0.75 ? '#4ade80' : d.ortografia >= 0.5 ? '#fb923c' : '#f87171';
+
+  // Erros detalhados
+  var erros = d.erros_ortografia || [];
+  var errosEl = document.getElementById('modal-erros');
+  if (erros.length === 0) {
+    errosEl.innerHTML = '<div class="no-erros"><i class="fas fa-check-circle"></i> Nenhum erro de ortografia ou gramática encontrado.</div>';
+  } else {
+    var html = '<div class="erro-list">';
+    erros.forEach(function(e) {
+      html += '<div class="erro-card">' +
+        '<div class="erro-trecho">❌ &ldquo;' + escHtml(e.trecho || '') + '&rdquo;</div>' +
+        '<div class="erro-correcao">✏️ Correto: <strong>' + escHtml(e.correcao || '') + '</strong></div>' +
+        '<div class="erro-meta">' +
+          '<span class="erro-tipo">' + escHtml(e.tipo || '') + '</span>' +
+          (e.desconto ? '<span class="erro-desconto">-' + Number(e.desconto).toFixed(2) + ' pts</span>' : '') +
+        '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    errosEl.innerHTML = html;
+  }
+
+  document.getElementById('modal-feedback').innerHTML = formatFeedback(d.feedback || '—');
+  document.getElementById('auditModal').classList.add('open');
+}
+
+function formatFeedback(text) {
+  if (!text || text === '—') return '<span style="opacity:.4">—</span>';
+  // Escapa HTML primeiro
+  var s = text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  // Negrito **texto** ou *texto*
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Divide em linhas para processar listas
+  var lines = s.split(/\n/);
+  var html = '';
+  var inList = false;
+  var listType = '';
+
+  lines.forEach(function(line) {
+    var trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) { html += '</' + listType + '>'; inList = false; }
+      return;
+    }
+
+    // Linha de seção tipo "## Título:" ou "**Título:**"
+    var sectionMatch = trimmed.match(/^#+\s*(.+)$/) || trimmed.match(/^<strong>(.+?)<\/strong>\s*:?\s*$/);
+    if (sectionMatch) {
+      if (inList) { html += '</' + listType + '>'; inList = false; }
+      html += '<span class="fb-section">' + sectionMatch[1] + '</span>';
+      return;
+    }
+
+    // Lista com marcador: - item ou • item
+    var bulletMatch = trimmed.match(/^[-•]\s+(.+)$/);
+    if (bulletMatch) {
+      if (!inList || listType !== 'ul') {
+        if (inList) html += '</' + listType + '>';
+        html += '<ul>'; inList = true; listType = 'ul';
+      }
+      html += '<li>' + bulletMatch[1] + '</li>';
+      return;
+    }
+
+    // Lista numerada: 1. item
+    var numMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (numMatch) {
+      if (!inList || listType !== 'ol') {
+        if (inList) html += '</' + listType + '>';
+        html += '<ol>'; inList = true; listType = 'ol';
+      }
+      html += '<li>' + numMatch[1] + '</li>';
+      return;
+    }
+
+    // Parágrafo normal
+    if (inList) { html += '</' + listType + '>'; inList = false; }
+    html += '<p>' + trimmed + '</p>';
+  });
+
+  if (inList) html += '</' + listType + '>';
+  return html || '<span style="opacity:.4">—</span>';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function auditarTodos(salaId, pendentes) {
+  if (!pendentes || pendentes.length === 0) return;
+  var btn = document.getElementById('audit-all-btn');
+  var bar = document.getElementById('audit-progress-bar');
+  var fill = document.getElementById('audit-progress-fill');
+  var title = document.getElementById('banner-title');
+  var total = pendentes.length;
+  var done = 0;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Auditando...';
+  bar.style.display = 'block';
+
+  function auditNext(idx) {
+    if (idx >= pendentes.length) {
+      // Concluído
+      var pct = 100;
+      fill.style.width = pct + '%';
+      title.textContent = '✓ Todas as ' + total + ' auditorias concluídas!';
+      btn.innerHTML = '<i class="fas fa-check"></i> Concluído';
+      setTimeout(function() {
+        document.getElementById('audit-banner').style.opacity = '0';
+        document.getElementById('audit-banner').style.transition = 'opacity .5s';
+        setTimeout(function(){ window.location.reload(); }, 600);
+      }, 1500);
+      return;
+    }
+
+    var simId = pendentes[idx];
+    fetch('/salas/' + salaId + '/simulacao/' + simId + '/auditar/', {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      done++;
+      var pct = Math.round((done / total) * 100);
+      fill.style.width = pct + '%';
+      title.textContent = 'Auditando... ' + done + ' de ' + total;
+      if (data.ok) {
+        _auditCache[simId] = data;
+        // Atualiza nota na linha de simulações recentes se existir
+        var simRow = document.getElementById('sim-row-' + simId);
+        if (simRow) {
+          var auditBtn = document.getElementById('audit-btn-' + simId);
+          if (auditBtn) {
+            var nota = data.nota_total;
+            var cls = nota >= 7 ? 'nota-high' : nota >= 5 ? 'nota-mid' : 'nota-low';
+            auditBtn.outerHTML = '<span class="nota-badge ' + cls + '" style="cursor:pointer" onclick="abrirAuditoria(' + simId + ')">' +
+              nota.toFixed(1) + '<small style="font-size:.6rem;opacity:.7">/10</small></span>';
+          }
+        }
+      }
+      auditNext(idx + 1);
+    })
+    .catch(function() {
+      done++;
+      auditNext(idx + 1);
+    });
+  }
+
+  auditNext(0);
+}
+
+function fecharAuditModal() {
+  document.getElementById('auditModal').classList.remove('open');
+}
+
+function toggleAluno(userId) {
+  var card = document.getElementById('aluno-card-' + userId);
+  if (card) card.classList.toggle('open');
+}
+
+function abrirAuditoriaFromCache(simId) {
+  if (_auditCache[simId]) abrirAuditoria(simId);
+}
+
+function rodarAuditoriaAluno(salaId, simId, btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  fetch('/salas/' + salaId + '/simulacao/' + simId + '/auditar/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (!data.ok) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-robot"></i> Auditar';
+      alert(data.error);
+      return;
+    }
+    _auditCache[simId] = data;
+    _auditCache[simId].detalhe = data.detalhe;
+
+    // Atualiza nota na coluna
+    var nota = data.nota_total;
+    var cls = nota >= 7 ? 'nota-high' : nota >= 5 ? 'nota-mid' : 'nota-low';
+    var notaEl = document.getElementById('aluno-nota-' + simId);
+    if (notaEl) {
+      notaEl.innerHTML = '<span class="nota-badge ' + cls + '" style="cursor:pointer" onclick="abrirAuditoriaFromCache(' + simId + ')">' +
+        nota.toFixed(1) + '<small style="font-size:.58rem;opacity:.7">/10</small></span>';
+    }
+    // Troca botão para "Refazer"
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-redo"></i> Refazer';
+
+    abrirAuditoria(simId);
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-robot"></i> Auditar';
+    alert('Erro: ' + e);
+  });
+}
+
+function rodarAuditoria(salaId, simId) {
+  var btn = document.getElementById('audit-btn-' + simId);
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Auditando…';
+
+  fetch('/salas/' + salaId + '/simulacao/' + simId + '/auditar/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (!data.ok) { btn.disabled=false; btn.innerHTML='<i class="fas fa-robot"></i> Auditar'; alert(data.error); return; }
+    _auditCache[simId] = data;
+    _auditCache[simId].detalhe = data.detalhe;
+
+    var nota = data.nota_total;
+    var cls = nota >= 7 ? 'nota-high' : nota >= 5 ? 'nota-mid' : 'nota-low';
+    var badge = '<span class="nota-badge ' + cls + '" style="cursor:pointer" onclick="abrirAuditoria(' + simId + ')">' + nota.toFixed(1) + '<small style="font-size:.6rem;opacity:.7">/10</small></span>';
+    btn.parentNode.replaceChild(Object.assign(document.createElement('span'), {innerHTML: badge}).firstChild || document.createTextNode(''), btn);
+
+    // Substitui no DOM
+    var row = document.getElementById('sim-row-' + simId);
+    if (row) {
+      var old = row.querySelector('.audit-btn');
+      if (old) {
+        var span = document.createElement('span');
+        span.className = 'nota-badge ' + cls;
+        span.style.cursor = 'pointer';
+        span.onclick = function(){ abrirAuditoria(simId); };
+        span.innerHTML = nota.toFixed(1) + '<small style="font-size:.6rem;opacity:.7">/10</small>';
+        old.replaceWith(span);
+      }
+    }
+    abrirAuditoria(simId);
+  })
+  .catch(function(e){ btn.disabled=false; btn.innerHTML='<i class="fas fa-robot"></i> Auditar'; alert('Erro: ' + e); });
+}
+
+function getCookie(name) {
+  var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+function toggleNotas(salaId) {
+  var btn = document.getElementById('btn-toggle-notas');
+  var icon = document.getElementById('toggle-notas-icon');
+  var label = document.getElementById('toggle-notas-label');
+  btn.disabled = true;
+  fetch('/salas/' + salaId + '/toggle-notas/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.notas_liberadas) {
+      btn.classList.add('ds-toggle-on');
+      icon.className = 'fas fa-eye';
+      label.textContent = 'Notas liberadas';
+      btn.title = 'Notas visíveis para os alunos — clique para ocultar';
+    } else {
+      btn.classList.remove('ds-toggle-on');
+      icon.className = 'fas fa-eye-slash';
+      label.textContent = 'Liberar notas';
+      btn.title = 'Notas ocultas para os alunos — clique para liberar';
+    }
+    btn.disabled = false;
+  })
+  .catch(function() { btn.disabled = false; });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.spark-bar').forEach(function (bar) {
+    var h = bar.dataset.h || 3;
+    setTimeout(function () { bar.style.height = h + 'px'; }, 50);
+  });
+  var circle = document.getElementById('taxa-circle');
+  if (circle) {
+    var pct = {{ taxa_conclusao }};
+    var circ = 2 * Math.PI * 42;
+    var offset = circ - (pct / 100) * circ;
+    setTimeout(function () { circle.style.strokeDashoffset = offset; }, 100);
+  }
+  // Fecha modal clicando fora
+  document.getElementById('auditModal').addEventListener('click', function(e){
+    if (e.target === this) fecharAuditModal();
+  });
+});
+</script>
+{% endblock content %}

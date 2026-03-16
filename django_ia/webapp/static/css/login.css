@@ -1,93 +1,155 @@
-.login-container {
+/* ── Reset base ── */
+body {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important;
+    min-height: 100vh;
+}
+.container.bg-secondary-subtle { background: transparent !important; }
+.container > br:first-of-type  { display: none; }
+
+/* ── Wrapper ── */
+.signin-wrapper {
     display: flex;
-    justify-content: center;
+    min-height: calc(100vh - 56px);  /* desconta a navbar */
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    gap: 1.5rem;
     align-items: center;
-    min-height: 80vh;
 }
 
-.login-card {
-    display: flex;
-    width: 100%;
-    max-width: 900px;
-    border-radius: 15px;
+/* ══════════════════════════════════
+   Painel esquerdo — branding
+══════════════════════════════════ */
+.signin-brand {
+    flex: 1;
+    position: relative;
+    padding: 3rem 2.5rem;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(106,17,203,.8) 0%, rgba(37,117,252,.8) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 20px 60px rgba(106,17,203,.4);
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+.brand-glow {
+    position: absolute;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%);
+    top: -80px; right: -80px;
+    pointer-events: none;
+}
+.brand-content { position: relative; z-index: 1; }
+
+.brand-logo {
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,.15);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #fff;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+}
+.signin-brand h2 {
+    font-size: 2rem; font-weight: 800; color: #fff;
+    line-height: 1.2; margin-bottom: 1rem;
+}
+.signin-brand p {
+    font-size: .95rem; color: rgba(255,255,255,.75);
+    line-height: 1.6; margin-bottom: 2.5rem;
 }
 
-.login-form-container {
-    background-color: #ffffff;
-    padding: 50px;
-    width: 50%;
+.brand-features { display: flex; flex-direction: column; gap: .9rem; }
+.brand-feature {
+    display: flex; align-items: center; gap: .9rem;
+    color: rgba(255,255,255,.85); font-size: .88rem;
+}
+.feature-icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; color: #fff; flex-shrink: 0;
 }
 
-.login-welcome-container {
-    background: linear-gradient(to right, #6a11cb, #2575fc);
-    color: #ffffff;
-    padding: 50px;
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+/* ══════════════════════════════════
+   Painel direito — formulário
+══════════════════════════════════ */
+.signin-form-panel {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+}
+.signin-form-card {
+    width: 100%; max-width: 400px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
 }
 
-.login-welcome-container h2 {
-    margin-bottom: 20px;
-    font-size: 2rem;
-}
+.signin-form-header { margin-bottom: 2rem; text-align: center; }
+.signin-form-header h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: .4rem; }
+.signin-form-header p  { font-size: .88rem; color: rgba(255,255,255,.5); }
 
-.login-welcome-container p {
-    font-size: 1.1rem;
+/* Input groups */
+.input-group-custom {
+    position: relative; margin-bottom: 1rem;
+    display: flex; align-items: center;
 }
-
-.login-form-container h1 {
-    text-align: center;
-    margin-bottom: 40px;
-    color: #333;
-    font-weight: 300;
+.input-group-custom .input-icon {
+    position: absolute; left: 1rem;
+    color: rgba(255,255,255,.35); font-size: .85rem;
+    pointer-events: none; z-index: 1;
 }
-
-.form-control {
-    border-radius: 8px;
-    padding: 15px;
-    border: 1px solid #e0e0e0;
-    margin-bottom: 20px;
-}
-
-.btn-login {
-    background: linear-gradient(to right, #6a11cb, #2575fc);
-    border: none;
-    color: #fff;
+.input-group-custom input {
     width: 100%;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    padding: .85rem 1rem .85rem 2.7rem;
+    color: #fff; font-size: .95rem;
+    transition: all .25s; outline: none;
 }
-
-.btn-login:hover {
-    opacity: 0.9;
+.input-group-custom input::placeholder { color: rgba(255,255,255,.3); }
+.input-group-custom input:focus {
+    border-color: rgba(106,17,203,.7);
+    background: rgba(106,17,203,.1);
+    box-shadow: 0 0 0 3px rgba(106,17,203,.2);
 }
+.toggle-pw {
+    position: absolute; right: .9rem;
+    background: none; border: none;
+    color: rgba(255,255,255,.3); font-size: .85rem;
+    cursor: pointer; padding: .2rem; transition: color .2s;
+}
+.toggle-pw:hover { color: rgba(255,255,255,.7); }
 
-@media (max-width: 768px) {
-    .login-card {
-        flex-direction: column;
-        max-width: 90%;
-    }
+/* Botão entrar */
+.btn-entrar {
+    width: 100%; margin-top: .5rem;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    border: none; border-radius: 12px;
+    padding: .9rem 1.5rem;
+    color: #fff; font-size: .95rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: .6rem;
+    cursor: pointer; transition: all .25s;
+    box-shadow: 0 4px 20px rgba(106,17,203,.4);
+}
+.btn-entrar:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(106,17,203,.55); }
+.btn-entrar:active { transform: translateY(0); }
 
-    .login-form-container,
-    .login-welcome-container {
-        width: 100%;
-    }
+/* Rodapé */
+.signin-footer {
+    text-align: center; margin-top: 1.8rem;
+    font-size: .87rem; color: rgba(255,255,255,.45);
+}
+.signin-footer a { color: #a78bfa; text-decoration: none; font-weight: 600; }
+.signin-footer a:hover { color: #c4b5fd; text-decoration: underline; }
 
-    .login-welcome-container {
-        /* Adjust border radius for the new layout */
-        border-radius: 15px 15px 0 0;
-    }
-
-    .login-form-container {
-        border-radius: 0 0 15px 15px;
-    }
+/* ── Responsivo ── */
+@media (max-width: 700px) {
+    .signin-wrapper { flex-direction: column; padding: 1.5rem 1rem; }
+    .signin-brand { padding: 2rem 1.5rem; }
+    .signin-brand h2 { font-size: 1.5rem; }
+    .brand-features { display: none; }
 }

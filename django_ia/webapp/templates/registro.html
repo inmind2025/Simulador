@@ -2,33 +2,154 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="{% static 'css/registro.css' %}" rel="stylesheet" />
 {% endblock %}
 
 {% block content %}
-<div class="registro-container">
+<div class="registro-wrapper">
+
     <div class="registro-card">
-        <h1>Crie sua Conta</h1>
-        <p class="subtitle">Junte-se à nossa comunidade e comece sua jornada.</p>
-        <form action="{% url 'registro' %}" method="post">
+
+        <!-- Header -->
+        <div class="registro-header">
+            <div class="registro-logo"><i class="fas fa-user-plus"></i></div>
+            <h1>Criar conta</h1>
+            <p>Preencha os dados abaixo para começar a treinar</p>
+        </div>
+
+        {% if form.errors %}
+        <div class="error-banner">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Corrija os erros abaixo antes de continuar.</span>
+        </div>
+        {% endif %}
+
+        <form action="{% url 'registro' %}" method="post" novalidate>
             {% csrf_token %}
 
-            {% if form.errors %}
-                <div class="alert alert-danger" role="alert">
-                    <strong>Ops!</strong> Por favor, corrija os erros abaixo.
+            <!-- Nome + Sobrenome -->
+            <div class="fields-row">
+                <div class="field-wrap">
+                    <label for="{{ form.first_name.id_for_label }}">Primeiro Nome</label>
+                    <div class="input-box">
+                        <span class="input-icon"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="first_name" id="{{ form.first_name.id_for_label }}"
+                               placeholder="João" value="{{ form.first_name.value|default_if_none:'' }}" required>
+                    </div>
+                    {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors.0 }}</div>{% endif %}
                 </div>
-            {% endif %}
+                <div class="field-wrap">
+                    <label for="{{ form.last_name.id_for_label }}">Sobrenome</label>
+                    <div class="input-box">
+                        <span class="input-icon"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="last_name" id="{{ form.last_name.id_for_label }}"
+                               placeholder="Silva" value="{{ form.last_name.value|default_if_none:'' }}" required>
+                    </div>
+                    {% if form.last_name.errors %}<div class="field-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
 
-            {{ form.as_p }}
+            <!-- Usuário -->
+            <div class="field-wrap">
+                <label for="{{ form.username.id_for_label }}">Nome de usuário</label>
+                <div class="input-box">
+                    <span class="input-icon"><i class="fas fa-at"></i></span>
+                    <input type="text" name="username" id="{{ form.username.id_for_label }}"
+                           placeholder="joaosilva" maxlength="150"
+                           value="{{ form.username.value|default_if_none:'' }}" required>
+                </div>
+                {% if form.username.errors %}<div class="field-error">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
 
-            <button type="submit" class="btn btn-primary w-100 mt-3">Cadastrar</button>
+            <!-- E-mail -->
+            <div class="field-wrap">
+                <label for="{{ form.email.id_for_label }}">E-mail</label>
+                <div class="input-box">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input type="email" name="email" id="{{ form.email.id_for_label }}"
+                           placeholder="joao@email.com"
+                           value="{{ form.email.value|default_if_none:'' }}" required>
+                </div>
+                {% if form.email.errors %}<div class="field-error">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Senha -->
+            <div class="field-wrap">
+                <label for="{{ form.password.id_for_label }}">Senha</label>
+                <div class="input-box">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" name="password" id="{{ form.password.id_for_label }}"
+                           placeholder="Mínimo 8 caracteres" required>
+                    <button type="button" class="toggle-pw" onclick="togglePw()" tabindex="-1">
+                        <i class="fas fa-eye" id="pw-icon"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}<div class="field-error">{{ form.password.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Perfil / Role -->
+            <div class="field-wrap">
+                <label>Tipo de conta</label>
+                <div class="role-cards">
+                    <label class="role-card" for="role-cliente">
+                        <input type="radio" name="role" id="role-cliente" value="cliente" checked>
+                        <div class="role-card-inner">
+                            <div class="role-icon blue"><i class="fas fa-user"></i></div>
+                            <div>
+                                <div class="role-title">Participante</div>
+                                <div class="role-desc">Realiza simulações de atendimento</div>
+                            </div>
+                        </div>
+                        <div class="role-check"><i class="fas fa-check"></i></div>
+                    </label>
+                    <label class="role-card" for="role-admin">
+                        <input type="radio" name="role" id="role-admin" value="administrador">
+                        <div class="role-card-inner">
+                            <div class="role-icon purple"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div>
+                                <div class="role-title">Administrador</div>
+                                <div class="role-desc">Gerencia salas e acompanha participantes</div>
+                            </div>
+                        </div>
+                        <div class="role-check"><i class="fas fa-check"></i></div>
+                    </label>
+                </div>
+                {% if form.role.errors %}<div class="field-error">{{ form.role.errors.0 }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="btn-cadastrar">
+                <span>Criar minha conta</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </form>
-        <div class="signin-link">
+
+        <div class="registro-footer">
             <p>Já tem uma conta? <a href="{% url 'signin' %}">Faça o login</a></p>
         </div>
     </div>
 </div>
+
+<script>
+function togglePw() {
+    const inp  = document.getElementById('{{ form.password.id_for_label }}');
+    const icon = document.getElementById('pw-icon');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.classList.replace('fa-eye','fa-eye-slash');
+    } else {
+        inp.type = 'password';
+        icon.classList.replace('fa-eye-slash','fa-eye');
+    }
+}
+
+// Highlight role cards
+document.querySelectorAll('.role-card input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+        if (radio.checked) radio.closest('.role-card').classList.add('selected');
+    });
+    if (radio.checked) radio.closest('.role-card').classList.add('selected');
+});
+</script>
 {% endblock content %}

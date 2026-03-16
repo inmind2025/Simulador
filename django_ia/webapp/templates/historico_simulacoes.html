@@ -2,64 +2,233 @@
 {% load static %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    .history-card {
-        background: linear-gradient(to right, #6a11cb, #2575fc);
-        color: #ffffff;
-        border-radius: 15px;
-        padding: 25px;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        text-decoration: none;
-        display: block;
-        height: 100%;
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+    .container.bg-secondary-subtle { background: transparent !important; }
+
+    .hist-page { max-width: 1050px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── Hero ── */
+    .hist-hero {
+        background: linear-gradient(135deg, rgba(106,17,203,.85) 0%, rgba(37,117,252,.85) 100%);
+        backdrop-filter: blur(12px);
+        border-radius: 20px; padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+        box-shadow: 0 20px 60px rgba(106,17,203,.4);
+        border: 1px solid rgba(255,255,255,.12);
+    }
+    .hist-hero-left { display: flex; align-items: center; gap: 1.2rem; }
+    .hist-hero-icon {
+        width: 54px; height: 54px; background: rgba(255,255,255,.15);
+        border-radius: 14px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #fff; flex-shrink: 0;
+    }
+    .hist-hero h1 { font-size: 1.55rem; font-weight: 700; color: #fff; margin: 0; }
+    .hist-hero p  { color: rgba(255,255,255,.7); margin: 0; font-size: .87rem; }
+    .hist-badge {
+        background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+        border-radius: 50px; padding: .4rem 1rem;
+        color: #fff; font-size: .82rem; font-weight: 700;
+        display: flex; align-items: center; gap: .4rem; white-space: nowrap;
+    }
+
+    /* ── Search/filter bar ── */
+    .filter-bar {
+        display: flex; align-items: center; gap: .8rem;
+        margin-bottom: 1.8rem; flex-wrap: wrap;
+    }
+    .search-box {
+        flex: 1; min-width: 220px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 12px; padding: .65rem 1rem .65rem 2.5rem;
+        color: #fff; font-size: .88rem; outline: none; transition: all .25s;
         position: relative;
     }
-    .history-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        color: #ffffff;
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap i { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,.3); font-size: .82rem; pointer-events: none; }
+    .search-wrap input {
+        width: 100%;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 12px; padding: .65rem 1rem .65rem 2.5rem;
+        color: #fff; font-size: .88rem; outline: none; transition: all .25s;
     }
-    .history-card-user {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 10px;
+    .search-wrap input::placeholder { color: rgba(255,255,255,.3); }
+    .search-wrap input:focus { border-color: rgba(106,17,203,.6); background: rgba(106,17,203,.1); box-shadow: 0 0 0 3px rgba(106,17,203,.15); }
+    .total-pill {
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 50px; padding: .45rem 1rem;
+        color: rgba(255,255,255,.7); font-size: .8rem; white-space: nowrap;
+        display: flex; align-items: center; gap: .4rem;
     }
-    .history-card-date {
-        font-size: 0.9rem;
-        opacity: 0.8;
+    .total-pill strong { color: #c4b5fd; }
+
+    /* ── Section label ── */
+    .section-label {
+        font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 1.2rem;
+        display: flex; align-items: center; gap: .5rem;
     }
-    .history-card-icon {
-        font-size: 2.5rem;
-        opacity: 0.3;
-        position: absolute;
-        bottom: 15px;
-        right: 20px;
+    .section-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+    /* ── Grid ── */
+    .sim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.2rem; }
+
+    /* ── Card de simulação ── */
+    .sim-card {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 18px; padding: 1.4rem;
+        text-decoration: none; color: inherit;
+        display: flex; flex-direction: column;
+        transition: all .28s ease; position: relative; overflow: hidden;
     }
+    .sim-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #6a11cb, #2575fc); opacity: 0; transition: opacity .3s;
+    }
+    .sim-card:hover { transform: translateY(-5px); background: rgba(255,255,255,.09); border-color: rgba(106,17,203,.45); box-shadow: 0 16px 40px rgba(0,0,0,.3); color: inherit; text-decoration: none; }
+    .sim-card:hover::before { opacity: 1; }
+
+    .sim-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; margin-bottom: 1rem; }
+    .sim-avatar {
+        width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; font-weight: 800; color: #fff;
+        box-shadow: 0 4px 12px rgba(106,17,203,.4);
+    }
+    .sim-id-badge {
+        font-size: .7rem; font-weight: 700; letter-spacing: .5px;
+        background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.25);
+        color: #a78bfa; padding: .25rem .65rem; border-radius: 20px;
+    }
+
+    .sim-card h5 { font-size: .97rem; font-weight: 700; color: #fff; margin-bottom: .6rem; }
+
+    .sim-meta { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .9rem; }
+    .sim-meta span { font-size: .79rem; color: rgba(255,255,255,.5); display: flex; align-items: center; gap: .4rem; }
+    .sim-meta span i { color: #a78bfa; width: 12px; text-align: center; }
+
+    .sim-msgs {
+        margin-top: auto; padding-top: .85rem;
+        border-top: 1px solid rgba(255,255,255,.07);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .sim-msgs-count { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: rgba(255,255,255,.45); }
+    .sim-msgs-count strong { color: #e0c3fc; }
+    .sim-cta { font-size: .75rem; font-weight: 700; color: #a78bfa; display: flex; align-items: center; gap: .35rem; }
+
+    /* ── Status chip ── */
+    .status-chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        font-size: .7rem; font-weight: 700; padding: .2rem .65rem; border-radius: 20px;
+    }
+    .status-chip.done    { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #4ade80; }
+    .status-chip.ongoing { background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3); color: #fbbf24; }
+    .status-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center; padding: 5rem 2rem;
+        color: rgba(255,255,255,.35); grid-column: 1/-1;
+    }
+    .empty-icon {
+        width: 72px; height: 72px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem; color: rgba(255,255,255,.2); margin: 0 auto 1.2rem;
+    }
+    .empty-state h4 { color: rgba(255,255,255,.6); font-weight: 600; margin-bottom: .4rem; }
+    .empty-state p  { font-size: .88rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<h2 class="text-center my-4">{{ views.titulo }}</h2>
+<div class="hist-page">
 
-<div class="row">
-    {% for simulacao in simulacoes %}
-        <div class="col-lg-4 col-md-6 mb-4">
-            <a href="{% url 'conversation_detail' simulacao.id %}" class="history-card">
-                <div class="history-card-user">{{ simulacao.user.username }}</div>
-                <p class="history-card-date">
-                    Iniciada em: {{ simulacao.start_time|date:"d/m/Y \\à\\s H:i" }}
-                </p>
-                <p>ID da Simulação: {{ simulacao.id }}</p>
-                <div class="history-card-icon">
-                    &#128172; <!-- Speech bubble icon -->
+    <!-- Hero -->
+    <div class="hist-hero">
+        <div class="hist-hero-left">
+            <div class="hist-hero-icon"><i class="fas fa-history"></i></div>
+            <div>
+                <h1>Histórico de Simulações</h1>
+                <p>Revise todas as suas conversas com clientes virtuais</p>
+            </div>
+        </div>
+        <div class="hist-badge">
+            <i class="fas fa-comments"></i> {{ simulacoes|length }} simulaç{{ simulacoes|length|pluralize:"ão,ões" }}
+        </div>
+    </div>
+
+    <!-- Filtro / busca -->
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por usuário ou resumo…">
+        </div>
+        <div class="total-pill"><i class="fas fa-layer-group"></i> Total: <strong>{{ simulacoes|length }}</strong></div>
+    </div>
+
+    <div class="section-label"><i class="fas fa-clock"></i> Simulações recentes</div>
+
+    <!-- Grid -->
+    <div class="sim-grid" id="simGrid">
+        {% for sim in simulacoes %}
+        <a href="{% url 'conversation_detail' sim.id %}" class="sim-card" data-search="{{ sim.user.username|lower }} {{ sim.initial_prompt_summary|lower|default:'' }}">
+
+            <div class="sim-card-top">
+                <div class="sim-avatar">{{ sim.user.username|first|upper }}</div>
+                <span class="sim-id-badge">#{{ sim.id }}</span>
+            </div>
+
+            <h5>{{ sim.user.get_full_name|default:sim.user.username }}</h5>
+
+            <div class="sim-meta">
+                <span><i class="fas fa-calendar-alt"></i> {{ sim.start_time|date:"d/m/Y \à\s H:i" }}</span>
+                {% if sim.initial_prompt_summary %}
+                <span><i class="fas fa-tag"></i> {{ sim.initial_prompt_summary }}</span>
+                {% endif %}
+                {% if sim.sala %}
+                <span><i class="fas fa-door-open"></i> {{ sim.sala.nome }}</span>
+                {% endif %}
+            </div>
+
+            <div class="sim-msgs">
+                <div class="sim-msgs-count">
+                    <i class="fas fa-comment-dots" style="color:#a78bfa"></i>
+                    <strong>{{ sim.mensagens.count }}</strong> mensagen{{ sim.mensagens.count|pluralize:"s" }}
                 </div>
-            </a>
+                {% if sim.end_time %}
+                <span class="status-chip done"><span class="dot"></span> Concluída</span>
+                {% else %}
+                <span class="status-chip ongoing"><span class="dot"></span> Em andamento</span>
+                {% endif %}
+            </div>
+
+            <div class="sim-cta" style="margin-top:.7rem">
+                <i class="fas fa-eye"></i> Ver conversa
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-comment-slash"></i></div>
+            <h4>Nenhuma simulação ainda</h4>
+            <p>Entre em uma sala de treinamento e inicie sua primeira simulação.</p>
         </div>
-    {% empty %}
-        <div class="col">
-            <p class="text-center">Nenhuma simulação de atendimento encontrada.</p>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
 </div>
 
+<script>
+document.getElementById('searchInput')?.addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.sim-card').forEach(card => {
+        const text = card.dataset.search || '';
+        card.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+});
+</script>
 {% endblock content %}
