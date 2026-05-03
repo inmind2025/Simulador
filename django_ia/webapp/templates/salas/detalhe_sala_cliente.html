@@ -158,6 +158,11 @@
         <button class="sc-tab" onclick="switchTab('participantes', this)">
             <i class="fas fa-users"></i> Participantes
         </button>
+        {% if sala.notas_liberadas %}
+        <a href="{% url 'ranking_sala' sala.id %}" class="sc-tab" style="text-decoration:none">
+            <i class="fas fa-trophy" style="color:#fbbf24"></i> Ranking
+        </a>
+        {% endif %}
     </div>
 
     <!-- Panel: Iniciar atendimento -->

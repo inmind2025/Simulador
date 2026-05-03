@@ -4,6 +4,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   /* ── Background dark ── */
   body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; color: #fff; }
@@ -74,6 +75,7 @@
   /* ── Two-col main layout ── */
   .ds-main { display:grid; grid-template-columns:1fr 290px; gap:1.3rem; align-items:start; }
   @media(max-width:900px) { .ds-main { grid-template-columns:1fr; } }
+  @media(max-width:640px) { .charts-two-col { grid-template-columns:1fr !important; } }
 
   /* ── Glass panel ── */
   .ds-panel {
@@ -331,6 +333,9 @@
         <i class="fas {% if sala.notas_liberadas %}fa-eye{% else %}fa-eye-slash{% endif %}" id="toggle-notas-icon"></i>
         <span id="toggle-notas-label">{% if sala.notas_liberadas %}Notas liberadas{% else %}Liberar notas{% endif %}</span>
       </button>
+      <a href="{% url 'ranking_sala' sala.id %}" class="ds-action-btn ds-action-btn-detail">
+        <i class="fas fa-trophy"></i> Ranking
+      </a>
       <a href="{% url 'detalhe_sala_admin' sala.id %}" class="ds-action-btn ds-action-btn-detail">
         <i class="fas fa-cog"></i> Gerenciar sala
       </a>
@@ -340,7 +345,7 @@
   <!-- ── Banner: simulações pendentes de auditoria ── -->
   {% if sims_pendentes_ids %}
   <div class="audit-banner" id="audit-banner">
-    <div class="audit-banner-icon">⚠️</div>
+    <div class="audit-banner-icon"><i class="fas fa-exclamation-triangle"></i></div>
     <div class="audit-banner-text">
       <div class="audit-banner-title" id="banner-title">
         {{ sims_pendentes_ids|length }} simulação{{ sims_pendentes_ids|length|pluralize }} sem auditoria
@@ -411,27 +416,32 @@
     <!-- Coluna principal -->
     <div style="display:flex;flex-direction:column;gap:1.2rem">
 
-      <!-- Sparkline -->
-      <div class="ds-panel">
-        <div class="ds-panel-header"><i class="fas fa-chart-bar"></i> Atividade — últimos 7 dias</div>
-        <div class="ds-panel-body">
-          {% with max_day=atividade_diaria|dictsort:"count"|last %}
-          {% with max_val=max_day.count %}
-          <div class="spark-bars" id="spark-bars">
-            {% for dia in atividade_diaria %}
-            <div class="spark-bar-wrap">
-              <div class="spark-bar"
-                   data-h="{% if max_val > 0 %}{% widthratio dia.count max_val 56 %}{% else %}3{% endif %}"
-                   style="height:3px"
-                   title="{{ dia.dia }}: {{ dia.count }} simulações">
-              </div>
-              <span class="spark-label">{{ dia.dia }}</span>
-            </div>
-            {% endfor %}
+      <!-- Gráfico: Atividade + Distribuição de Notas lado a lado -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem" class="charts-two-col">
+
+        <div class="ds-panel">
+          <div class="ds-panel-header"><i class="fas fa-chart-bar"></i> Atividade — últimos 7 dias</div>
+          <div class="ds-panel-body" style="padding-bottom:.5rem">
+            <canvas id="activityChart" height="140"></canvas>
           </div>
-          {% endwith %}
-          {% endwith %}
         </div>
+
+        <div class="ds-panel">
+          <div class="ds-panel-header"><i class="fas fa-chart-pie"></i> Distribuição de notas</div>
+          <div class="ds-panel-body" style="display:flex;align-items:center;justify-content:center;gap:1.2rem;padding:.8rem">
+            {% if notas_altas or notas_medias or notas_baixas %}
+            <div style="width:110px;height:110px;flex-shrink:0"><canvas id="scoreDistChart"></canvas></div>
+            <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.78rem">
+              <div style="display:flex;align-items:center;gap:.55rem"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0"></span><span style="color:rgba(255,255,255,.6)">Ótimo ≥7</span><strong style="margin-left:auto;color:#fff">{{ notas_altas }}</strong></div>
+              <div style="display:flex;align-items:center;gap:.55rem"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;flex-shrink:0"></span><span style="color:rgba(255,255,255,.6)">Regular 5–7</span><strong style="margin-left:auto;color:#fff">{{ notas_medias }}</strong></div>
+              <div style="display:flex;align-items:center;gap:.55rem"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0"></span><span style="color:rgba(255,255,255,.6)">Baixo &lt;5</span><strong style="margin-left:auto;color:#fff">{{ notas_baixas }}</strong></div>
+            </div>
+            {% else %}
+            <p style="color:rgba(255,255,255,.25);font-size:.82rem;margin:0;text-align:center;padding:1.5rem 0">Nenhuma auditoria ainda.</p>
+            {% endif %}
+          </div>
+        </div>
+
       </div>
 
       <!-- Rankings lado a lado -->
@@ -683,9 +693,9 @@
               </td>
               <td style="text-align:center">
                 {% if item.sim.end_time %}
-                  <span style="font-size:.7rem;color:#4ade80;font-weight:700">✓ Concluída</span>
+                  <span style="font-size:.7rem;color:#4ade80;font-weight:700"><i class="fas fa-check-circle"></i> Concluída</span>
                 {% else %}
-                  <span style="font-size:.7rem;color:#fb923c;font-weight:700">⏳ Aberta</span>
+                  <span style="font-size:.7rem;color:#fb923c;font-weight:700"><i class="fas fa-clock"></i> Aberta</span>
                 {% endif %}
               </td>
               <td style="text-align:center" id="aluno-nota-{{ item.sim.id }}">
@@ -783,6 +793,10 @@
     <div id="modal-ort"></div>
     <div id="modal-erros"></div>
 
+    <div class="audit-section-title">Métricas da Conversa</div>
+    <div class="audit-row"><span>Tempo total</span><strong id="modal-duracao">—</strong></div>
+    <div class="audit-row"><span>Tempo médio de resposta</span><strong id="modal-tempo-medio">—</strong></div>
+
     <div class="audit-section-title">Feedback da IA</div>
     <div class="audit-feedback" id="modal-feedback"></div>
 
@@ -792,6 +806,7 @@
 
 <script>
 // _auditCache already declared above (before aluno-cards loop)
+var _metricsCache = {{ metricas_tempo_json|safe }};
 
 {% for sim in simulacoes_recentes %}
 {% if sim.auditoria %}
@@ -826,6 +841,10 @@ function abrirAuditoria(simId) {
   if (!d) return;
   document.getElementById('modal-nota').textContent = d.nota_total.toFixed(1);
 
+  var mt = _metricsCache[simId] || {};
+  document.getElementById('modal-duracao').textContent    = mt.duracao    || '—';
+  document.getElementById('modal-tempo-medio').textContent = mt.tempo_medio || '—';
+
   var ponte = [
     ['Abordar',           d.detalhe.abordar,          0.6],
     ['Pesquisar',         d.detalhe.pesquisar,         0.3],
@@ -856,8 +875,8 @@ function abrirAuditoria(simId) {
     var html = '<div class="erro-list">';
     erros.forEach(function(e) {
       html += '<div class="erro-card">' +
-        '<div class="erro-trecho">❌ &ldquo;' + escHtml(e.trecho || '') + '&rdquo;</div>' +
-        '<div class="erro-correcao">✏️ Correto: <strong>' + escHtml(e.correcao || '') + '</strong></div>' +
+        '<div class="erro-trecho"><i class="fas fa-times-circle" style="color:#f87171;margin-right:.3rem"></i>&ldquo;' + escHtml(e.trecho || '') + '&rdquo;</div>' +
+        '<div class="erro-correcao"><i class="fas fa-pen" style="color:#a78bfa;margin-right:.3rem"></i>Correto: <strong>' + escHtml(e.correcao || '') + '</strong></div>' +
         '<div class="erro-meta">' +
           '<span class="erro-tipo">' + escHtml(e.tipo || '') + '</span>' +
           (e.desconto ? '<span class="erro-desconto">-' + Number(e.desconto).toFixed(2) + ' pts</span>' : '') +
@@ -872,67 +891,38 @@ function abrirAuditoria(simId) {
   document.getElementById('auditModal').classList.add('open');
 }
 
+function _fbInline(s) {
+  return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+}
 function formatFeedback(text) {
   if (!text || text === '—') return '<span style="opacity:.4">—</span>';
-  // Escapa HTML primeiro
-  var s = text
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
-
-  // Negrito **texto** ou *texto*
-  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-  // Divide em linhas para processar listas
-  var lines = s.split(/\n/);
-  var html = '';
-  var inList = false;
-  var listType = '';
-
-  lines.forEach(function(line) {
-    var trimmed = line.trim();
-    if (!trimmed) {
-      if (inList) { html += '</' + listType + '>'; inList = false; }
-      return;
+  var lines = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split('\n');
+  var html = '', inList = false, listType = '';
+  lines.forEach(function(raw) {
+    var t = raw.trim();
+    if (!t) { if (inList) { html += '</'+listType+'>'; inList = false; } return; }
+    // Cabeçalho de seção: linha que é APENAS **Título** ou **Título:** ou ## Título
+    var sec = t.match(/^\*\*(.+?)\*\*\s*:?\s*$/) || t.match(/^#{1,3}\s+(.+)$/);
+    if (sec) {
+      if (inList) { html += '</'+listType+'>'; inList = false; }
+      html += '<span class="fb-section">'+_fbInline(sec[1])+'</span>'; return;
     }
-
-    // Linha de seção tipo "## Título:" ou "**Título:**"
-    var sectionMatch = trimmed.match(/^#+\s*(.+)$/) || trimmed.match(/^<strong>(.+?)<\/strong>\s*:?\s*$/);
-    if (sectionMatch) {
-      if (inList) { html += '</' + listType + '>'; inList = false; }
-      html += '<span class="fb-section">' + sectionMatch[1] + '</span>';
-      return;
+    // Bullet: - item  •item
+    var bul = t.match(/^[-•]\s+(.+)$/);
+    if (bul) {
+      if (!inList || listType!=='ul') { if (inList) html+='</'+listType+'>'; html+='<ul>'; inList=true; listType='ul'; }
+      html += '<li>'+_fbInline(bul[1])+'</li>'; return;
     }
-
-    // Lista com marcador: - item ou • item
-    var bulletMatch = trimmed.match(/^[-•]\s+(.+)$/);
-    if (bulletMatch) {
-      if (!inList || listType !== 'ul') {
-        if (inList) html += '</' + listType + '>';
-        html += '<ul>'; inList = true; listType = 'ul';
-      }
-      html += '<li>' + bulletMatch[1] + '</li>';
-      return;
+    // Numerado: 1. item
+    var num = t.match(/^\d+\.\s+(.+)$/);
+    if (num) {
+      if (!inList || listType!=='ol') { if (inList) html+='</'+listType+'>'; html+='<ol>'; inList=true; listType='ol'; }
+      html += '<li>'+_fbInline(num[1])+'</li>'; return;
     }
-
-    // Lista numerada: 1. item
-    var numMatch = trimmed.match(/^\d+\.\s+(.+)$/);
-    if (numMatch) {
-      if (!inList || listType !== 'ol') {
-        if (inList) html += '</' + listType + '>';
-        html += '<ol>'; inList = true; listType = 'ol';
-      }
-      html += '<li>' + numMatch[1] + '</li>';
-      return;
-    }
-
-    // Parágrafo normal
-    if (inList) { html += '</' + listType + '>'; inList = false; }
-    html += '<p>' + trimmed + '</p>';
+    if (inList) { html += '</'+listType+'>'; inList = false; }
+    html += '<p>'+_fbInline(t)+'</p>';
   });
-
-  if (inList) html += '</' + listType + '>';
+  if (inList) html += '</'+listType+'>';
   return html || '<span style="opacity:.4">—</span>';
 }
 
@@ -958,7 +948,7 @@ function auditarTodos(salaId, pendentes) {
       // Concluído
       var pct = 100;
       fill.style.width = pct + '%';
-      title.textContent = '✓ Todas as ' + total + ' auditorias concluídas!';
+      title.textContent = 'Todas as ' + total + ' auditorias concluídas!';
       btn.innerHTML = '<i class="fas fa-check"></i> Concluído';
       setTimeout(function() {
         document.getElementById('audit-banner').style.opacity = '0';
@@ -1128,11 +1118,71 @@ function toggleNotas(salaId) {
   .catch(function() { btn.disabled = false; });
 }
 
+// Chart.js defaults
+Chart.defaults.color = 'rgba(255,255,255,.45)';
+Chart.defaults.borderColor = 'rgba(255,255,255,.06)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.spark-bar').forEach(function (bar) {
-    var h = bar.dataset.h || 3;
-    setTimeout(function () { bar.style.height = h + 'px'; }, 50);
-  });
+
+  // ── Gráfico de atividade (barras) ──
+  var actCtx = document.getElementById('activityChart');
+  if (actCtx) {
+    var actData = {{ atividade_diaria_json|safe }};
+    new Chart(actCtx, {
+      type: 'bar',
+      data: {
+        labels: actData.map(function(d){ return d.dia; }),
+        datasets: [{
+          label: 'Simulações',
+          data: actData.map(function(d){ return d.count; }),
+          backgroundColor: 'rgba(29,78,216,.55)',
+          borderColor: '#3b82f6',
+          borderWidth: 1.5,
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: function(c){ return c.parsed.y + ' simulação' + (c.parsed.y !== 1 ? 'ões':''); } }
+        }},
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,.05)' } }
+        }
+      }
+    });
+  }
+
+  // ── Gráfico de distribuição de notas (donut) ──
+  var distCtx = document.getElementById('scoreDistChart');
+  if (distCtx) {
+    var altas = {{ notas_altas }}, medias = {{ notas_medias }}, baixas = {{ notas_baixas }};
+    if (altas + medias + baixas > 0) {
+      new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Ótimo ≥7', 'Regular 5–7', 'Baixo <5'],
+          datasets: [{
+            data: [altas, medias, baixas],
+            backgroundColor: ['rgba(34,197,94,.75)', 'rgba(249,115,22,.75)', 'rgba(239,68,68,.75)'],
+            borderColor: ['#22c55e', '#f97316', '#ef4444'],
+            borderWidth: 1.5,
+          }]
+        },
+        options: {
+          cutout: '68%',
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: function(c){ return c.label + ': ' + c.parsed; } }
+          }}
+        }
+      });
+    }
+  }
+
+  // ── Círculo taxa de conclusão ──
   var circle = document.getElementById('taxa-circle');
   if (circle) {
     var pct = {{ taxa_conclusao }};
@@ -1140,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var offset = circ - (pct / 100) * circ;
     setTimeout(function () { circle.style.strokeDashoffset = offset; }, 100);
   }
+
   // Fecha modal clicando fora
   document.getElementById('auditModal').addEventListener('click', function(e){
     if (e.target === this) fecharAuditModal();

@@ -5,6 +5,7 @@ urlpatterns = [
     path('criar/', salas_views.criar_sala, name='criar_sala'),
     path('', salas_views.lista_salas_admin, name='lista_salas_admin'),
     path('<int:sala_id>/dashboard/', salas_views.dashboard_sala, name='dashboard_sala'),
+    path('<int:sala_id>/ranking/', salas_views.ranking_sala, name='ranking_sala'),
     path('<int:sala_id>/simulacao/<int:simulacao_id>/auditar/', salas_views.auditar_simulacao, name='auditar_simulacao'),
     path('<int:sala_id>/simulacao/<int:simulacao_id>/imprimir/', salas_views.imprimir_simulacao, name='imprimir_simulacao'),
     path('<int:sala_id>/toggle-notas/', salas_views.toggle_notas_liberadas, name='toggle_notas_liberadas'),

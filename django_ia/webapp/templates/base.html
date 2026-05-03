@@ -1,45 +1,200 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Agente de treinamento </title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
-    <link href="{% static 'css/prism.css' %}" rel="stylesheet" />
-    <link rel="stylesheet" href="{% static 'css/chat.css' %}">
-    {% block extra_head %}{% endblock %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Simulador de Vendas</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap + FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- App CSS -->
+  <link href="{% static 'css/prism.css' %}" rel="stylesheet">
+  <link href="{% static 'css/chat.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+
+  {% block extra_head %}{% endblock %}
+
+  {# ── Paleta global: navy enterprise (sobrescreve !important dos templates) ── #}
+  <style>
+    :root {
+      --ram-p1: #1D4ED8;
+      --ram-p2: #0EA5E9;
+      --ram-glow: rgba(29,78,216,.38);
+      --ram-glow-sm: rgba(29,78,216,.25);
+    }
+    body {
+      background: linear-gradient(135deg,#050D1A 0%,#091528 55%,#0C1B35 100%) !important;
+    }
+    /* Hero cards — troca roxo por azul/ciano */
+    .bv-hero,.salas-hero,.detalhe-hero,.sc-hero,.hp-hero,.rk-hero {
+      background: linear-gradient(135deg,rgba(29,78,216,.84) 0%,rgba(6,182,212,.72) 100%) !important;
+      box-shadow: 0 20px 60px var(--ram-glow) !important;
+    }
+    /* Botões primários */
+    .btn-criar,.btn-start,.btn-entrar,.btn-entrar-sala,
+    button.btn-entrar,a.btn-criar {
+      background: linear-gradient(135deg,var(--ram-p1),var(--ram-p2)) !important;
+      box-shadow: 0 4px 18px var(--ram-glow-sm) !important;
+    }
+    /* Avatares / ícones coloridos */
+    .room-card-avatar,.part-avatar,.rk-avatar-sm,.sim-avatar,
+    .add-room-card .add-icon {
+      background: linear-gradient(135deg,var(--ram-p1),var(--ram-p2)) !important;
+      box-shadow: 0 4px 14px var(--ram-glow-sm) !important;
+    }
+    /* Gradiente da barra de cards individuais */
+    .room-card::before,.sim-item::before {
+      background: linear-gradient(90deg,var(--ram-p1),var(--ram-p2)) !important;
+    }
+    /* Links de seção */
+    .section-label,.rk-section,.ds-section,.audit-section-title {
+      color: #60A5FA !important;
+    }
+    /* Chips hero */
+    .hp-chip,.ds-room-code {
+      background: rgba(29,78,216,.2) !important;
+      border-color: rgba(29,78,216,.35) !important;
+    }
+    /* input focus ring */
+    .modal-input-box input:focus,
+    .input-group-custom input:focus {
+      border-color: rgba(29,78,216,.7) !important;
+      background: rgba(29,78,216,.1) !important;
+      box-shadow: 0 0 0 3px rgba(29,78,216,.2) !important;
+    }
+    /* ── Toasts de mensagens ── */
+    #app-toasts {
+      position: fixed; top: 1.1rem; right: 1.1rem; z-index: 9999;
+      display: flex; flex-direction: column; gap: .55rem;
+      max-width: 360px; pointer-events: none;
+    }
+    .app-toast {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .75rem 1rem; border-radius: 13px;
+      background: rgba(15,20,40,.96);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 8px 32px rgba(0,0,0,.45);
+      pointer-events: all;
+      animation: toastSlideIn .3s ease;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    @keyframes toastSlideIn {
+      from { opacity:0; transform:translateX(50px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+    .app-toast-icon { font-size: .95rem; flex-shrink:0; }
+    .app-toast-msg  { font-size: .82rem; color:rgba(255,255,255,.88); flex:1; line-height:1.4; }
+    .app-toast-close {
+      background:none; border:none; cursor:pointer;
+      color:rgba(255,255,255,.3); font-size:.72rem; padding:.15rem .3rem; flex-shrink:0;
+      transition:color .2s;
+    }
+    .app-toast-close:hover { color:rgba(255,255,255,.75); }
+    /* Cores por tipo */
+    .app-toast-success, .app-toast-success.app-toast-success {
+      border-color:rgba(34,197,94,.3);
+    }
+    .app-toast-success .app-toast-icon { color:#4ade80; }
+    .app-toast-error, .app-toast-danger {
+      border-color:rgba(239,68,68,.3);
+    }
+    .app-toast-error .app-toast-icon,
+    .app-toast-danger .app-toast-icon { color:#f87171; }
+    .app-toast-warning { border-color:rgba(251,191,36,.3); }
+    .app-toast-warning .app-toast-icon { color:#fbbf24; }
+    .app-toast-info { border-color:rgba(96,165,250,.3); }
+    .app-toast-info .app-toast-icon { color:#60a5fa; }
+
+    /* Responsivo: garante que páginas com padding fixo funcionem em mobile */
+    @media (max-width: 900px) {
+      .bv-page, .hp-page, .rk-page, .ds-page,
+      .salas-page, .detalhe-page, .sc-page {
+        padding-top: 4.2rem !important;  /* espaço para o toggle */
+      }
+    }
+    @media (max-width: 600px) {
+      .bv-page, .hp-page, .rk-page, .ds-page,
+      .salas-page, .detalhe-page, .sc-page {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    {% if user.is_authenticated %}
-        {% include "navbar.html" %}
-    {% endif %}
-    <div class="{% if user.is_authenticated or request.resolver_match.url_name == 'registro' %}container bg-secondary-subtle{% endif %}">
-        <br>
+{% if not user.is_authenticated and request.resolver_match.url_name != 'registro' %}
 
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            {{message}}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-        {% endif %}
+  {# Usuário não autenticado e não está no registro: mostra login #}
+  {% include "signin.html" %}
 
-                {% if user.is_authenticated or request.resolver_match.url_name == 'registro' %}
-            <h2 class="text-center" > {{ view_data.titulo }} </h2> 
-            <br>
-            {% block content %}
-            {% endblock %}
-                {% else %}
-            {% include "signin.html" %}
-        {% endif %}
-    </div>
- 
-    </div>
+{% else %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
-<script src=" {% static 'js/prism.js' %}"></script>
+  {# Autenticado → sidebar + main. Registro sem login → sem sidebar #}
+  {% if user.is_authenticated %}
+  <div class="app-shell">
+    {% include "sidebar.html" %}
+    <main class="app-main">
+      {% if messages %}
+      <div id="app-toasts">
+        {% for message in messages %}
+        <div class="app-toast app-toast-{{ message.tags }}">
+          <span class="app-toast-icon">
+            {% if 'success' in message.tags %}<i class="fas fa-check-circle"></i>
+            {% elif 'error' in message.tags or 'danger' in message.tags %}<i class="fas fa-times-circle"></i>
+            {% elif 'warning' in message.tags %}<i class="fas fa-exclamation-triangle"></i>
+            {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+          </span>
+          <span class="app-toast-msg">{{ message }}</span>
+          <button class="app-toast-close" onclick="this.closest('.app-toast').remove()" title="Fechar">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+  {% endif %}
+
+      {% block content %}{% endblock %}
+
+  {% if user.is_authenticated %}
+    </main>
+  </div>
+  {% endif %}
+
+{% endif %}
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/prism.js' %}"></script>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('app-sidebar').classList.toggle('sidebar-open');
+  document.getElementById('sidebar-overlay').classList.toggle('sidebar-open');
+}
+function closeSidebar() {
+  document.getElementById('app-sidebar').classList.remove('sidebar-open');
+  document.getElementById('sidebar-overlay').classList.remove('sidebar-open');
+}
+// Auto-dismiss toasts
+document.querySelectorAll('.app-toast').forEach(function(t, i) {
+  setTimeout(function() {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(50px)';
+    setTimeout(function() { t.remove(); }, 370);
+  }, 4000 + i * 500);
+});
+</script>
+
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

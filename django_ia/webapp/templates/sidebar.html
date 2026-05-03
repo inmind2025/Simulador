@@ -1,0 +1,83 @@
+{% load static %}
+<aside class="app-sidebar" id="app-sidebar">
+
+  <!-- Brand -->
+  <a href="{% if user.profile.role == 'administrador' %}{% url 'dashboard' %}{% else %}{% url 'bem_vindo' %}{% endif %}" class="sidebar-brand">
+    <div class="sidebar-brand-icon">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <span class="brand-name">Simulador</span>
+  </a>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+
+    {% if user.profile.role == 'administrador' %}
+
+      <div class="sidebar-section">Menu</div>
+
+      <a href="{% url 'dashboard' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-pie"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="{% url 'lista_salas_admin' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'lista_salas_admin' or request.resolver_match.url_name == 'criar_sala' or request.resolver_match.url_name == 'editar_sala' or request.resolver_match.url_name == 'detalhe_sala_admin' or request.resolver_match.url_name == 'dashboard_sala' or request.resolver_match.url_name == 'ranking_sala' %}active{% endif %}">
+        <i class="fas fa-door-open"></i>
+        <span>Minhas Salas</span>
+      </a>
+
+    {% else %}
+
+      <div class="sidebar-section">Menu</div>
+
+      <a href="{% url 'bem_vindo' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'bem_vindo' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span>Início</span>
+      </a>
+
+      <a href="{% url 'historico_simulacoes' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'historico_simulacoes' or request.resolver_match.url_name == 'conversation_detail' %}active{% endif %}">
+        <i class="fas fa-history"></i>
+        <span>Meu Histórico</span>
+      </a>
+
+      <a href="{% url 'performance' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'performance' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Performance</span>
+      </a>
+
+    {% endif %}
+
+  </nav>
+
+  <!-- Rodapé: usuário + sair -->
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-user-avatar">
+        {{ user.first_name|first|upper|default:user.username|first|upper }}
+      </div>
+      <div class="sidebar-user-info">
+        <span class="sidebar-username">{{ user.get_full_name|default:user.username }}</span>
+        {% if user.profile.role == 'administrador' %}
+        <span class="sidebar-role">Administrador</span>
+        {% endif %}
+      </div>
+    </div>
+    <a href="{% url 'signout' %}" class="sidebar-logout" title="Sair">
+      <i class="fas fa-sign-out-alt"></i>
+    </a>
+  </div>
+
+</aside>
+
+<!-- Overlay mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- Botão toggle mobile (44×44px para toque acessível) -->
+<button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Abrir menu">
+  <i class="fas fa-bars"></i>
+</button>

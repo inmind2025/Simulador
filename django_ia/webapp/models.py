@@ -52,6 +52,34 @@ class SimulacaoAtendimento(models.Model):
     def __str__(self):
         return f"Simulação de {self.user.username} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
 
+    @property
+    def duracao_formatada(self):
+        if not (self.end_time and self.start_time):
+            return None
+        secs = int((self.end_time - self.start_time).total_seconds())
+        if secs <= 0:
+            return None
+        m, s = divmod(secs, 60)
+        if m >= 60:
+            h, m2 = divmod(m, 60)
+            return f"{h}h {m2:02d}min"
+        return f"{m}min {s:02d}s" if m else f"{s}s"
+
+    @property
+    def tempo_medio_resposta_formatado(self):
+        msgs = list(self.mensagens.order_by('timestamp'))
+        deltas = []
+        for i, msg in enumerate(msgs):
+            if msg.sender == 'vendedor_usuario' and i > 0 and msgs[i - 1].sender == 'cliente_ia':
+                delta = (msg.timestamp - msgs[i - 1].timestamp).total_seconds()
+                if 0 < delta < 1800:
+                    deltas.append(delta)
+        if not deltas:
+            return None
+        avg = round(sum(deltas) / len(deltas))
+        m, s = divmod(avg, 60)
+        return f"{m}min {s:02d}s" if m else f"{s}s"
+
 class MensagemSimulacao(models.Model):
     """
     Representa uma única mensagem dentro de uma sessão de simulação de atendimento.
@@ -103,6 +131,9 @@ class Sala(models.Model):
     personagens_disponiveis = models.ManyToManyField(Personagem, related_name='salas')
     participantes = models.ManyToManyField(User, related_name='salas_participando', blank=True)
     notas_liberadas = models.BooleanField(default=False)
+    TIPO_CHOICES = [('simulacao', 'Simulação'), ('prova', 'Prova')]
+    tipo_atividade = models.CharField(max_length=10, choices=TIPO_CHOICES, default='simulacao')
+    correcao_automatica = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.codigo_acesso:

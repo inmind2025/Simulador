@@ -1,10 +1,12 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    /* ── Reset page layout para chat fullscreen ── */
+    /* DISC: Analítico — azul */
+    :root { --disc: #3b82f6; --disc-dark: #1d4ed8; --disc-rgb: 59,130,246; --navbar-h: 56px; }
+
     html, body { height: 100%; overflow: hidden; }
     body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; }
     .container.bg-secondary-subtle {
@@ -12,11 +14,9 @@
         padding: 0 !important; margin: 0 !important;
         max-width: 100% !important; width: 100% !important;
     }
-    .container.bg-secondary-subtle > br { display: none; }
+    .container.bg-secondary-subtle > br,
     .container.bg-secondary-subtle > h2 { display: none; }
 
-    /* ── Wrapper ocupa tudo abaixo do navbar ── */
-    :root { --navbar-h: 56px; }
     .chat-wrapper {
         position: fixed;
         top: var(--navbar-h);
@@ -27,7 +27,7 @@
         box-sizing: border-box;
     }
 
-    /* ── Contentor principal do chat ── */
+    /* â”€â”€ Contentor principal do chat â”€â”€ */
     .chat-container {
         width: 100%; max-width: 780px;
         background: rgba(255,255,255,.06);
@@ -40,9 +40,9 @@
         box-shadow: 0 24px 64px rgba(0,0,0,.5);
     }
 
-    /* ── Header ── */
+    /* Header */
     .chat-header {
-        background: linear-gradient(135deg, rgba(59,130,246,.85) 0%, rgba(37,117,252,.85) 100%);
+        background: linear-gradient(135deg, rgba(var(--disc-rgb),.85) 0%, rgba(var(--disc-rgb),.6) 100%);
         padding: .85rem 1rem;
         display: flex; align-items: center; justify-content: space-between; gap: .75rem;
         flex-shrink: 0;
@@ -59,7 +59,9 @@
     .char-name { font-size: .95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .char-sub  { font-size: .72rem; color: rgba(255,255,255,.65); display: flex; align-items: center; gap: .3rem; }
     .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; }
-
+    .header-stats { display:flex; gap:.45rem; align-items:center; }
+    .hstat { display:flex; align-items:center; gap:.35rem; font-size:.72rem; color:rgba(255,255,255,.9); font-weight:700; background:rgba(255,255,255,.15); border-radius:20px; padding:.28rem .7rem; }
+    .hstat i { font-size:.6rem; opacity:.75; }
     .btn-end {
         background: rgba(239,68,68,.2); border: 1px solid rgba(239,68,68,.4);
         color: #fca5a5; border-radius: 8px; padding: .4rem .85rem;
@@ -68,7 +70,7 @@
     }
     .btn-end:hover { background: rgba(239,68,68,.35); border-color: rgba(239,68,68,.6); color: #fff; }
 
-    /* ── Mensagens ── */
+    /* â”€â”€ Mensagens â”€â”€ */
     .chat-history {
         flex: 1; overflow-y: auto; padding: 1rem;
         display: flex; flex-direction: column; gap: .75rem;
@@ -126,7 +128,7 @@
     .typing-dots span:nth-child(3) { animation-delay: .4s; }
     @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
 
-    /* ── Input area ── */
+    /* â”€â”€ Input area â”€â”€ */
     .chat-input-area {
         padding: .75rem 1rem;
         border-top: 1px solid rgba(255,255,255,.08);
@@ -138,26 +140,26 @@
         flex: 1;
         background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
         border-radius: 12px; padding: .7rem 1rem;
-        color: #fff; font-size: 1rem; /* ≥16px evita zoom no iOS */
+        color: #fff; font-size: 1rem; /* â‰¥16px evita zoom no iOS */
         outline: none; transition: all .22s; resize: none;
         max-height: 100px; overflow-y: auto;
         font-family: inherit;
     }
     .chat-input::placeholder { color: rgba(255,255,255,.3); }
-    .chat-input:focus { border-color: rgba(59,130,246,.6); background: rgba(59,130,246,.08); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+    .chat-input:focus { border-color: rgba(var(--disc-rgb),.6); background: rgba(var(--disc-rgb),.08); box-shadow: 0 0 0 3px rgba(var(--disc-rgb),.15); }
     .btn-send {
         width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--disc), var(--disc-dark));
         color: #fff; border: none; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         font-size: .9rem; transition: all .22s;
-        box-shadow: 0 4px 12px rgba(59,130,246,.4);
+        box-shadow: 0 4px 12px rgba(var(--disc-rgb),.4);
     }
-    .btn-send:hover  { transform: scale(1.08); box-shadow: 0 6px 18px rgba(59,130,246,.55); }
+    .btn-send:hover  { transform: scale(1.08); box-shadow: 0 6px 18px rgba(var(--disc-rgb),.55); }
     .btn-send:active { transform: scale(.96); }
     .btn-send:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    /* ── Modal dark ── */
+    /* â”€â”€ Modal dark â”€â”€ */
     .dark-modal .modal-content {
         background: rgba(15,12,41,.95); border: 1px solid rgba(255,255,255,.12);
         backdrop-filter: blur(20px); color: #fff; border-radius: 18px;
@@ -168,15 +170,13 @@
     .dark-modal .modal-body   { color: rgba(255,255,255,.7); }
     .dark-modal .btn-close    { filter: invert(1); }
 
-    /* ── Mobile: navbar pode ser menor (≤576px) ── */
     @media (max-width: 576px) {
         :root { --navbar-h: 54px; }
         .chat-wrapper { padding: .4rem; padding-bottom: calc(.4rem + env(safe-area-inset-bottom)); }
         .chat-container { border-radius: 14px; }
-        .chat-header { padding: .7rem .85rem; }
         .char-sub { display: none; }
         .chat-history { padding: .75rem .7rem; }
-        .chat-input { font-size: 1rem; }
+        .header-stats { display:none; }
     }
 </style>
 {% endblock %}
@@ -185,21 +185,23 @@
 <div class="chat-wrapper">
     <div class="chat-container">
 
-        <!-- Header -->
         <div class="chat-header">
             <div class="chat-header-center">
-                <div class="char-avatar">{{ personagem.short_name|first|upper }}</div>
+                <div class="char-avatar"><i class="fas fa-user"></i></div>
                 <div class="char-info">
-                    <div class="char-name">{{ personagem.short_name }}</div>
-                    <div class="char-sub"><span class="online-dot"></span> Simulação ativa · perfil analítico</div>
+                    <div class="char-name">Cliente</div>
+                    <div class="char-sub"><span class="online-dot"></span> em andamento</div>
                 </div>
+            </div>
+            <div class="header-stats">
+                <div class="hstat"><i class="fas fa-clock"></i> <span id="sim-timer">00:00</span></div>
+                <div class="hstat"><i class="fas fa-comment-dots"></i> <span id="sim-msgs">0</span></div>
+                <div class="hstat"><i class="fas fa-stopwatch"></i> <span id="sim-avg">—</span></div>
             </div>
             <button type="button" class="btn-end" data-bs-toggle="modal" data-bs-target="#confirmEndModal">
                 <i class="fas fa-stop-circle"></i> Finalizar
             </button>
         </div>
-
-        <!-- Mensagens -->
         <div class="chat-history" id="chat-history-display">
             {% for entry in chat_display %}
                 {% if entry.role == 'user' %}
@@ -212,9 +214,9 @@
                     </div>
                 {% elif entry.role == 'model' %}
                     <div class="message cliente-ia">
-                        <div class="msg-avatar">{{ personagem.short_name|first|upper }}</div>
+                        <div class="msg-avatar">C</div>
                         <div class="message-content">
-                            <div class="message-sender">{{ personagem.short_name }}</div>
+                            <div class="message-sender">Cliente</div>
                             {{ entry.parts.0 }}
                         </div>
                     </div>
@@ -223,7 +225,7 @@
 
             <!-- Indicador de digitação -->
             <div class="message cliente-ia typing-indicator" id="typing-indicator">
-                <div class="msg-avatar">{{ personagem.short_name|first|upper }}</div>
+                <div class="msg-avatar">C</div>
                 <div class="typing-dots">
                     <span></span><span></span><span></span>
                 </div>
@@ -263,6 +265,16 @@
 </div>
 
 <script>
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        for (const c of document.cookie.split(';')) {
+            const t = c.trim();
+            if (t.startsWith(name + '=')) { v = decodeURIComponent(t.slice(name.length + 1)); break; }
+        }
+    }
+    return v;
+}
 document.addEventListener('DOMContentLoaded', function () {
     const sendBtn    = document.getElementById('send-button');
     const inputEl    = document.getElementById('vendedor-message');
@@ -296,20 +308,28 @@ document.addEventListener('DOMContentLoaded', function () {
     function setLoading(on) {
         sendBtn.disabled = on;
         typingEl.classList.toggle('visible', on);
+        if (!on) _lastAiTs = Date.now();
         scrollToBottom();
     }
 
     function handleSend() {
         const msg = inputEl.value.trim();
         if (!msg) return;
+        if (_lastAiTs !== null) {
+            _respTimes.push(Date.now() - _lastAiTs);
+            _lastAiTs = null;
+            var avg = _respTimes.reduce(function(a,b){return a+b;},0) / _respTimes.length;
+            document.getElementById('sim-avg').textContent = _fmtAvg(avg);
+        }
         addMessage('user', 'Vendedor (Você)', msg);
+        document.getElementById('sim-msgs').textContent = ++_msgs;
         inputEl.value = '';
         inputEl.style.height = 'auto';
         setLoading(true);
 
         fetch("{% url 'enviar_resposta_vendedor' %}", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
             body: JSON.stringify({ message: msg })
         })
         .then(r => r.json())
@@ -318,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.error) {
                 addMessage('model', 'Erro', data.error);
             } else {
-                addMessage('model', '{{ personagem.short_name|escapejs }}', data.customer_response);
+                addMessage('model', 'Cliente', data.customer_response);
             }
         })
         .catch(() => {
@@ -333,6 +353,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     scrollToBottom();
+
+    var _start = Date.now(), _msgs = 0, _lastAiTs = null, _respTimes = [];
+    setInterval(function(){
+        var e = Math.floor((Date.now()-_start)/1000);
+        document.getElementById('sim-timer').textContent =
+            Math.floor(e/60).toString().padStart(2,'0')+':'+(e%60).toString().padStart(2,'0');
+    }, 1000);
+    function _fmtAvg(ms) {
+        var s = Math.round(ms/1000);
+        return s < 60 ? s+'s' : Math.floor(s/60)+'m'+(s%60).toString().padStart(2,'0')+'s';
+    }
 });
 </script>
 {% endblock %}

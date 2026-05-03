@@ -123,8 +123,16 @@ class SalaForm(forms.ModelForm):
 
     class Meta:
         model = Sala
-        fields = ['nome', 'capacidade_maxima', 'personagens_disponiveis']
+        fields = ['nome', 'capacidade_maxima', 'personagens_disponiveis', 'tipo_atividade', 'correcao_automatica']
         labels = {
             'nome': 'Nome da Sala',
             'capacidade_maxima': 'Nº Máximo de Participantes',
+            'tipo_atividade': 'Tipo de Atividade',
+            'correcao_automatica': 'Correção Automática ao Término',
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('tipo_atividade') == 'prova':
+            cleaned_data['correcao_automatica'] = False
+        return cleaned_data

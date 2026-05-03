@@ -25,8 +25,70 @@ from django.urls import reverse
 # --- O resto do seu código (suas views) começa aqui ---
 
 # Substitua pela sua chave de API do Gemini
-GEMINI_API_KEY = "AIzaSyBogX8bbgaMhtLc8m5_Hi67MDH4sfU0iX0"  
-# GEMINI_API_KEY = "AIzaSyB6em4DeHZYuIydgpSD3kwq4rmWOjH7Psc"
+GEMINI_API_KEY = "AIzaSyCpRFKl-QyPK_xYOHQxSKXHyeoIYtVsBPE"
+# GEMINI_API_KEY = "AIzaSyCpRFKl-QyPK_xYOHQxSKXHyeoIYtVsBPE"
+
+import random as _random
+
+_CATALOGO_PRODUTOS = [
+    # Cozinha
+    'geladeira', 'fogão', 'micro-ondas', 'cooktop', 'coifa', 'forno elétrico',
+    'airfryer', 'cafeteira', 'liquidificador', 'batedeira', 'purificador de água',
+    'freezer', 'adega',
+    # Lavanderia
+    'máquina de lavar', 'lava e seca', 'ferro de passar',
+    # Climatização
+    'ar-condicionado', 'ventilador', 'climatizador',
+    # Limpeza
+    'aspirador', 'robô aspirador',
+    # Som & Imagem
+    'TV', 'soundbar', 'caixa de som', 'home theater',
+    # Informática
+    'notebook', 'desktop', 'monitor', 'impressora',
+    # Mobile & Foto
+    'celular', 'tablet', 'câmera',
+    # Rede & Segurança
+    'roteador', 'câmera de segurança', 'videoporteiro', 'lâmpada inteligente',
+    # Móveis & Colchões
+    'sofá', 'rack', 'guarda-roupa', 'cômoda', 'mesa e cadeiras', 'colchão',
+]
+
+_TIPOS_OBJECAO = [
+    'preço alto ("tá caro", "vi mais barato")',
+    'comparação com concorrência ("na outra loja tá mais barato")',
+    'falta de urgência ("meu produto antigo ainda funciona")',
+    'dúvida sobre qualidade ou durabilidade ("parece frágil")',
+    'condições de pagamento ("não quero parcelar", "meu cartão tá cheio")',
+    'dúvida sobre garantia e assistência técnica ("e se der problema?")',
+    'medo de arrependimento ("e se eu me arrepender?")',
+    'precisa consultar familiar antes de decidir',
+    'prazo ou condição de entrega ("demora muito?")',
+    'experiência ruim anterior com a loja ou a marca',
+    'dificuldade em perceber diferença para um modelo mais barato',
+    'falta de dinheiro no momento ("esse mês tô apertado")',
+]
+
+def _sortear_simulacao():
+    produto = _random.choice(_CATALOGO_PRODUTOS)
+    objecoes = _random.sample(_TIPOS_OBJECAO, k=3)
+    return produto, objecoes
+
+def _injecao_sorteio(produto, objecoes):
+    lista = '\n'.join(f'  {i+1}. {o}' for i, o in enumerate(objecoes))
+    return f"""
+________________________________________
+CONFIGURAÇÃO OBRIGATÓRIA DESTA SIMULAÇÃO
+(Esta seção tem prioridade máxima e sobrepõe qualquer produto ou objeção mencionados anteriormente neste prompt.)
+
+PRODUTO DE INTERESSE NESTA SIMULAÇÃO: {produto}
+  → Este é o único produto que você quer comprar. Mantenha esse foco durante toda a conversa.
+  → Se o vendedor oferecer outro produto sem antes entender sua necessidade, recuse gentilmente ou aguarde ser perguntado.
+
+OBJEÇÕES DESTA SIMULAÇÃO (use-as uma por vez, conforme a conversa evoluir naturalmente):
+{lista}
+  → Levante APENAS estas objeções, de forma espaçada e natural. Não invente outras.
+________________________________________
+"""
 
 @login_required
 def dominante(request):
@@ -36,7 +98,7 @@ def dominante(request):
     # Verifica se é o início de uma nova simulação (sem histórico na sessão) 
     if 'chat_display' not in request.session: 
         initial_prompt = '''
-        PROMPT — Agente Cliente DISC-D (Ramsons) - Perfil Lucas Andrade
+        PROMPT — Agente Cliente DISC-D  - Perfil Lucas Andrade
 Você é Lucas Andrade, um cliente com perfil Dominante (DISC-D) e exigências de alto padrão, simulando uma compra real na loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades). Seu comportamento é direto, objetivo e orientado a resultados, como um Diretor de Operações de uma startup de logística. Seu tempo é extremamente valioso, e você não tolera enrolação. A conversa deve ser mais simples e natural.
 ________________________________________
 REGRAS DO PAPEL
@@ -44,9 +106,9 @@ REGRAS DO PAPEL
 •   Comece mudo, exibindo apenas: ...
 •   Responda somente após o vendedor iniciar a conversa.
 •   Prefixe todas as suas falas com: Cliente:
-•   Fale de forma direta e simples, com frases curtas e naturais, entre 5 e 15 palavras.
+•   Fale de forma direta e simples, como se estivesse realmente em uma loja física — respostas curtas e naturais, sem formalidade excessiva.
 •   Seja claro e objetivo, mas mostre também algumas dúvidas reais e típicas de um cliente de loja.
-•   Não use termos excessivamente técnicos ou complexos. A conversa deve ser como se você estivesse realmente em uma loja física, de maneira descomplicada.
+•   Não use termos excessivamente técnicos ou complexos.
 •   Não aja como vendedor, nem dê conselhos técnicos ao vendedor.
 ________________________________________
 PERFIL DO CLIENTE - LUCAS ANDRADE
@@ -56,10 +118,8 @@ PERFIL DO CLIENTE - LUCAS ANDRADE
 •   Motivadores emocionais: Você sente urgência em resolver a compra, e busca sempre controle e certeza de que fez a escolha certa.
 ________________________________________
 PRODUTO DE INTERESSE
-•   Regra: Não comece a conversa detalhando todas as suas necessidades. Aguarde o vendedor perguntar sobre o que você precisa e responda de forma simples.
-•   Sua necessidade principal é completar a sua cozinha nova, com foco prioritário em refrigerador ou fogão.
-•   Em cada interação, escolha um produto diferente, mas sempre dentro do seu perfil.
-•   Alterne entre categorias, nunca repetindo geladeira e micro-ondas seguidamente.
+•   Regra: Não comece a conversa detalhando suas necessidades. Aguarde o vendedor perguntar o que você procura e responda de forma simples.
+•   O produto que você quer comprar nesta simulação está definido na seção CONFIGURAÇÃO OBRIGATÓRIA, mais abaixo. Siga-o.
 •   Categorias disponíveis (sem citar marcas/modelos):
 o   Cozinha: Geladeira, fogão, micro-ondas, cooktop, coifa, forno elétrico, airfryer, cafeteira, sanduicheira, liquidificador, batedeira, panela elétrica, purificador de água, freezer, adega.
 o   Lavanderia: Máquina de lavar, lava e seca, ferro de passar.
@@ -154,12 +214,13 @@ FORMATAÇÃO INICIAL
             # 2. Armazene o ID da simulação na sessão para associar as futuras mensagens
             request.session['current_simulacao_id'] = simulacao.id
 
-            # O histórico 'interno' do Gemini começa com o prompt de sistema. 
+            # Injeta produto e objeções sorteados para garantir variação entre simulações
+            initial_prompt += _injecao_sorteio(*_sortear_simulacao())
+
             gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
             chat = model.start_chat(history=gemini_internal_history)
-            
-            # Gerar a primeira fala do cliente (Gemini) baseada no prompt. 
-            response = chat.send_message("Estou pronto para simular.") 
+
+            response = chat.send_message("Estou pronto para simular.")
             
             customer_first_dialogue = response.text.strip()
             
@@ -615,25 +676,27 @@ def reiniciar_simulacao(request):
     if 'current_simulacao_id' in request.session:
         try:
             simulacao = SimulacaoAtendimento.objects.get(id=request.session['current_simulacao_id'])
-            if not simulacao.end_time: # Só atualiza se ainda não tiver sido definida
-                simulacao.end_time = timezone.now() 
+            if not simulacao.end_time:
+                simulacao.end_time = timezone.now()
                 simulacao.save()
-        except SimulacaoAtendimento.DoesNotExist:
-            pass # A simulação pode já ter sido excluída ou nunca existiu
-        # Sempre remove o ID da sessão, mesmo que não consiga atualizar o DB
-        del request.session['current_simulacao_id'] 
 
-    # Limpa os históricos da sessão para iniciar uma nova simulação
-    if 'chat_display' in request.session:
-        del request.session['chat_display']
-    if 'gemini_chat_internal_history' in request.session:
-        del request.session['gemini_chat_internal_history']
-    
-    # Se 'gemini_chat_id' não é mais usado, pode ser removido
-    if 'gemini_chat_id' in request.session:
-        del request.session['gemini_chat_id']
-    
-    messages.info(request, "Simulação finalizada com sucesso!") # Mensagem para o usuário
+                # Correção automática — só para salas do tipo Simulação
+                sala = simulacao.sala
+                if sala and sala.correcao_automatica and sala.tipo_atividade != 'prova':
+                    try:
+                        from webapp.views.salas import _executar_auditoria
+                        _executar_auditoria(simulacao)
+                        messages.success(request, "Simulação finalizada e corrigida automaticamente!")
+                    except Exception:
+                        messages.warning(request, "Simulação finalizada! A correção automática não pôde ser concluída.")
+                else:
+                    messages.info(request, "Simulação finalizada com sucesso!")
+        except SimulacaoAtendimento.DoesNotExist:
+            pass
+        del request.session['current_simulacao_id']
+
+    for key in ('chat_display', 'gemini_chat_internal_history', 'gemini_chat_id'):
+        request.session.pop(key, None)
 
     return redirect('bem_vindo')
 
@@ -657,7 +720,7 @@ def performance(request):
     auditorias = AuditoriaSimulacao.objects.filter(
         simulacao__user=user,
         simulacao__sala__notas_liberadas=True,
-    ).select_related('simulacao').order_by('simulacao__start_time')
+    ).select_related('simulacao').prefetch_related('simulacao__mensagens').order_by('simulacao__start_time')
 
     notas = [a.nota_total for a in auditorias]
     media_nota = round(sum(notas) / len(notas), 1) if notas else None
@@ -743,15 +806,33 @@ def performance(request):
     # Auditorias detalhadas para exibição ao aluno (mais recentes primeiro)
     auditorias_detalhes = list(auditorias.order_by('-simulacao__start_time'))
 
-    # Últimas 5 simulações com notas
+    # Tempo médio de resposta global (todas as simulações concluídas)
+    all_deltas = []
+    for sim in SimulacaoAtendimento.objects.filter(
+        user=user, end_time__isnull=False
+    ).prefetch_related('mensagens'):
+        msgs = list(sim.mensagens.order_by('timestamp'))
+        for i, msg in enumerate(msgs):
+            if msg.sender == 'vendedor_usuario' and i > 0 and msgs[i-1].sender == 'cliente_ia':
+                delta = (msg.timestamp - msgs[i-1].timestamp).total_seconds()
+                if 0 < delta < 1800:
+                    all_deltas.append(delta)
+    if all_deltas:
+        avg_s = round(sum(all_deltas) / len(all_deltas))
+        _m, _s = divmod(avg_s, 60)
+        media_tempo_resposta = f"{_m}min {_s:02d}s" if _m else f"{_s}s"
+    else:
+        media_tempo_resposta = None
+
+    # Últimas simulações com notas
     ultimas_sims = []
-    for s in sims.order_by('-start_time')[:10]:
+    for s in sims.order_by('-start_time').prefetch_related('mensagens')[:10]:
         try:
             aud = s.auditoria
         except Exception:
             aud = None
         msgs_count = MensagemSimulacao.objects.filter(simulacao=s, sender='vendedor_usuario').count()
-        ultimas_sims.append({'sim': s, 'auditoria': aud, 'msgs': msgs_count})
+        ultimas_sims.append({'sim': s, 'auditoria': aud, 'msgs': msgs_count, 'tempo_medio': s.tempo_medio_resposta_formatado})
 
     context = {
         'views': {'id': 'performance', 'titulo': 'Minha Performance'},
@@ -770,6 +851,7 @@ def performance(request):
         'salas_data': salas_data,
         'ultimas_sims': ultimas_sims,
         'auditorias_detalhes': auditorias_detalhes,
+        'media_tempo_resposta': media_tempo_resposta,
     }
     return render(request, 'performance.html', context)
 
@@ -838,7 +920,7 @@ def influente(request):
 
     if 'chat_display' not in request.session: 
         initial_prompt = '''
-         PROMPT — Agente Cliente DISC-I (Ramsons) - Perfil Mariana Lobo
+         PROMPT — Agente Cliente DISC-I  - Perfil Mariana Lobo
 Você é um agente que simula Mariana Lobo, uma cliente com perfil Influente (DISC-I), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
 ________________________________________
 REGRAS DE PAPEL
@@ -846,7 +928,7 @@ REGRAS DE PAPEL
     Comece mudo, exibindo apenas: ...
     Responda somente após o vendedor iniciar a conversa.
     Prefixe todas as falas com: Cliente:
-    Fale em frases curtas, leves e naturais (5 a 15 palavras).
+    Fale em frases curtas, leves e naturais, como se estivesse em uma loja física — sem formalidade excessiva.
     Nunca aja como vendedor nem dê conselhos técnicos.
     Não faça falas exageradas ou teatrais.
 
@@ -868,12 +950,8 @@ O QUE NÃO FAZER
     Não deixar de passar os dados pessoais para cadastro.
 ________________________________________
 PRODUTO DE INTERESSE
-    Sua necessidade principal é uma televisão de alta tecnologia e com áudio imersivo. O objetivo é ter um equipamento que combine com a decoração minimalista do estúdio de pilates e que facilite a produção de conteúdo.
-Você deve sempre perguntar o preço do produto no início da conversa, assim que o vendedor apresentar a oferta.
-    Em cada interação, escolha um produto DIFERENTE do anterior.
-    Quando houver vários clientes logados simultaneamente, cada um deve estar interessado em um produto diferente.
-    Alterne categorias (cozinha, lavanderia, climatização, limpeza, som & imagem, informática, mobile & foto, rede & segurança, móveis & colchões).
-    Nunca repita geladeira e micro-ondas em sequência.
+    O produto que você quer comprar nesta simulação está definido na seção CONFIGURAÇÃO OBRIGATÓRIA, mais abaixo. Siga-o.
+    Pergunte o preço assim que o vendedor apresentar a oferta.
     Categorias disponíveis (sem citar marcas/modelos):
     Cozinha: geladeira, fogão, micro-ondas, cooktop, coifa, forno elétrico, airfryer, cafeteira, sanduicheira, liquidificador, batedeira, panela elétrica, purificador de água, freezer, adega
     Lavanderia: máquina de lavar, lava e seca, ferro de passar
@@ -945,7 +1023,7 @@ ________________________________________
 FORMATAÇÃO INICIAL
     Ao iniciar, exiba apenas: ... e aguarde o vendedor.
         '''
-        
+
         try:
             sala_id = request.session.get('current_sala_id')
             sala = Sala.objects.get(id=sala_id) if sala_id else None
@@ -963,10 +1041,12 @@ FORMATAÇÃO INICIAL
             )
             request.session['current_simulacao_id'] = simulacao.id
 
+            initial_prompt += _injecao_sorteio(*_sortear_simulacao())
+
             gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
             chat = model.start_chat(history=gemini_internal_history)
-            
-            response = chat.send_message("Estou pronto para simular.") 
+
+            response = chat.send_message("Estou pronto para simular.")
             
             customer_first_dialogue = response.text.strip()
             
@@ -1008,7 +1088,7 @@ def analitico(request):
 
     if 'chat_display' not in request.session: 
         initial_prompt = '''
-     PROMPT — Agente Cliente DISC-C (Ramsons) - Perfil Eliane Souza
+     PROMPT — Agente Cliente DISC-C  - Perfil Eliane Souza
 Você é um agente que simula Eliane Souza, uma cliente com perfil Cautelosa e Analítica (DISC-C), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
 ________________________________________
 REGRAS DE PAPEL
@@ -1016,11 +1096,11 @@ REGRAS DE PAPEL
 •   Comece mudo, exibindo apenas: ...
 •   Responda somente após o vendedor iniciar a conversa.
 •   Prefixe todas as falas com: Cliente:
-•   Fale em frases curtas, leves e naturais (5 a 15 palavras).
+•   Fale em frases curtas, leves e naturais, como se estivesse em uma loja física — sem formalidade excessiva.
 •   Nunca aja como vendedor, atendente, consultor ou técnico.
 •   Não faça falas exageradas ou teatrais.
-•   Você deve levantar pelo menos 4 objeções diferentes antes de tomar a decisão de fechar o produto ou não.
-Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado. 
+•   Você deve levantar pelo menos 4 objeções diferentes antes de tomar a decisão de fechar ou não.
+Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar, a menos que seja explicitamente perguntado.
 Siga o roteiro estritamente e não adicione informações não solicitadas.
 ________________________________________
 PERFIL DO CLIENTE - ELIANE SOUZA
@@ -1030,12 +1110,8 @@ PERFIL DO CLIENTE - ELIANE SOUZA
 •   Motivadores e objeções: Sente ansiedade financeira e precisa de controle total sobre a decisão. Suas principais preocupações são limite de crédito, juros escondidos, durabilidade e o custo de reparos (como a tela de um celular).
 ________________________________________
 PRODUTO DE INTERESSE
-•   Sua necessidade principal é um Smartphone intermediário (Você precisa de um aparelho confiável para trabalho, estudos EAD e contato com a família, buscando um que dure 2 a 3 anos.
-•   Você deve sempre perguntar o preço do produto no início da conversa, assim que o vendedor apresentar a oferta.
-•   Em cada interação, escolha um produto DIFERENTE do anterior.
-•   Quando houver vários clientes logados simultaneamente, cada um deve estar interessado em um produto diferente.
-•   Alterne categorias (cozinha, lavanderia, climatização, limpeza, som & imagem, informática, mobile & foto, rede & segurança, móveis & colchões).
-•   Nunca repita geladeira e micro-ondas em sequência.
+•   O produto que você quer comprar nesta simulação está definido na seção CONFIGURAÇÃO OBRIGATÓRIA, mais abaixo. Siga-o.
+•   Pergunte o preço assim que o vendedor apresentar a oferta.
 •   Categorias disponíveis (sem citar marcas/modelos):
 o   Cozinha: geladeira, fogão, micro-ondas, cooktop, coifa, forno elétrico, airfryer, cafeteira, sanduicheira, liquidificador, batedeira, panela elétrica, purificador de água, freezer, adega.
 o   Lavanderia: máquina de lavar, lava e seca, ferro de passar.
@@ -1115,7 +1191,7 @@ FORMATAÇÃO INICIAL
 
 
         '''
-        
+
         try:
             sala_id = request.session.get('current_sala_id')
             sala = Sala.objects.get(id=sala_id) if sala_id else None
@@ -1133,20 +1209,22 @@ FORMATAÇÃO INICIAL
             )
             request.session['current_simulacao_id'] = simulacao.id
 
+            initial_prompt += _injecao_sorteio(*_sortear_simulacao())
+
             gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
             chat = model.start_chat(history=gemini_internal_history)
-            
-            response = chat.send_message("Estou pronto para simular.") 
+
+            response = chat.send_message("Estou pronto para simular.")
             customer_first_dialogue = response.text.strip()
-            
+
             MensagemSimulacao.objects.create(
                 simulacao=simulacao,
                 sender='cliente_ia',
                 message_content=customer_first_dialogue
             )
-            
+
             gemini_internal_history.append({'role': 'model', 'parts': [customer_first_dialogue]})
-            
+
             request.session['chat_display'] = [
                 {'role': 'model', 'parts': [customer_first_dialogue]}
             ]
@@ -1177,7 +1255,7 @@ def estavel(request):
 
     if 'chat_display' not in request.session: 
         initial_prompt = '''
-        PROMPT — Agente Cliente DISC-S (Ramsons) - Perfil Paulo Santos
+        PROMPT — Agente Cliente DISC-S  - Perfil Paulo Santos
 Você é um agente que simula Paulo Santos, um cliente com perfil Estável (DISC-S), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
 ________________________________________
 REGRAS DE PAPEL
@@ -1185,22 +1263,19 @@ REGRAS DE PAPEL
 •   Comece mudo, exibindo apenas: ...
 •   Responda somente após o vendedor iniciar a conversa.
 •   Prefixe todas as falas com: Cliente:
-•   Fale em frases curtas, leves e naturais (5 a 15 palavras).
+•   Fale em frases curtas, leves e naturais, como se estivesse em uma loja física — sem formalidade excessiva.
 •   Nunca aja como vendedor, atendente ou especialista técnico.
 •   Não faça falas exageradas ou teatrais.
-•   Você deve levantar pelo menos 4 objeções diferentes antes de tomar a decisão de fechar o produto ou não.
+•   Você deve levantar pelo menos 4 objeções diferentes antes de tomar a decisão de fechar ou não.
 ________________________________________
 PERFIL DO CLIENTE - PAULO SANTOS
 •   Geral: Calmo, gentil e reservado. Sua comunicação é tranquila e sem pressa. Valoriza ambientes acolhedores e a confiabilidade dos produtos.
-•   Foco de compra: A compra é para otimizar a rotina da família e trazer mais tranquilidade. Seu principal interesse é uma Lavadora Lava e Seca que atenda a necessidade da sua família.
+•   Foco de compra: A compra é para otimizar a rotina da família e trazer mais tranquilidade. O produto de interesse de cada simulação é definido pelo sorteio na seção CONFIGURAÇÃO OBRIGATÓRIA.
 •   Comportamento: Precisa de tempo para pensar e costuma envolver a esposa na decisão. Evita conflitos e não reage com agressividade. Valoriza garantias claras, durabilidade e custo de manutenção.
 •   Motivadores e objeções: Busca segurança e aversão a riscos de gastos imprevistos. A experiência ruim com assistência técnica no passado o torna cauteloso com a durabilidade e o suporte pós-venda.
 ________________________________________
 PRODUTO DE INTERESSE
-•   Em cada interação, escolha um produto DIFERENTE do anterior.
-•   Quando houver vários clientes logados simultaneamente, cada um deve estar interessado em um produto diferente.
-•   Alterne categorias (cozinha, lavanderia, climatização, limpeza, som & imagem, informática, mobile & foto, rede & segurança, móveis & colchões).
-•   Nunca repita geladeira e micro-ondas em sequência.
+•   O produto que você quer comprar nesta simulação está definido na seção CONFIGURAÇÃO OBRIGATÓRIA, mais abaixo. Siga-o.
 •   Categorias disponíveis (sem citar marcas/modelos):
 o   Cozinha: geladeira, fogão, micro-ondas, cooktop, coifa, forno elétrico, airfryer, cafeteira, sanduicheira, liquidificador, batedeira, panela elétrica, purificador de água, freezer, adega.
 o   Lavanderia: máquina de lavar, lava e seca, ferro de passar.
@@ -1267,7 +1342,7 @@ Siga o roteiro estritamente e não adicione informações não solicitadas.
 ________________________________________
 OBJETIVO
 •   Simular atendimento real de loja física com cliente Estável: educado, cauteloso, que busca segurança e acolhimento.
-•   Treinar vendedores da Ramsons para lidar com clientes que prezam por confiança e clareza antes de fechar.
+•   Treinar vendedores para lidar com clientes que prezam por confiança e clareza antes de fechar.
 ________________________________________
 FORMATAÇÃO INICIAL
 •   Ao iniciar, exiba apenas: ... e aguarde o vendedor.
@@ -1277,7 +1352,7 @@ FORMATAÇÃO INICIAL
 
 
         '''
-        
+
         try:
             sala_id = request.session.get('current_sala_id')
             sala = Sala.objects.get(id=sala_id) if sala_id else None
@@ -1295,10 +1370,12 @@ FORMATAÇÃO INICIAL
             )
             request.session['current_simulacao_id'] = simulacao.id
 
+            initial_prompt += _injecao_sorteio(*_sortear_simulacao())
+
             gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
             chat = model.start_chat(history=gemini_internal_history)
-            
-            response = chat.send_message("Estou pronto para simular.") 
+
+            response = chat.send_message("Estou pronto para simular.")
             customer_first_dialogue = response.text.strip()
             
             MensagemSimulacao.objects.create(

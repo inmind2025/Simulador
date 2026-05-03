@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height: 100vh; }
+  .container.bg-secondary-subtle { background: transparent !important; }
+  .container.bg-secondary-subtle > br, .container.bg-secondary-subtle > h2 { display: none; }
+
+  .rk-page { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+
+  /* ── Topbar ── */
+  .rk-back {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.65); border-radius: 10px; padding: .45rem 1rem;
+    font-size: .82rem; text-decoration: none; transition: all .2s; margin-bottom: 1.8rem;
+  }
+  .rk-back:hover { background: rgba(255,255,255,.13); color: #fff; text-decoration: none; }
+
+  /* ── Hero ── */
+  .rk-hero {
+    background: linear-gradient(135deg, rgba(106,17,203,.75) 0%, rgba(37,117,252,.75) 100%);
+    backdrop-filter: blur(12px); border-radius: 18px; padding: 1.5rem 1.8rem;
+    margin-bottom: 2.4rem; border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 16px 48px rgba(106,17,203,.3);
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .rk-hero-icon {
+    font-size: 1.8rem; width: 52px; height: 52px; border-radius: 14px;
+    background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .rk-hero-info { flex: 1; min-width: 0; }
+  .rk-hero-title { font-size: 1.3rem; font-weight: 900; color: #fff; margin-bottom: .2rem; }
+  .rk-hero-sub { font-size: .8rem; color: rgba(255,255,255,.65); }
+  .rk-hero-badge {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 12px; padding: .55rem 1.1rem; text-align: center; flex-shrink: 0;
+  }
+  .rk-hero-badge strong { display: block; font-size: 1.6rem; font-weight: 900; color: #fff; line-height: 1; }
+  .rk-hero-badge span { font-size: .68rem; color: rgba(255,255,255,.6); }
+
+  /* ── Section label ── */
+  .rk-section {
+    font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #a78bfa; margin-bottom: 1.4rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .rk-section::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.08); }
+
+  /* ── Podium ── */
+  .rk-podium {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: .75rem; margin-bottom: 2.4rem;
+  }
+  .rk-podium-item {
+    display: flex; flex-direction: column; align-items: center;
+    flex: 1; max-width: 200px;
+  }
+  .rk-podium-card {
+    width: 100%; border-radius: 16px 16px 0 0; padding: 1.2rem .8rem 1rem;
+    display: flex; flex-direction: column; align-items: center; gap: .5rem;
+    border: 1px solid rgba(255,255,255,.12); border-bottom: none;
+    position: relative; transition: transform .25s;
+  }
+  .rk-podium-card:hover { transform: translateY(-4px); }
+  .rk-podium-card.p1 {
+    background: linear-gradient(180deg, rgba(251,191,36,.18) 0%, rgba(251,191,36,.07) 100%);
+    border-color: rgba(251,191,36,.35); padding-top: 1.5rem;
+  }
+  .rk-podium-card.p2 {
+    background: linear-gradient(180deg, rgba(148,163,184,.18) 0%, rgba(148,163,184,.07) 100%);
+    border-color: rgba(148,163,184,.3);
+  }
+  .rk-podium-card.p3 {
+    background: linear-gradient(180deg, rgba(205,127,50,.18) 0%, rgba(205,127,50,.07) 100%);
+    border-color: rgba(205,127,50,.3);
+  }
+  .rk-podium-medal {
+    font-size: 1.5rem; line-height: 1;
+    position: absolute; top: -1rem; left: 50%; transform: translateX(-50%);
+  }
+  .rk-podium-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 900; color: #fff;
+    border: 2px solid rgba(255,255,255,.25);
+  }
+  .rk-podium-avatar.p1 { background: linear-gradient(135deg, #f59e0b, #d97706); width: 62px; height: 62px; font-size: 1.4rem; border-color: rgba(251,191,36,.5); }
+  .rk-podium-avatar.p2 { background: linear-gradient(135deg, #94a3b8, #64748b); }
+  .rk-podium-avatar.p3 { background: linear-gradient(135deg, #b97333, #92400e); }
+  .rk-podium-name { font-size: .82rem; font-weight: 800; color: #fff; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rk-podium-score { font-size: 1.5rem; font-weight: 900; line-height: 1; }
+  .rk-podium-score.p1 { color: #fbbf24; font-size: 1.8rem; }
+  .rk-podium-score.p2 { color: #94a3b8; }
+  .rk-podium-score.p3 { color: #b97333; }
+  .rk-podium-score small { font-size: .6em; opacity: .6; }
+  .rk-podium-meta { font-size: .68rem; color: rgba(255,255,255,.4); text-align: center; }
+  .rk-podium-base {
+    width: 100%; border-radius: 0 0 10px 10px; text-align: center;
+    font-size: .72rem; font-weight: 800; padding: .4rem .5rem;
+    letter-spacing: .05em;
+  }
+  .rk-podium-base.p1 { background: rgba(251,191,36,.25); color: #fbbf24; height: 54px; display: flex; align-items: center; justify-content: center; }
+  .rk-podium-base.p2 { background: rgba(148,163,184,.18); color: #94a3b8; height: 38px; display: flex; align-items: center; justify-content: center; }
+  .rk-podium-base.p3 { background: rgba(205,127,50,.18); color: #b97333; height: 28px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Full list ── */
+  .rk-list { display: flex; flex-direction: column; gap: .7rem; }
+  .rk-row {
+    display: flex; align-items: center; gap: 1rem;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px; padding: .9rem 1.2rem;
+    transition: all .22s;
+  }
+  .rk-row:hover { background: rgba(255,255,255,.09); border-color: rgba(106,17,203,.3); transform: translateX(3px); }
+  .rk-pos {
+    width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 900; color: rgba(255,255,255,.5);
+  }
+  .rk-avatar-sm {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(106,17,203,.6), rgba(37,117,252,.6));
+    border: 1px solid rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 800; color: #fff;
+  }
+  .rk-row-info { flex: 1; min-width: 0; }
+  .rk-row-name { font-size: .9rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rk-row-meta { font-size: .72rem; color: rgba(255,255,255,.4); margin-top: .1rem; }
+  .rk-score-col { text-align: right; flex-shrink: 0; }
+  .rk-score-best { font-size: 1.25rem; font-weight: 900; color: #fff; line-height: 1; }
+  .rk-score-best.high { color: #4ade80; }
+  .rk-score-best.mid  { color: #fb923c; }
+  .rk-score-best.low  { color: #f87171; }
+  .rk-score-avg { font-size: .7rem; color: rgba(255,255,255,.35); margin-top: .15rem; }
+
+  /* ── No score ── */
+  .rk-no-score {
+    background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.08);
+    border-radius: 12px; padding: .75rem 1.2rem;
+    display: flex; align-items: center; gap: .9rem; opacity: .65;
+  }
+  .rk-no-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(255,255,255,.07); border: 1px dashed rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; color: rgba(255,255,255,.3);
+  }
+  .rk-no-name { font-size: .85rem; color: rgba(255,255,255,.35); flex: 1; }
+  .rk-no-badge { font-size: .68rem; color: rgba(255,255,255,.25); background: rgba(255,255,255,.05); border-radius: 20px; padding: .15rem .6rem; flex-shrink: 0; }
+
+  /* ── Empty ── */
+  .rk-empty { text-align: center; padding: 3.5rem 1.5rem; background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.09); border-radius: 16px; }
+  .rk-empty i { font-size: 2rem; color: rgba(255,255,255,.15); display: block; margin-bottom: .8rem; }
+  .rk-empty p { color: rgba(255,255,255,.3); font-size: .85rem; margin: 0; }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="rk-page">
+
+  <!-- Voltar -->
+  {% if is_admin %}
+  <a href="{% url 'dashboard_sala' sala.id %}" class="rk-back"><i class="fas fa-arrow-left"></i> Voltar ao Dashboard</a>
+  {% else %}
+  <a href="{% url 'detalhe_sala_cliente' sala.id %}" class="rk-back"><i class="fas fa-arrow-left"></i> Voltar à Sala</a>
+  {% endif %}
+
+  <!-- Hero -->
+  <div class="rk-hero">
+    <div class="rk-hero-icon"><i class="fas fa-trophy"></i></div>
+    <div class="rk-hero-info">
+      <div class="rk-hero-title">Ranking de Simulação</div>
+      <div class="rk-hero-sub">{{ sala.nome }} &nbsp;·&nbsp; <i class="fas fa-key" style="opacity:.5;font-size:.7rem"></i> {{ sala.codigo_acesso }}</div>
+    </div>
+    <div class="rk-hero-badge">
+      <strong>{{ ranking|length }}</strong>
+      <span>com nota</span>
+    </div>
+  </div>
+
+  {% if ranking %}
+
+  <!-- ── Pódio (top 3) ── -->
+  {% if ranking|length >= 2 %}
+  <div class="rk-section"><i class="fas fa-crown"></i> Pódio</div>
+  <div class="rk-podium">
+
+    {% if ranking|length >= 2 %}
+    <!-- 2º lugar -->
+    {% with item=ranking.1 %}
+    <div class="rk-podium-item">
+      <div class="rk-podium-card p2">
+        <div class="rk-podium-medal"><i class="fas fa-medal" style="color:#94a3b8"></i></div>
+        <div class="rk-podium-avatar p2">{{ item.user.first_name|first|upper|default:item.user.username|first|upper }}</div>
+        <div class="rk-podium-name" title="{{ item.user.get_full_name|default:item.user.username }}">{{ item.user.first_name|default:item.user.username }}</div>
+        <div class="rk-podium-score p2">{{ item.melhor_nota }}<small>/10</small></div>
+        <div class="rk-podium-meta">{{ item.qtd_auditorias }} auditoria{{ item.qtd_auditorias|pluralize }}</div>
+      </div>
+      <div class="rk-podium-base p2">2º lugar</div>
+    </div>
+    {% endwith %}
+    {% endif %}
+
+    <!-- 1º lugar (centro, mais alto) -->
+    {% with item=ranking.0 %}
+    <div class="rk-podium-item">
+      <div class="rk-podium-card p1">
+        <div class="rk-podium-medal"><i class="fas fa-trophy" style="color:#fbbf24"></i></div>
+        <div class="rk-podium-avatar p1">{{ item.user.first_name|first|upper|default:item.user.username|first|upper }}</div>
+        <div class="rk-podium-name" title="{{ item.user.get_full_name|default:item.user.username }}">{{ item.user.first_name|default:item.user.username }}</div>
+        <div class="rk-podium-score p1">{{ item.melhor_nota }}<small>/10</small></div>
+        <div class="rk-podium-meta">{{ item.qtd_auditorias }} auditoria{{ item.qtd_auditorias|pluralize }}</div>
+      </div>
+      <div class="rk-podium-base p1">1º lugar</div>
+    </div>
+    {% endwith %}
+
+    {% if ranking|length >= 3 %}
+    <!-- 3º lugar -->
+    {% with item=ranking.2 %}
+    <div class="rk-podium-item">
+      <div class="rk-podium-card p3">
+        <div class="rk-podium-medal"><i class="fas fa-award" style="color:#cd7c2f"></i></div>
+        <div class="rk-podium-avatar p3">{{ item.user.first_name|first|upper|default:item.user.username|first|upper }}</div>
+        <div class="rk-podium-name" title="{{ item.user.get_full_name|default:item.user.username }}">{{ item.user.first_name|default:item.user.username }}</div>
+        <div class="rk-podium-score p3">{{ item.melhor_nota }}<small>/10</small></div>
+        <div class="rk-podium-meta">{{ item.qtd_auditorias }} auditoria{{ item.qtd_auditorias|pluralize }}</div>
+      </div>
+      <div class="rk-podium-base p3">3º lugar</div>
+    </div>
+    {% endwith %}
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  <!-- ── Lista completa ── -->
+  <div class="rk-section"><i class="fas fa-list-ol"></i> Classificação completa</div>
+  <div class="rk-list">
+    {% for item in ranking %}
+    <div class="rk-row">
+      <div class="rk-pos">
+        {% if item.posicao == 1 %}<i class="fas fa-trophy" style="color:#fbbf24;font-size:.85rem"></i>
+        {% elif item.posicao == 2 %}<i class="fas fa-medal" style="color:#94a3b8;font-size:.85rem"></i>
+        {% elif item.posicao == 3 %}<i class="fas fa-award" style="color:#cd7c2f;font-size:.85rem"></i>
+        {% else %}<span style="font-size:.82rem;font-weight:700;color:rgba(255,255,255,.6)">{{ item.posicao }}º</span>{% endif %}
+      </div>
+      <div class="rk-avatar-sm">{{ item.user.first_name|first|upper|default:item.user.username|first|upper }}</div>
+      <div class="rk-row-info">
+        <div class="rk-row-name">{{ item.user.get_full_name|default:item.user.username }}</div>
+        <div class="rk-row-meta">
+          {{ item.qtd_auditorias }} auditoria{{ item.qtd_auditorias|pluralize }}
+          &nbsp;·&nbsp;
+          {{ item.total_sims }} simulação{{ item.total_sims|pluralize:"ão,ões" }}
+          &nbsp;·&nbsp;
+          Média: {{ item.media_nota }}
+        </div>
+      </div>
+      <div class="rk-score-col">
+        <div class="rk-score-best {% if item.melhor_nota >= 7 %}high{% elif item.melhor_nota >= 5 %}mid{% else %}low{% endif %}">
+          {{ item.melhor_nota }}<span style="font-size:.55em;opacity:.5">/10</span>
+        </div>
+        <div class="rk-score-avg">melhor nota</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty -->
+  <div class="rk-empty">
+    <i class="fas fa-robot"></i>
+    <p>Nenhuma simulação foi auditada ainda.<br>As notas aparecerão aqui após as auditorias serem concluídas.</p>
+  </div>
+  {% endif %}
+
+  <!-- ── Participantes sem nota ── -->
+  {% if sem_nota %}
+  <div class="rk-section" style="margin-top:2rem"><i class="fas fa-user-clock"></i> Aguardando auditoria</div>
+  <div style="display:flex;flex-direction:column;gap:.5rem">
+    {% for u in sem_nota %}
+    <div class="rk-no-score">
+      <div class="rk-no-avatar">{{ u.first_name|first|upper|default:u.username|first|upper }}</div>
+      <span class="rk-no-name">{{ u.get_full_name|default:u.username }}</span>
+      <span class="rk-no-badge">Sem auditoria</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock content %}

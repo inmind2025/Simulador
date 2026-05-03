@@ -144,6 +144,54 @@
     .disc-badge.analitico  { background: rgba(59,130,246,.2);  color: #60a5fa; }
     .disc-badge.estavel    { background: rgba(34,197,94,.2);   color: #4ade80; }
 
+    /* ── Configurações de Correção ── */
+    .toggle-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .toggle-row:first-child { padding-top: 0; }
+    .toggle-info { flex: 1; padding-right: 1.5rem; }
+    .toggle-title { font-size: .9rem; font-weight: 600; color: #fff; margin-bottom: .2rem; }
+    .toggle-desc  { font-size: .78rem; color: rgba(255,255,255,.45); line-height: 1.4; }
+
+    .tipo-switcher { display: flex; gap: .4rem; background: rgba(0,0,0,.25); border-radius: 10px; padding: .25rem; }
+    .tipo-switcher input[type="radio"] { display: none; }
+    .tipo-btn {
+        padding: .4rem .9rem; border-radius: 8px; cursor: pointer;
+        font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.5);
+        transition: all .2s; display: flex; align-items: center; gap: .35rem; white-space: nowrap;
+    }
+    .tipo-switcher input[type="radio"]:checked + .tipo-btn {
+        background: rgba(249,115,22,.6); color: #fff;
+        box-shadow: 0 2px 8px rgba(249,115,22,.4);
+    }
+    .tipo-switcher input[value="prova"]:checked + .tipo-btn {
+        background: rgba(239,68,68,.55); box-shadow: 0 2px 8px rgba(239,68,68,.35);
+    }
+
+    .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute; inset: 0; cursor: pointer;
+        background: rgba(255,255,255,.12); border-radius: 26px; transition: .3s;
+    }
+    .slider:before {
+        content: ''; position: absolute;
+        height: 20px; width: 20px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%; transition: .3s;
+    }
+    .switch input:checked ~ .slider { background: #f97316; }
+    .switch input:checked ~ .slider:before { transform: translateX(20px); }
+    .switch input:disabled ~ .slider { opacity: .35; cursor: not-allowed; }
+
+    .prova-lock-notice {
+        display: none; margin-top: .6rem;
+        font-size: .75rem; color: rgba(239,68,68,.8);
+        background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
+        border-radius: 8px; padding: .4rem .8rem;
+    }
+
     /* ── Botões ── */
     .form-actions { display: flex; gap: .8rem; justify-content: flex-end; flex-wrap: wrap; }
     .btn-cancelar {
@@ -238,6 +286,40 @@
             </div>
         </div>
 
+        <!-- Configurações de Correção -->
+        <div class="form-card">
+            <div class="section-label"><i class="fas fa-check-double"></i> Configurações de Correção</div>
+
+            <!-- Tipo de Atividade -->
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-title">Tipo de Atividade</div>
+                    <div class="toggle-desc">Define se esta sala é para prática (<strong style="color:#a78bfa">Simulação</strong>) ou avaliação formal (<strong style="color:#f87171">Prova</strong>)</div>
+                </div>
+                <div class="tipo-switcher">
+                    <input type="radio" name="tipo_atividade" value="simulacao" id="tipo_simulacao" {% if sala.tipo_atividade != 'prova' %}checked{% endif %}>
+                    <label for="tipo_simulacao" class="tipo-btn"><i class="fas fa-play-circle"></i> Simulação</label>
+                    <input type="radio" name="tipo_atividade" value="prova" id="tipo_prova" {% if sala.tipo_atividade == 'prova' %}checked{% endif %}>
+                    <label for="tipo_prova" class="tipo-btn"><i class="fas fa-file-alt"></i> Prova</label>
+                </div>
+            </div>
+
+            <!-- Correção Automática -->
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-title">Correção Automática ao Término</div>
+                    <div class="toggle-desc">A simulação será corrigida pela IA automaticamente quando o aluno finalizar. Indisponível para Provas.</div>
+                    <div class="prova-lock-notice" id="prova-lock-notice">
+                        <i class="fas fa-lock"></i> Bloqueado — provas devem ser corrigidas manualmente pelo administrador.
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" name="correcao_automatica" id="correcao_automatica" {% if sala.correcao_automatica %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
         <!-- Ações -->
         <div class="form-actions">
             <a href="{% url 'detalhe_sala_admin' sala.id %}" class="btn-cancelar">
@@ -259,5 +341,22 @@ document.querySelectorAll('.personagem-card-wrapper input[type="checkbox"]').for
         if (this.checked) card.classList.add('selected-' + perfil);
     });
 });
+
+// Bloqueia correção automática quando o tipo for "Prova"
+(function () {
+    const radios = document.querySelectorAll('input[name="tipo_atividade"]');
+    const corrCheck = document.getElementById('correcao_automatica');
+    const lockNotice = document.getElementById('prova-lock-notice');
+
+    function syncLock() {
+        const isProva = document.querySelector('input[name="tipo_atividade"]:checked')?.value === 'prova';
+        corrCheck.disabled = isProva;
+        if (isProva) { corrCheck.checked = false; lockNotice.style.display = 'block'; }
+        else { lockNotice.style.display = 'none'; }
+    }
+
+    radios.forEach(r => r.addEventListener('change', syncLock));
+    syncLock();
+})();
 </script>
 {% endblock %}

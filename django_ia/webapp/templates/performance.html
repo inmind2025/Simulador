@@ -3,6 +3,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%) !important; min-height:100vh; color:#fff; }
   .container.bg-secondary-subtle { background: transparent !important; box-shadow: none !important; }
@@ -52,6 +53,11 @@
   /* ── Two col layout ── */
   .two-col { display:grid; grid-template-columns:1fr 340px; gap:1.2rem; align-items:start; }
   @media(max-width:860px){ .two-col { grid-template-columns:1fr; } }
+
+  /* ── Criteria + Radar layout ── */
+  .crit-radar-grid { display:grid; grid-template-columns:1fr 220px; gap:1.5rem; align-items:center; }
+  @media(max-width:700px){ .crit-radar-grid { grid-template-columns:1fr; } }
+  @media(max-width:700px){ .crit-radar-grid > div:last-child { display:none; } }
 
   /* ── Evolução chart ── */
   .evol-chart { display:flex; align-items:flex-end; gap:6px; height:90px; padding:0 .2rem; }
@@ -195,7 +201,7 @@
   <div class="perf-topbar">
     <div class="perf-avatar-big">{{ request.user.username|slice:":1"|upper }}</div>
     <div class="perf-greeting">
-      <div class="perf-greeting-name">Olá, {{ request.user.username }} 👋</div>
+      <div class="perf-greeting-name">Olá, {{ request.user.username }}</div>
       <div class="perf-greeting-sub">Aqui está um resumo da sua performance nas simulações de vendas.</div>
     </div>
   </div>
@@ -246,6 +252,15 @@
       <div class="kpi-label">Última nota</div>
     </div>
 
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(56,189,248,.15)"><i class="fas fa-stopwatch" style="color:#38bdf8"></i></div>
+      <div class="kpi-val" style="font-size:1.35rem;color:{% if media_tempo_resposta %}#fff{% else %}rgba(255,255,255,.25){% endif %}">
+        {% if media_tempo_resposta %}{{ media_tempo_resposta }}{% else %}—{% endif %}
+      </div>
+      <div class="kpi-label">Tempo médio de resposta</div>
+      <div class="kpi-sub">Entre resposta da IA e sua réplica</div>
+    </div>
+
   </div>
 
   <!-- ══ EVOLUÇÃO + CRITÉRIOS ══ -->
@@ -254,21 +269,10 @@
 
     <!-- Evolução cronológica -->
     <div class="glass">
-      <div class="glass-header"><i class="fas fa-chart-bar"></i> Evolução das notas</div>
+      <div class="glass-header"><i class="fas fa-chart-line"></i> Evolução das notas</div>
       <div class="glass-body">
         {% if evolucao %}
-        <div class="evol-chart" id="evolChart">
-          {% for e in evolucao %}
-          <div class="evol-bar-wrap" title="Simulação #{{ e.sim_id }} · {{ e.data }} · {{ e.nota }}/10">
-            <div class="evol-val">{{ e.nota }}</div>
-            <div class="evol-bar"
-                 data-nota="{{ e.nota }}"
-                 style="background:{% if e.nota >= 7 %}linear-gradient(180deg,#22c55e,#16a34a){% elif e.nota >= 5 %}linear-gradient(180deg,#f97316,#ea580c){% else %}linear-gradient(180deg,#ef4444,#dc2626){% endif %};height:4px">
-            </div>
-            <div class="evol-label">{{ e.data }}</div>
-          </div>
-          {% endfor %}
-        </div>
+        <canvas id="evolChart" height="130"></canvas>
         {% else %}
         <div class="evol-empty">
           <i class="fas fa-chart-bar" style="font-size:1.5rem;display:block;margin-bottom:.5rem;opacity:.4"></i>
@@ -283,18 +287,18 @@
       <div class="glass-header"><i class="fas fa-percentage"></i> Taxa de conclusão</div>
       <div class="glass-body" style="display:flex;flex-direction:column;align-items:center;gap:.6rem">
         <svg width="110" height="110" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="perfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8"/>
+              <stop offset="100%" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
           <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
           <circle cx="50" cy="50" r="42" fill="none"
             stroke="url(#perfGrad)" stroke-width="9" stroke-linecap="round"
             stroke-dasharray="263.9" stroke-dashoffset="263.9"
             transform="rotate(-90 50 50)" id="perf-circle"/>
-          <defs>
-            <linearGradient id="perfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#6a11cb"/>
-              <stop offset="100%" stop-color="#2575fc"/>
-            </linearGradient>
-          </defs>
-          <text x="50" y="55" text-anchor="middle" fill="#fff" font-size="18" font-weight="900">{{ taxa_conclusao }}%</text>
+          <text x="50" y="55" text-anchor="middle" fill="#fff" font-size="18" font-weight="900" font-family="Inter,sans-serif">{{ taxa_conclusao }}%</text>
         </svg>
         <div style="font-size:.75rem;color:rgba(255,255,255,.4)">{{ sims_concluidas }} de {{ total_sims }} simulações</div>
       </div>
@@ -306,8 +310,9 @@
   {% if criterios_pct %}
   <div class="perf-section" style="margin-top:1.5rem"><i class="fas fa-sliders-h"></i> Desempenho por critério (média)</div>
   <div class="glass">
-    <div class="glass-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 2rem">
+    <div class="glass-body crit-radar-grid">
+      <!-- Barras de critério -->
+      <div>
         {% for nome, pct in criterios_pct.items %}
         <div class="crit-item">
           <span class="crit-name">{{ nome }}</span>
@@ -319,6 +324,10 @@
           <span class="crit-val">{{ pct }}%</span>
         </div>
         {% endfor %}
+      </div>
+      <!-- Radar chart -->
+      <div style="width:220px;height:220px;flex-shrink:0">
+        <canvas id="radarChart"></canvas>
       </div>
     </div>
   </div>
@@ -359,7 +368,7 @@
             <td style="text-align:center">
               {% if sd.posicao %}
                 <span class="rank-badge {% if sd.posicao == 1 %}gold{% elif sd.posicao == 2 %}silver{% elif sd.posicao == 3 %}bronze{% endif %}">
-                  {% if sd.posicao == 1 %}🥇{% elif sd.posicao == 2 %}🥈{% elif sd.posicao == 3 %}🥉{% else %}<i class="fas fa-hashtag" style="font-size:.6rem"></i>{% endif %}
+                  {% if sd.posicao == 1 %}<i class="fas fa-trophy" style="font-size:.65rem"></i>{% elif sd.posicao == 2 %}<i class="fas fa-medal" style="font-size:.65rem"></i>{% elif sd.posicao == 3 %}<i class="fas fa-award" style="font-size:.65rem"></i>{% else %}<i class="fas fa-hashtag" style="font-size:.6rem"></i>{% endif %}
                   {{ sd.posicao }}º
                 </span>
               {% else %}
@@ -387,10 +396,10 @@
           <div class="sim-avatar">{{ item.sim.user.username|slice:":1"|upper }}</div>
           <div class="sim-info">
             <div class="sim-sala">{{ item.sim.sala.nome|default:"—" }}</div>
-            <div class="sim-date">{{ item.sim.start_time|date:"d/m/Y · H:i" }} · {{ item.msgs }} msg{{ item.msgs|pluralize }}</div>
+            <div class="sim-date">{{ item.sim.start_time|date:"d/m/Y · H:i" }} · {{ item.msgs }} msg{{ item.msgs|pluralize }}{% if item.tempo_medio %} · <i class="fas fa-stopwatch" style="font-size:.6rem;opacity:.6"></i> {{ item.tempo_medio }}{% endif %}</div>
           </div>
           <span class="sim-badge {% if item.sim.end_time %}sim-done{% else %}sim-open{% endif %}">
-            {% if item.sim.end_time %}✓{% else %}⏳{% endif %}
+            {% if item.sim.end_time %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-circle-notch fa-spin" style="font-size:.6rem"></i>{% endif %}
           </span>
           {% if item.auditoria %}
             <span class="nota-badge {% if item.auditoria.nota_total >= 7 %}nota-high{% elif item.auditoria.nota_total >= 5 %}nota-mid{% else %}nota-low{% endif %}">
@@ -466,6 +475,20 @@
 
       <!-- Body expansível -->
       <div class="audit-card-body" id="audit-body-{{ a.id }}" style="display:none">
+
+        <!-- Métricas de tempo -->
+        <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+          {% with dur=sim.duracao_formatada tm=sim.tempo_medio_resposta_formatado %}
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:.6rem 1rem;flex:1;min-width:140px">
+            <div style="font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem"><i class="fas fa-clock"></i> Tempo total</div>
+            <div style="font-size:.95rem;font-weight:700;color:#c4b5fd">{{ dur|default:"—" }}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:.6rem 1rem;flex:1;min-width:140px">
+            <div style="font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem"><i class="fas fa-reply"></i> Tempo médio de resposta</div>
+            <div style="font-size:.95rem;font-weight:700;color:#c4b5fd">{{ tm|default:"—" }}</div>
+          </div>
+          {% endwith %}
+        </div>
 
         <!-- Critérios A PONTE -->
         <div class="audit-section-title"><i class="fas fa-bridge"></i> Método A PONTE</div>
@@ -566,14 +589,87 @@
 </div>
 
 <script>
+Chart.defaults.color = 'rgba(255,255,255,.45)';
+Chart.defaults.borderColor = 'rgba(255,255,255,.06)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
 document.addEventListener('DOMContentLoaded', function () {
-  // Anima barras de evolução
-  var bars = document.querySelectorAll('.evol-bar[data-nota]');
-  bars.forEach(function(bar) {
-    var nota = parseFloat(bar.getAttribute('data-nota'));
-    var pct = (nota / 10) * 80; // max 80px de altura
-    setTimeout(function() { bar.style.height = Math.max(pct, 4) + 'px'; }, 100);
-  });
+
+  // ── Gráfico de evolução de notas (linha) ──
+  var evolCtx = document.getElementById('evolChart');
+  if (evolCtx) {
+    var evolData = {{ evolucao_json|safe }};
+    var pointColors = evolData.map(function(e){
+      return e.nota >= 7 ? '#22c55e' : e.nota >= 5 ? '#f97316' : '#ef4444';
+    });
+    new Chart(evolCtx, {
+      type: 'line',
+      data: {
+        labels: evolData.map(function(e){ return e.data; }),
+        datasets: [{
+          label: 'Nota',
+          data: evolData.map(function(e){ return e.nota; }),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,.12)',
+          pointBackgroundColor: pointColors,
+          pointBorderColor: pointColors,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){ return 'Nota: ' + c.parsed.y + '/10'; } } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { min: 0, max: 10, ticks: { stepSize: 2, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,.05)' } }
+        }
+      }
+    });
+  }
+
+  // ── Radar de critérios ──
+  var radarCtx = document.getElementById('radarChart');
+  if (radarCtx) {
+    var critData = {{ criterios_pct_json|safe }};
+    var labels = Object.keys(critData);
+    var values = labels.map(function(k){ return critData[k]; });
+    if (labels.length > 0) {
+      new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: 'rgba(29,78,216,.2)',
+            borderColor: '#3b82f6',
+            borderWidth: 2,
+            pointBackgroundColor: '#60a5fa',
+            pointRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              min: 0, max: 100,
+              ticks: { stepSize: 25, font: { size: 9 }, backdropColor: 'transparent' },
+              grid: { color: 'rgba(255,255,255,.08)' },
+              angleLines: { color: 'rgba(255,255,255,.08)' },
+              pointLabels: { font: { size: 10 }, color: 'rgba(255,255,255,.55)' }
+            }
+          }
+        }
+      });
+    }
+  }
 
   // Anima barras de critérios
   document.querySelectorAll('.crit-fill[data-w]').forEach(function(el) {
@@ -608,39 +704,51 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  function _fbInline(s) {
+    return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  }
   function formatFeedbackPerf(text) {
-    var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    esc = esc.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-    var lines = esc.split('\n');
-    var html = '';
-    var inUl = false, inOl = false;
-    lines.forEach(function(line) {
-      var trimmed = line.trim();
-      if (/^\*\s+/.test(trimmed) || /^-\s+/.test(trimmed)) {
-        if (!inUl) { html += '<ul style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inUl = true; }
-        if (inOl) { html += '</ol>'; inOl = false; }
-        html += '<li>' + trimmed.replace(/^[\*\-]\s+/, '') + '</li>';
-      } else if (/^\d+\.\s/.test(trimmed)) {
-        if (!inOl) { html += '<ol style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inOl = true; }
-        if (inUl) { html += '</ul>'; inUl = false; }
-        html += '<li>' + trimmed.replace(/^\d+\.\s/, '') + '</li>';
-      } else {
-        if (inUl) { html += '</ul>'; inUl = false; }
-        if (inOl) { html += '</ol>'; inOl = false; }
-        if (trimmed === '') { html += '<br>'; }
-        else html += '<p style="margin:.2rem 0">' + trimmed + '</p>';
+    if (!text) return '';
+    var lines = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split('\n');
+    var html = '', inList = false, listType = '';
+    lines.forEach(function(raw) {
+      var t = raw.trim();
+      if (!t) { if (inList) { html += '</'+listType+'>'; inList = false; } return; }
+      var sec = t.match(/^\*\*(.+?)\*\*\s*:?\s*$/) || t.match(/^#{1,3}\s+(.+)$/);
+      if (sec) {
+        if (inList) { html += '</'+listType+'>'; inList = false; }
+        html += '<p style="font-weight:700;color:#a78bfa;margin:.6rem 0 .2rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em">'+_fbInline(sec[1])+'</p>'; return;
       }
+      var bul = t.match(/^[-•]\s+(.+)$/);
+      if (bul) {
+        if (!inList || listType!=='ul') { if (inList) html+='</'+listType+'>'; html+='<ul style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inList=true; listType='ul'; }
+        html += '<li>'+_fbInline(bul[1])+'</li>'; return;
+      }
+      var num = t.match(/^\d+\.\s+(.+)$/);
+      if (num) {
+        if (!inList || listType!=='ol') { if (inList) html+='</'+listType+'>'; html+='<ol style="margin:.3rem 0 .3rem 1.2rem;padding:0">'; inList=true; listType='ol'; }
+        html += '<li>'+_fbInline(num[1])+'</li>'; return;
+      }
+      if (inList) { html += '</'+listType+'>'; inList = false; }
+      html += '<p style="margin:.2rem 0">'+_fbInline(t)+'</p>';
     });
-    if (inUl) html += '</ul>';
-    if (inOl) html += '</ol>';
+    if (inList) html += '</'+listType+'>';
     return html;
   }
   var circle = document.getElementById('perf-circle');
   if (circle) {
-    var pct = {{ taxa_conclusao }};
+    var pct  = {{ taxa_conclusao }};
     var circ = 2 * Math.PI * 42;
     var offset = circ - (pct / 100) * circ;
-    setTimeout(function() { circle.style.strokeDashoffset = offset; circle.style.transition = 'stroke-dashoffset .9s ease'; }, 100);
+    // Define o valor inicial como CSS property (sobrescreve atributo SVG)
+    circle.style.strokeDashoffset = circ;
+    // Double rAF: primeiro frame registra o valor inicial, segundo aplica a transição
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        circle.style.transition = 'stroke-dashoffset 1.1s ease';
+        circle.style.strokeDashoffset = offset;
+      });
+    });
   }
 });
 </script>

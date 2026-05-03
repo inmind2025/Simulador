@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.db.models import Count, Q, Max
+from django.db.models import Count, Q, Max, Avg
 from django.utils import timezone
 import datetime
 from webapp.models import Sala, SimulacaoAtendimento, Personagem, MensagemSimulacao, AuditoriaSimulacao
@@ -123,12 +123,20 @@ def iniciar_atendimento_sorteio(request, sala_id):
     # Sorteio
     import random
     personagem_sorteado = random.choice(personagens)
-    
+
+    # Deleta simulação fantasma da sessão anterior (criada mas sem nenhuma mensagem)
+    old_sim_id = request.session.get('current_simulacao_id')
+    if old_sim_id:
+        try:
+            old_sim = SimulacaoAtendimento.objects.get(id=old_sim_id, user=request.user)
+            if not old_sim.mensagens.exists():
+                old_sim.delete()
+        except SimulacaoAtendimento.DoesNotExist:
+            pass
+
     # Limpa a sessão de chat anterior para garantir uma nova simulação
-    if 'chat_display' in request.session:
-        del request.session['chat_display']
-    if 'gemini_chat_internal_history' in request.session:
-        del request.session['gemini_chat_internal_history']
+    for key in ('chat_display', 'gemini_chat_internal_history', 'current_simulacao_id'):
+        request.session.pop(key, None)
     
     # Guarda o ID da sala e do personagem na sessão
     request.session['current_sala_id'] = sala.id
@@ -152,7 +160,9 @@ def historico_chats_participante(request, sala_id, participante_id):
         messages.error(request, "Este usuário não é participante da sala.")
         return redirect('detalhe_sala_admin', sala_id=sala.id)
 
-    simulacoes = SimulacaoAtendimento.objects.filter(sala=sala, user=participante).order_by('-start_time')
+    simulacoes = SimulacaoAtendimento.objects.filter(
+        sala=sala, user=participante, mensagens__isnull=False
+    ).distinct().order_by('-start_time').prefetch_related('mensagens')
 
     context = {
         'sala': sala,
@@ -227,7 +237,9 @@ def dashboard(request):
     total_simulacoes = SimulacaoAtendimento.objects.filter(sala__administrador=request.user).count()
     simulacoes_semana = SimulacaoAtendimento.objects.filter(sala__administrador=request.user, start_time__gte=uma_semana_atras).count()
     simulacoes_concluidas = SimulacaoAtendimento.objects.filter(sala__administrador=request.user, end_time__isnull=False).count()
-    total_mensagens = MensagemSimulacao.objects.filter(simulacao__sala__administrador=request.user).count()
+    total_mensagens = MensagemSimulacao.objects.filter(
+        simulacao__sala__administrador=request.user, sender='vendedor_usuario'
+    ).count()
 
     taxa_conclusao = round((simulacoes_concluidas / total_simulacoes * 100) if total_simulacoes else 0)
 
@@ -258,6 +270,8 @@ def dashboard(request):
         sala__administrador=request.user
     ).select_related('user', 'sala').order_by('-start_time')[:8]
 
+    simulacoes_em_andamento = total_simulacoes - simulacoes_concluidas
+
     context = {
         'views': {'id': 'dashboard', 'titulo': 'Dashboard'},
         'total_salas': total_salas,
@@ -265,9 +279,12 @@ def dashboard(request):
         'total_simulacoes': total_simulacoes,
         'simulacoes_semana': simulacoes_semana,
         'simulacoes_concluidas': simulacoes_concluidas,
+        'simulacoes_em_andamento': simulacoes_em_andamento,
         'total_mensagens': total_mensagens,
         'taxa_conclusao': taxa_conclusao,
         'atividade_diaria': atividade_diaria,
+        'atividade_diaria_json': _json.dumps(atividade_diaria),
+        'disc_counts_json': _json.dumps(disc_counts),
         'top_salas': top_salas,
         'disc_counts': disc_counts,
         'simulacoes_recentes': simulacoes_recentes,
@@ -284,11 +301,17 @@ def dashboard_sala(request, sala_id):
 
     sala = get_object_or_404(Sala, id=sala_id, administrador=request.user)
 
-    simulacoes = SimulacaoAtendimento.objects.filter(sala=sala).select_related('user')
+    # Exclui simulações fantasmas (criadas mas sem nenhuma mensagem enviada)
+    simulacoes = SimulacaoAtendimento.objects.filter(
+        sala=sala, mensagens__isnull=False
+    ).distinct().select_related('user')
     total_sims = simulacoes.count()
     sims_concluidas = simulacoes.filter(end_time__isnull=False).count()
     taxa_conclusao = round((sims_concluidas / total_sims * 100) if total_sims else 0)
-    total_mensagens = MensagemSimulacao.objects.filter(simulacao__sala=sala).count()
+    # Conta apenas mensagens do consultor para alinhar com o ranking de interações
+    total_mensagens = MensagemSimulacao.objects.filter(
+        simulacao__sala=sala, sender='vendedor_usuario'
+    ).count()
 
     uma_semana_atras = timezone.now() - datetime.timedelta(days=7)
     sims_semana = simulacoes.filter(start_time__gte=uma_semana_atras).count()
@@ -310,12 +333,31 @@ def dashboard_sala(request, sala_id):
         ).count()
         concl_u = sims_u.filter(end_time__isnull=False).count()
 
-        # Lista completa de simulações do aluno com auditoria
+        # Lista completa de simulações do aluno com auditoria e métricas de tempo
         sims_lista = []
         for s in sims_u.select_related('auditoria'):
-            msgs_sim = MensagemSimulacao.objects.filter(
-                simulacao=s, sender='vendedor_usuario'
-            ).count()
+            all_msgs = list(MensagemSimulacao.objects.filter(simulacao=s).order_by('timestamp'))
+            msgs_sim = sum(1 for m in all_msgs if m.sender == 'vendedor_usuario')
+            # Duração total
+            if s.end_time and s.start_time:
+                secs = int((s.end_time - s.start_time).total_seconds())
+                mn, sc = divmod(secs, 60)
+                duracao = f"{mn}min {sc:02d}s" if mn else f"{sc}s"
+            else:
+                duracao = None
+            # Tempo médio de resposta do vendedor
+            deltas = []
+            for i, msg in enumerate(all_msgs):
+                if msg.sender == 'vendedor_usuario' and i > 0 and all_msgs[i - 1].sender == 'cliente_ia':
+                    d = (msg.timestamp - all_msgs[i - 1].timestamp).total_seconds()
+                    if 0 < d < 1800:
+                        deltas.append(d)
+            if deltas:
+                avg = round(sum(deltas) / len(deltas))
+                mn, sc = divmod(avg, 60)
+                tempo_medio = f"{mn}min {sc:02d}s" if mn else f"{sc}s"
+            else:
+                tempo_medio = None
             try:
                 aud = s.auditoria
             except Exception:
@@ -324,6 +366,8 @@ def dashboard_sala(request, sala_id):
                 'sim': s,
                 'msgs': msgs_sim,
                 'auditoria': aud,
+                'duracao': duracao,
+                'tempo_medio': tempo_medio,
             })
 
         participantes_stats.append({
@@ -385,6 +429,34 @@ def dashboard_sala(request, sala_id):
                   .values_list('id', flat=True)
     )
 
+    # Métricas de tempo por simulação para o modal JS
+    metricas_tempo = {}
+    for ps in participantes_stats:
+        for item in ps['sims_lista']:
+            metricas_tempo[item['sim'].id] = {
+                'duracao': item['duracao'] or '—',
+                'tempo_medio': item['tempo_medio'] or '—',
+            }
+    for sim in simulacoes_recentes:
+        if sim.id not in metricas_tempo:
+            d = sim.duracao_formatada
+            tm = sim.tempo_medio_resposta_formatado
+            metricas_tempo[sim.id] = {'duracao': d or '—', 'tempo_medio': tm or '—'}
+
+    # Score distribution for charts
+    notas_altas  = sum(1 for n in todas_notas if n >= 7)
+    notas_medias = sum(1 for n in todas_notas if 5 <= n < 7)
+    notas_baixas = sum(1 for n in todas_notas if n < 5)
+
+    # Evolução de notas por aluno ordenada cronologicamente (para gráfico)
+    evolucao_notas = []
+    for ps in ranking_notas[:5]:
+        series = sorted(ps['notas_sims'], key=lambda x: x['data'])
+        evolucao_notas.append({
+            'label': ps['user'].get_full_name() or ps['user'].username,
+            'data': [s['nota'] for s in series],
+        })
+
     context = {
         'views': {'id': 'dashboard_sala', 'titulo': f'Dashboard · {sala.nome}'},
         'sala': sala,
@@ -404,8 +476,80 @@ def dashboard_sala(request, sala_id):
         'ranking_notas': ranking_notas,
         'ranking_interacoes': ranking_interacoes,
         'sims_pendentes_ids': sims_pendentes_ids,
+        'metricas_tempo_json': _json.dumps(metricas_tempo),
+        'notas_altas': notas_altas,
+        'notas_medias': notas_medias,
+        'notas_baixas': notas_baixas,
+        'evolucao_notas_json': _json.dumps(evolucao_notas),
+        'atividade_diaria_json': _json.dumps(atividade_diaria),
     }
     return render(request, 'dashboard_sala.html', context)
+
+
+@login_required
+def ranking_sala(request, sala_id):
+    sala = get_object_or_404(Sala, id=sala_id)
+
+    is_admin = sala.administrador == request.user
+    is_participante = request.user in sala.participantes.all()
+
+    if not is_admin and not is_participante:
+        messages.error(request, 'Acesso não autorizado.')
+        return redirect('bem_vindo')
+
+    if not is_admin and not sala.notas_liberadas:
+        messages.warning(request, 'O ranking ainda não foi liberado pelo instrutor.')
+        return redirect('detalhe_sala_cliente', sala_id=sala_id)
+
+    # Aggregate best/avg score and count per user in this sala
+    stats = (
+        AuditoriaSimulacao.objects
+        .filter(simulacao__sala=sala)
+        .values('simulacao__user')
+        .annotate(melhor=Max('nota_total'), media=Avg('nota_total'), qtd=Count('id'))
+        .order_by('-melhor', '-media')
+    )
+
+    total_sims_by_user = {
+        item['user']: item['total']
+        for item in SimulacaoAtendimento.objects.filter(sala=sala)
+            .values('user').annotate(total=Count('id'))
+    }
+
+    user_ids = [s['simulacao__user'] for s in stats]
+    users_by_id = {u.id: u for u in User.objects.filter(id__in=user_ids)}
+
+    ranking = []
+    for i, s in enumerate(stats, 1):
+        uid = s['simulacao__user']
+        u = users_by_id.get(uid)
+        if not u:
+            continue
+        ranking.append({
+            'posicao': i,
+            'user': u,
+            'melhor_nota': round(s['melhor'], 1),
+            'media_nota': round(s['media'], 1),
+            'qtd_auditorias': s['qtd'],
+            'total_sims': total_sims_by_user.get(uid, 0),
+        })
+
+    # Participants with no audited simulation
+    com_nota_ids = set(user_ids)
+    sem_nota = [
+        u for u in sala.participantes.all()
+        if u.id not in com_nota_ids
+    ]
+
+    context = {
+        'sala': sala,
+        'ranking': ranking,
+        'sem_nota': sem_nota,
+        'total_sims_by_user': total_sims_by_user,
+        'is_admin': is_admin,
+        'views': {'id': 'ranking_sala', 'titulo': f'Ranking · {sala.nome}'},
+    }
+    return render(request, 'salas/ranking_sala.html', context)
 
 
 import json as _json
@@ -449,19 +593,12 @@ def toggle_notas_liberadas(request, sala_id):
     from django.http import JsonResponse
     return JsonResponse({'notas_liberadas': sala.notas_liberadas})
 
-@login_required
-def auditar_simulacao(request, sala_id, simulacao_id):
-    """Chama o Gemini para auditar uma simulação e salva o resultado."""
-    if request.user.profile.role != 'administrador':
-        return _json_error('Acesso negado', 403)
-
-    sala = get_object_or_404(Sala, id=sala_id, administrador=request.user)
-    sim  = get_object_or_404(SimulacaoAtendimento, id=simulacao_id, sala=sala)
-
-    # Monta transcrição
+def _executar_auditoria(sim):
+    """Executa a auditoria Gemini em uma simulação e salva/retorna AuditoriaSimulacao.
+    Levanta Exception em caso de falha. Retorna None se não houver mensagens."""
     msgs = sim.mensagens.order_by('timestamp')
     if not msgs.exists():
-        return _json_error('Simulação sem mensagens para auditar.')
+        return None
 
     transcript_lines = []
     for m in msgs:
@@ -502,7 +639,7 @@ Formato JSON EXATO (sem texto fora do JSON):
   "spin": 0.0,
   "cbv": 0.0,
   "ortografia": 1.0,
-  "feedback": "Resumo com pontos fortes e oportunidades de melhoria do consultor.",
+  "feedback": "**Pontos Fortes:**\n- [descreva pelo menos 2 acertos do consultor]\n\n**Oportunidades de Melhoria:**\n- [descreva pelo menos 2 pontos a desenvolver]\n\n**Avaliação Geral:**\n[1 a 2 frases resumindo o desempenho geral do consultor]",
   "erros_ortografia": [
     {{
       "trecho": "trecho exato da fala do consultor com o erro",
@@ -519,26 +656,20 @@ TRANSCRIÇÃO:
 {transcript}
 """
 
-    try:
-        import google.generativeai as genai
-        from webapp.views.openai import GEMINI_API_KEY
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content(prompt)
-        raw = response.text.strip()
-
-        # Remove possível bloco markdown ```json ... ```
-        raw = _re.sub(r'^```[a-z]*\n?', '', raw)
-        raw = _re.sub(r'\n?```$', '', raw)
-
-        data = _json.loads(raw)
-    except Exception as e:
-        return _json_error(f'Erro ao chamar Gemini: {e}')
+    import google.generativeai as genai
+    from webapp.views.openai import GEMINI_API_KEY
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    response = model.generate_content(prompt)
+    raw = response.text.strip()
+    raw = _re.sub(r'^```[a-z]*\n?', '', raw)
+    raw = _re.sub(r'\n?```$', '', raw)
+    data = _json.loads(raw)
 
     def clamp(v, max_v):
         try:
             return round(min(max(float(v), 0), max_v), 2)
-        except:
+        except Exception:
             return 0.0
 
     pa  = clamp(data.get('ponte_abordar', 0),         0.6)
@@ -569,20 +700,47 @@ TRANSCRIÇÃO:
             feedback=feedback, erros_ortografia=erros,
         )
     )
+    return auditoria
+
+
+@login_required
+def auditar_simulacao(request, sala_id, simulacao_id):
+    """Chama o Gemini para auditar uma simulação e salva o resultado."""
+    if request.user.profile.role != 'administrador':
+        return _json_error('Acesso negado', 403)
+
+    sala = get_object_or_404(Sala, id=sala_id, administrador=request.user)
+    sim  = get_object_or_404(SimulacaoAtendimento, id=simulacao_id, sala=sala)
+
+    if not sim.mensagens.exists():
+        return _json_error('Simulação sem mensagens para auditar.')
+
+    try:
+        auditoria = _executar_auditoria(sim)
+    except Exception as e:
+        return _json_error(f'Erro ao chamar Gemini: {e}')
+
+    if auditoria is None:
+        return _json_error('Simulação sem mensagens para auditar.')
 
     from django.http import JsonResponse
     return JsonResponse({
         'ok': True,
-        'nota_total': nota_total,
-        'nota_ponte': nota_ponte,
-        'nota_ea': nota_ea,
-        'ortografia': ort,
-        'feedback': feedback,
-        'erros_ortografia': erros,
+        'nota_total': auditoria.nota_total,
+        'nota_ponte': auditoria.nota_ponte,
+        'nota_ea': auditoria.nota_ea,
+        'ortografia': auditoria.ortografia,
+        'feedback': auditoria.feedback,
+        'erros_ortografia': auditoria.erros_ortografia,
         'detalhe': {
-            'abordar': pa, 'pesquisar': pp, 'oferecer': po,
-            'negociar': pn, 'tomar_iniciativa': pti, 'estender': pe,
-            'spin': spin, 'cbv': cbv,
+            'abordar': auditoria.ponte_abordar,
+            'pesquisar': auditoria.ponte_pesquisar,
+            'oferecer': auditoria.ponte_oferecer,
+            'negociar': auditoria.ponte_negociar,
+            'tomar_iniciativa': auditoria.ponte_tomar_iniciativa,
+            'estender': auditoria.ponte_estender,
+            'spin': auditoria.spin_total,
+            'cbv': auditoria.cbv_total,
         }
     })
 

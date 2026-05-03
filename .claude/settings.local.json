@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\cleid\\\\OneDrive\\\\Documentos\\\\inmind\\\\Simulador\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(.venv\\\\Scripts\\\\activate)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(& \"C:\\\\Users\\\\cleid\\\\OneDrive\\\\Documentos\\\\inmind\\\\Simulador\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import django; print\\(django.__version__\\)\")",
+      "Bash(\"C:\\\\Users\\\\cleid\\\\OneDrive\\\\Documentos\\\\inmind\\\\Simulador\\\\.venv\\\\Scripts\\\\python.exe\" manage.py check)",
+      "Bash(\"C:\\\\Users\\\\cleid\\\\OneDrive\\\\Documentos\\\\inmind\\\\Simulador\\\\.venv\\\\Scripts\\\\python.exe\" manage.py findstatic css/app.css)",
+      "Bash(powershell -Command \"\\(Get-Content influente.html\\) -replace 'Simulação ativa · perfil influente', 'Simulação ativa' | Set-Content influente.html -Encoding UTF8\")",
+      "Bash(powershell -Command \"\\(Get-Content analitico.html\\) -replace 'Simulação ativa · perfil analítico', 'Simulação ativa' | Set-Content analitico.html -Encoding UTF8\")",
+      "Bash(powershell -Command \"\\(Get-Content estavel.html\\) -replace 'Simulação ativa · perfil estável', 'Simulação ativa' | Set-Content estavel.html -Encoding UTF8\")",
+      "Bash(powershell -Command \"Select-String -Path 'dominante.html','influente.html','analitico.html','estavel.html' -Pattern 'perfil dominante|perfil influente|perfil anal|perfil est'\")",
+      "Bash('C:\\\\Users\\\\cleid\\\\OneDrive\\\\Documentos\\\\inmind\\\\Simulador\\\\.venv\\\\Scripts\\\\python.exe' -c ' *)",
+      "Bash(python -c \"import django; import os; os.environ.setdefault\\('DJANGO_SETTINGS_MODULE', 'django_ia.settings'\\); django.setup\\(\\); from webapp.views import salas; print\\('salas OK'\\)\")",
+      "Bash(.venvScriptspython.exe -c ' *)"
+    ]
+  }
+}

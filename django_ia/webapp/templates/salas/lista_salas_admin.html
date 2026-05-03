@@ -38,36 +38,37 @@
     .salas-hero h1 { font-size: 1.7rem; font-weight: 700; color: #fff; margin: 0; letter-spacing: -.3px; }
     .salas-hero p { color: rgba(255,255,255,.75); margin: 0; font-size: .9rem; }
     .btn-criar {
-        background: #fff;
-        color: #6a11cb;
+        background: rgba(255,255,255,.15) !important;
+        color: #fff !important;
         font-weight: 700;
         font-size: .9rem;
-        border: none;
+        border: 1px solid rgba(255,255,255,.3) !important;
         border-radius: 12px;
         padding: .7rem 1.5rem;
         display: inline-flex; align-items: center; gap: .5rem;
         text-decoration: none;
         transition: all .25s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,.2);
+        box-shadow: none !important;
         white-space: nowrap;
+        backdrop-filter: blur(6px);
     }
-    .btn-criar:hover { background: #f0e8ff; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,.25); color: #6a11cb; }
+    .btn-criar:hover { background: rgba(255,255,255,.25) !important; transform: translateY(-2px); color: #fff !important; }
 
     /* ── Stats bar ── */
     .stats-bar {
         display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;
     }
     .stat-pill {
-        background: rgba(255,255,255,.07);
-        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.15);
         border-radius: 50px;
         padding: .45rem 1.1rem;
-        color: rgba(255,255,255,.8);
+        color: rgba(255,255,255,.92);
         font-size: .82rem;
         display: flex; align-items: center; gap: .5rem;
         backdrop-filter: blur(8px);
     }
-    .stat-pill i { color: #a78bfa; font-size: .8rem; }
+    .stat-pill i { color: #60A5FA; font-size: .8rem; }
     .stat-pill strong { color: #fff; }
 
     /* ── Grid ── */
@@ -127,42 +128,42 @@
     .sala-card-body { position: relative; z-index: 0; pointer-events: none; }
     .sala-card-avatar {
         width: 48px; height: 48px;
-        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        background: linear-gradient(135deg, #1D4ED8, #0EA5E9);
         border-radius: 14px;
         display: flex; align-items: center; justify-content: center;
         font-size: 1.3rem; color: #fff;
         margin-bottom: 1.1rem;
-        box-shadow: 0 4px 15px rgba(106,17,203,.4);
+        box-shadow: 0 4px 15px rgba(29,78,216,.4);
     }
-    .sala-card-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: .6rem; padding-right: 2.5rem; line-height: 1.3; }
+    .sala-card-name { font-size: 1.1rem; font-weight: 700; color: #fff !important; margin-bottom: .6rem; padding-right: 2.5rem; line-height: 1.3; }
     .sala-card-meta { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1rem; }
-    .sala-card-meta span { font-size: .82rem; color: rgba(255,255,255,.55); display: flex; align-items: center; gap: .45rem; }
-    .sala-card-meta span i { color: #a78bfa; width: 13px; text-align: center; }
+    .sala-card-meta span { font-size: .82rem; color: rgba(255,255,255,.82); display: flex; align-items: center; gap: .45rem; }
+    .sala-card-meta span i { color: #60A5FA; width: 13px; text-align: center; }
 
     /* Código badge */
-    .sala-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: .9rem; border-top: 1px solid rgba(255,255,255,.07); }
+    .sala-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: .9rem; border-top: 1px solid rgba(255,255,255,.1); }
     .codigo-badge {
         font-family: 'Courier New', monospace;
         font-size: .85rem; font-weight: 700;
-        background: rgba(106,17,203,.3);
-        border: 1px solid rgba(106,17,203,.5);
-        color: #c4b5fd;
+        background: rgba(29,78,216,.25);
+        border: 1px solid rgba(29,78,216,.5);
+        color: #93C5FD;
         padding: .3rem .75rem; border-radius: 8px;
         letter-spacing: 2px;
     }
     .copy-btn {
         background: transparent; border: none;
-        color: rgba(255,255,255,.4); font-size: .8rem; cursor: pointer;
+        color: rgba(255,255,255,.55); font-size: .8rem; cursor: pointer;
         transition: color .2s; padding: .2rem .4rem; border-radius: 6px;
         pointer-events: all; position: relative; z-index: 5;
     }
-    .copy-btn:hover { color: #a78bfa; background: rgba(167,139,250,.1); }
+    .copy-btn:hover { color: #60A5FA; background: rgba(29,78,216,.15); }
 
     /* Ocupação barra */
     .occupancy-bar { margin-top: .8rem; }
-    .occupancy-label { display: flex; justify-content: space-between; font-size: .75rem; color: rgba(255,255,255,.45); margin-bottom: .35rem; }
-    .occupancy-track { height: 4px; background: rgba(255,255,255,.08); border-radius: 50px; overflow: hidden; }
-    .occupancy-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, #6a11cb, #2575fc); transition: width .6s ease; }
+    .occupancy-label { display: flex; justify-content: space-between; font-size: .75rem; color: rgba(255,255,255,.7); margin-bottom: .35rem; }
+    .occupancy-track { height: 4px; background: rgba(255,255,255,.12); border-radius: 50px; overflow: hidden; }
+    .occupancy-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, #1D4ED8, #0EA5E9); transition: width .6s ease; }
 
     /* ── Empty state ── */
     .empty-state {
