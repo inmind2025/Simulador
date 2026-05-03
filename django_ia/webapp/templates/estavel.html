@@ -84,6 +84,8 @@
     .message.cliente-ia .message-sender { color: #86efac; }
     .typing-indicator { display: none; align-self: flex-start; }
     .typing-indicator.visible { display: flex; }
+    .chat-empty-hint { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: .5rem; color: rgba(255,255,255,.35); font-size: .9rem; text-align: center; padding: 2rem; }
+    .chat-empty-hint i { font-size: 2rem; }
     .typing-dots {
         display: flex; gap: 4px; align-items: center; padding: .7rem 1rem;
         background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
@@ -180,6 +182,11 @@
                         </div>
                     </div>
                 {% endif %}
+            {% empty %}
+                <div class="chat-empty-hint" id="chat-empty-hint">
+                    <i class="fas fa-comment-medical"></i>
+                    <p>O cliente está aguardando. Inicie o atendimento!</p>
+                </div>
             {% endfor %}
             <div class="message cliente-ia typing-indicator" id="typing-indicator">
                 <div class="msg-avatar">C</div>
@@ -238,6 +245,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function addMessage(role, senderName, text) {
+        const hint = document.getElementById('chat-empty-hint');
+        if (hint) hint.remove();
         const w = document.createElement('div');
         w.className = 'message ' + (role === 'user' ? 'vendedor' : 'cliente-ia');
         w.innerHTML = `<div class="msg-avatar">${senderName.charAt(0).toUpperCase()}</div>

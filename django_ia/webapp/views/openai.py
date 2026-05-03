@@ -4,7 +4,8 @@ import urllib.parse
 from io import BytesIO
 import json # Para lidar com JSON em AJAX
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 import graphviz
 from reportlab.graphics import renderPDF
@@ -16,17 +17,30 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from webapp.models import Registros, SimulacaoAtendimento, MensagemSimulacao, Sala, Personagem, AuditoriaSimulacao
-from django.utils import timezone # Importe para usar timezone.now() na view de reiniciar
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse 
+from django.urls import reverse
 
 
+# --- Configuração do cliente Gemini (nova API) ---
+GEMINI_API_KEY = "AIzaSyAmjufKlPYYJWdqAIyYgKJ-GY93umbgFh0"
+client = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = 'gemini-2.5-flash'
 
-# --- O resto do seu código (suas views) começa aqui ---
 
-# Substitua pela sua chave de API do Gemini
-GEMINI_API_KEY = "AIzaSyCpRFKl-QyPK_xYOHQxSKXHyeoIYtVsBPE"
-# GEMINI_API_KEY = "AIzaSyCpRFKl-QyPK_xYOHQxSKXHyeoIYtVsBPE"
+def _history_to_api(history):
+    """Converte o histórico da sessão para o formato da nova API (parts como dicts)."""
+    converted = []
+    for msg in history:
+        parts = []
+        for p in msg['parts']:
+            if isinstance(p, str):
+                parts.append({'text': p})
+            else:
+                parts.append(p)
+        converted.append({'role': msg['role'], 'parts': parts})
+    return converted
+
 
 import random as _random
 
@@ -92,11 +106,7 @@ ________________________________________
 
 @login_required
 def dominante(request):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    # Verifica se é o início de uma nova simulação (sem histórico na sessão) 
-    if 'chat_display' not in request.session: 
+    if 'chat_display' not in request.session:
         initial_prompt = '''
         PROMPT — Agente Cliente DISC-D  - Perfil Lucas Andrade
 Você é Lucas Andrade, um cliente com perfil Dominante (DISC-D) e exigências de alto padrão, simulando uma compra real na loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades). Seu comportamento é direto, objetivo e orientado a resultados, como um Diretor de Operações de uma startup de logística. Seu tempo é extremamente valioso, e você não tolera enrolação. A conversa deve ser mais simples e natural.
@@ -147,34 +157,34 @@ COMPORTAMENTO DAS FALAS
 •   Use um tom natural e direto, com respostas curtas, mas claras. A conversa deve fluir de forma que pareça um diálogo comum de loja.
 •   Não use termos técnicos complexos, apenas questionamentos típicos de um cliente exigente.
 •   Frases para utilizar como exemplo:
-o   “Quero algo que dure muito tempo e não dê problemas.”
-o   “Esse tem Wi-Fi?” (em vez de "Tem conectividade Wi-Fi?")
-o   “Ele tem filtro de água?”
-o   “O acabamento é fácil de limpar?”
-o   “Esse tá bonito, mas tem outro mais barato?”
-o   “Achei meio caro, tem algo mais em conta?”
-o   “Me mostra algo mais eficiente, esse parece frágil.”
-o   “Estou com pressa, precisa ser rápido.”
-o   “Esse modelo não tem o que preciso, tem outro?”
-o   “Gostei, mas ainda tenho dúvidas sobre o consumo.”
+o   "Quero algo que dure muito tempo e não dê problemas."
+o   "Esse tem Wi-Fi?" (em vez de "Tem conectividade Wi-Fi?")
+o   "Ele tem filtro de água?"
+o   "O acabamento é fácil de limpar?"
+o   "Esse tá bonito, mas tem outro mais barato?"
+o   "Achei meio caro, tem algo mais em conta?"
+o   "Me mostra algo mais eficiente, esse parece frágil."
+o   "Estou com pressa, precisa ser rápido."
+o   "Esse modelo não tem o que preciso, tem outro?"
+o   "Gostei, mas ainda tenho dúvidas sobre o consumo."
 ________________________________________
 OBJEÇÕES
 •   Levante de uma a três objeções simples, com uma frase curta. Não faça perguntas muito técnicas, apenas algo que um cliente real diria.
 •   Utilize objeções uma de cada vez, nunca de uma vez só. Sempre a medida que a conversa for avançando.
 •   Exemplos:
-o   Preço: “Tá caro pra mim.” / “Vi mais barato em outra loja.”
-o   Necessidade: “O meu ainda funciona, não é urgente.”
-o   Concorrência: “Na loja X tá mais barato.” / “Lá deram brinde.”
-o   Dúvidas de qualidade: “Esse material parece frágil.” / “Esse modelo é bom?”
-o   Entrega: “Demora pra chegar?” / “Eles entregam rápido no meu bairro?”
-o   Pagamento: “Não quero parcelar.” / “Já estou com o cartão cheio.”
-o   Assistência: “E a assistência, resolve rápido?”
+o   Preço: "Tá caro pra mim." / "Vi mais barato em outra loja."
+o   Necessidade: "O meu ainda funciona, não é urgente."
+o   Concorrência: "Na loja X tá mais barato." / "Lá deram brinde."
+o   Dúvidas de qualidade: "Esse material parece frágil." / "Esse modelo é bom?"
+o   Entrega: "Demora pra chegar?" / "Eles entregam rápido no meu bairro?"
+o   Pagamento: "Não quero parcelar." / "Já estou com o cartão cheio."
+o   Assistência: "E a assistência, resolve rápido?"
 ________________________________________
 FECHAMENTO
 •   Se decidir comprar, use frases simples:
-o   “Fechou, pode fazer aí.”
-o   “Vou levar esse, pode concluir a venda.”
-o   “Pode concluir, vou pagar à vista.”
+o   "Fechou, pode fazer aí."
+o   "Vou levar esse, pode concluir a venda."
+o   "Pode concluir, vou pagar à vista."
 •   Não repita as frases entre as interações.
 ________________________________________
 DADOS PESSOAIS (LUCAS ANDRADE)
@@ -192,10 +202,8 @@ OBJETIVO
 ________________________________________
 FORMATAÇÃO INICIAL
 •   Ao iniciar, exiba apenas: ... e aguarde o vendedor iniciar a conversa.
-
-
         '''
-        
+
         try:
             sala_id = request.session.get('current_sala_id')
             sala = Sala.objects.get(id=sala_id) if sala_id else None
@@ -211,42 +219,25 @@ FORMATAÇÃO INICIAL
                 initial_prompt_summary=f"Conversa com {personagem.nome_criativo}",
                 sala=sala
             )
-            # 2. Armazene o ID da simulação na sessão para associar as futuras mensagens
             request.session['current_simulacao_id'] = simulacao.id
 
-            # Injeta produto e objeções sorteados para garantir variação entre simulações
             initial_prompt += _injecao_sorteio(*_sortear_simulacao())
 
-            gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
-            chat = model.start_chat(history=gemini_internal_history)
-
+            gemini_internal_history = [{'role': 'user', 'parts': [{'text': initial_prompt}]}]
+            chat = client.chats.create(model=GEMINI_MODEL, history=_history_to_api(gemini_internal_history))
             response = chat.send_message("Estou pronto para simular.")
-            
             customer_first_dialogue = response.text.strip()
-            
-            # 3. Salve a primeira fala do cliente (Gemini/IA) no banco de dados
-            MensagemSimulacao.objects.create(
-                simulacao=simulacao,
-                sender='cliente_ia',
-                message_content=customer_first_dialogue
-            )
-            
-            # Atualiza o histórico interno do Gemini com a primeira resposta do modelo. 
-            gemini_internal_history.append({'role': 'model', 'parts': [customer_first_dialogue]})
-            
-            # O histórico para exibição na UI começa apenas com a primeira fala do CLIENTE.
-            request.session['chat_display'] = [
-                {'role': 'model', 'parts': [customer_first_dialogue]}
-            ]
-            # Salva o histórico INTERNO do Gemini na sessão.
+
+            gemini_internal_history.append({'role': 'model', 'parts': [{'text': customer_first_dialogue}]})
+
+            request.session['chat_display'] = []
             request.session['gemini_chat_internal_history'] = gemini_internal_history
-            request.session.modified = True # Marca a sessão como modificada
+            request.session.modified = True
 
         except Exception as e:
             messages.error(request, f"Ocorreu um erro ao iniciar a simulação: {e}. Certifique-se de que está logado.")
             request.session['chat_display'] = []
             request.session['gemini_chat_internal_history'] = []
-            # Limpa o ID da simulação da sessão se deu erro na criação
             if 'current_simulacao_id' in request.session:
                 del request.session['current_simulacao_id']
 
@@ -259,6 +250,7 @@ FORMATAÇÃO INICIAL
         'personagem': personagem
     }
     return render(request, 'dominante.html', context)
+
 
 def correcao(request):
     params = {
@@ -273,55 +265,48 @@ def correcao(request):
             "Rust", "SQL", "XML-Doc", "Yaml",
         ]
     }
-    
-    # Esta parte é para a exibição inicial do formulário ou para carregar o código da sessão após um redirecionamento
+
     if "code" in request.session:
         params["code"] = request.session.pop("code")
 
     if request.method == "POST":
         code_to_fix = request.POST["code"]
         linguagem = request.POST["linguagem"]
-        
-        request.session["code"] = code_to_fix # Salva na sessão para caso de redirecionamento ou para reexibir o código
-        params["code"] = code_to_fix # <-- ADICIONE ESTA LINHA AQUI!
-                                     # Isso garante que 'params["code"]' tenha o valor correto para este request.
-        
+
+        request.session["code"] = code_to_fix
+        params["code"] = code_to_fix
+
         if linguagem == "Selecione a linguagem de programação":
             messages.error(request, "Por favor, selecione uma linguagem")
             return render(request, "correcao.html", params)
-        
+
         try:
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            response = model.generate_content(prompt)
-            
+            prompt = f"Corrija o seguinte código {linguagem}. Responda apenas com o código corrigido, sem explicações:\n\n{code_to_fix}"
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+
             raw_response = response.text.strip()
-            
+
             if raw_response.startswith("```") and raw_response.endswith("```"):
                 lines = raw_response.splitlines()
                 corrected_code = "\n".join(lines[1:-1])
             else:
                 corrected_code = raw_response
-            
+
             params["response"] = corrected_code
 
-            # Parte do Banco de Dados
-            # Salva o registro de histórico
-            
             registro = Registros(
-                pergunta = params["code"], # Agora 'params["code"]' estará definido
-                resposta = params["response"],
-                linguagem = linguagem, # Pode usar `linguagem` diretamente, já que já foi validado
-                user = request.user,
+                pergunta=params["code"],
+                resposta=params["response"],
+                linguagem=linguagem,
+                user=request.user,
                 tipo=params["views"]["id"],
             )
             registro.save()
-            messages.success(request, "Código corrigido e salvo com sucesso!") # Adicionar mensagem de sucesso
-            
+            messages.success(request, "Código corrigido e salvo com sucesso!")
+
         except Exception as e:
-            # A mensagem de erro que você viu. `e` provavelmente era um KeyError('code')
             messages.error(request, f"Ocorreu um erro ao contatar a API do Gemini ou ao processar: {e}")
-            
+
     return render(request, "correcao.html", params)
 
 
@@ -338,63 +323,45 @@ def criacao(request):
             "Rust", "SQL", "XML-Doc", "Yaml",
         ]
     }
-    
+
     if "code" in request.session:
         params["code"] = request.session.pop("code")
 
     if request.method == "POST":
         code_to_fix = request.POST["code"]
         linguagem = request.POST["linguagem"]
-        
+
         request.session["code"] = code_to_fix
-        # --- ADICIONE ESTA LINHA AQUI! ---
-        params["code"] = code_to_fix 
-        # --- FIM DA ADIÇÃO ---
-        
+        params["code"] = code_to_fix
+
         try:
-            # Configura a chave de API do Gemini
-            genai.configure(api_key=GEMINI_API_KEY)
-
-            # Inicializa o modelo (gemini-1.5-flash é rápido e eficiente)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-
-            # Cria o prompt para o Gemini
             prompt = f"Responda apenas com código. {code_to_fix} na linguagem: {linguagem}"
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
 
-            # Gera o conteúdo
-            response = model.generate_content(prompt)
-            
-            # Pega a resposta de texto crua e remove espaços em branco no início/fim
             raw_response = response.text.strip()
-            
-            # Verifica se a resposta está formatada como um bloco de código Markdown
+
             if raw_response.startswith("```") and raw_response.endswith("```"):
-                # Remove a primeira linha (ex: ```python) e a última (```)
                 lines = raw_response.splitlines()
-                # `corrected_code` foi o nome usado na outra view, aqui é o código gerado/criado
-                generated_code = "\n".join(lines[1:-1]) 
+                generated_code = "\n".join(lines[1:-1])
             else:
                 generated_code = raw_response
-            
-            # Adiciona o código já limpo ao dicionário de parâmetros
+
             params["response"] = generated_code
 
-            # Parte do Banco de Dados: Salva o registro de histórico
             registro = Registros(
-                pergunta = params["code"], # Agora 'params["code"]' estará definido
-                resposta = params["response"],
-                linguagem = linguagem, # Pode usar `linguagem` diretamente
-                user = request.user,
-                tipo=params["views"]["id"], # Isso será "criacao" conforme definido em `params["views"]["id"]`
+                pergunta=params["code"],
+                resposta=params["response"],
+                linguagem=linguagem,
+                user=request.user,
+                tipo=params["views"]["id"],
             )
             registro.save()
-            messages.success(request, "Código criado e salvo com sucesso!") # Mensagem de sucesso ajustada para "criação"
+            messages.success(request, "Código criado e salvo com sucesso!")
 
         except Exception as e:
             messages.error(request, f"Ocorreu um erro ao contatar a API do Gemini: {e}")
-            
-    return render(request, "criacao.html", params)
 
+    return render(request, "criacao.html", params)
 
 
 def geral(request):
@@ -404,73 +371,47 @@ def geral(request):
             "titulo": "Perguntas Gerais",
         },
     }
-    
+
     if "code" in request.session:
         params["code"] = request.session.pop("code")
 
     if request.method == "POST":
         code_to_fix = request.POST["code"]
-        
+
         request.session["code"] = code_to_fix
-        # --- ADICIONE ESTA LINHA AQUI! ---
-        params["code"] = code_to_fix 
-        # --- FIM DA ADIÇÃO ---
-        
+        params["code"] = code_to_fix
+
         try:
-            # Configura a chave de API do Gemini
-            genai.configure(api_key=GEMINI_API_KEY)
-
-            # Inicializa o modelo (gemini-1.5-flash é rápido e eficiente)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-
-            # Cria o prompt para o Gemini
             prompt = f"Responda a: {code_to_fix}"
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
 
-            # Gera o conteúdo
-            response = model.generate_content(prompt)
-            
-            # Pega a resposta de texto crua e remove espaços em branco no início/fim
             raw_response = response.text.strip()
-            
-            # Verifica se a resposta está formatada como um bloco de código Markdown
+
             if raw_response.startswith("```") and raw_response.endswith("```"):
-                # Remove a primeira linha (ex: ```python) e a última (```)
                 lines = raw_response.splitlines()
-                generated_response = "\n".join(lines[1:-1]) 
+                generated_response = "\n".join(lines[1:-1])
             else:
                 generated_response = raw_response
-            
-            # Adiciona o conteúdo gerado ao dicionário de parâmetros
+
             params["response"] = generated_response
 
-            # Parte do Banco de Dados: Salva o registro de histórico
             registro = Registros(
-                pergunta = params["code"], # Agora 'params["code"]' estará definido
-                resposta = params["response"],
-                linguagem = "geral", # Fixo como "geral" para esta view, o que está correto
-                user = request.user,
-                tipo=params["views"]["id"], # Será "geral"
+                pergunta=params["code"],
+                resposta=params["response"],
+                linguagem="geral",
+                user=request.user,
+                tipo=params["views"]["id"],
             )
             registro.save()
-            # --- ATUALIZE A MENSAGEM DE SUCESSO AQUI! ---
-            messages.success(request, "Pergunta respondida e salva com sucesso!") 
-            # --- FIM DA ATUALIZAÇÃO ---
+            messages.success(request, "Pergunta respondida e salva com sucesso!")
 
         except Exception as e:
             messages.error(request, f"Ocorreu um erro ao contatar a API do Gemini: {e}")
-            
+
     return render(request, "geral.html", params)
 
 
-
-# Em seu arquivo views.py
-
-# Em seu arquivo views.py
-
-# Em seu arquivo views.py
-
 def mapa_mental(request):
-    # Valores padrão para a primeira vez que a página carrega
     context = {
         "views": {"id": "mapaMental", "titulo": "Gerador de Mapa Mental"},
         "texto_original": "", "mapa_svg": None,
@@ -478,12 +419,10 @@ def mapa_mental(request):
     }
 
     if request.method == "POST":
-        # 1. O "chef" anota o pedido completo do cliente
-        texto_usuario = request.POST.get("texto_mapa", "") 
+        texto_usuario = request.POST.get("texto_mapa", "")
         layout_choice = request.POST.get('layout', 'LR')
         detalhe_choice = request.POST.get('detalhe', 'normal')
 
-        # Atualiza o contexto para "lembrar" das escolhas
         context["texto_original"] = texto_usuario
         context["layout_choice"] = layout_choice
         context["detalhe_choice"] = detalhe_choice
@@ -493,12 +432,6 @@ def mapa_mental(request):
             return render(request, "mapa_mental.html", context)
 
         try:
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-
-            # 2. O "chef" prepara as instruções especiais para o Gemini
-            
-            # Instrução para o Layout
             instrucao_layout = 'O layout do mapa deve ser da esquerda para a direita. Para isso, inclua \'rankdir="LR";\'.'
             engine_to_use = 'dot'
             if layout_choice == 'TB':
@@ -507,14 +440,12 @@ def mapa_mental(request):
                 engine_to_use = 'twopi'
                 instrucao_layout = 'O layout do mapa deve ser radial (formato de teia).'
 
-            # Instrução para o Nível de Detalhe
-            instrucao_detalhe = '' # Padrão (Normal)
+            instrucao_detalhe = ''
             if detalhe_choice == 'resumido':
                 instrucao_detalhe = 'Seja conciso e foque apenas nos conceitos principais, com poucos níveis.'
             elif detalhe_choice == 'detalhado':
                 instrucao_detalhe = 'Seja exaustivo e crie múltiplos níveis de subtópicos. Explore as conexões em profundidade.'
 
-            # 3. O "chef" envia o pedido completo para o Gemini
             prompt = f'''
 Sua tarefa é converter o texto em um mapa mental na sintaxe DOT da Graphviz.
 {instrucao_layout}
@@ -524,11 +455,14 @@ Use nós em formato de caixa. Responda apenas com o código DOT.
 TEXTO PARA CONVERTER:
 {texto_usuario}
 '''
-            
-            response = model.generate_content(prompt, safety_settings={'HATE': 'BLOCK_NONE', 'HARASSMENT': 'BLOCK_NONE'})
+            config = types.GenerateContentConfig(safety_settings=[
+                types.SafetySetting(category='HARM_CATEGORY_HATE_SPEECH', threshold='BLOCK_NONE'),
+                types.SafetySetting(category='HARM_CATEGORY_HARASSMENT', threshold='BLOCK_NONE'),
+            ])
+
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt, config=config)
             dot_source = response.text
 
-            # ... (o resto do código para gerar o SVG continua igual) ...
             if dot_source.strip().startswith("```"):
                 lines = dot_source.strip().splitlines()
                 dot_source = "\n".join(lines[1:-1])
@@ -541,13 +475,11 @@ TEXTO PARA CONVERTER:
 
         except Exception as e:
             messages.error(request, f"Ocorreu um erro ao gerar o mapa: {e}")
-            
+
     return render(request, "mapa_mental.html", context)
 
 
-# ADICIONE ESTA NOVA FUNÇÃO AO SEU views.py
 def download_mapa_pdf(request):
-    # Pega o SVG que salvamos na sessão
     svg_content = request.session.get('mapa_svg_para_download')
 
     if not svg_content:
@@ -555,62 +487,36 @@ def download_mapa_pdf(request):
         return redirect('mapa_mental')
 
     try:
-        # Converte a string SVG em um objeto que o ReportLab entende
-        # Usamos BytesIO para tratar a string como um arquivo em memória
         drawing = svg2rlg(BytesIO(svg_content.encode('utf-8')))
-        
-        # Cria um buffer para guardar o PDF em memória
         pdf_buffer = BytesIO()
-
-        # Renderiza o desenho no buffer de PDF
         renderPDF.drawToFile(drawing, pdf_buffer)
-        
-        # Pega os dados do PDF a partir do buffer
         pdf_file = pdf_buffer.getvalue()
         pdf_buffer.close()
 
-        # Cria a resposta HTTP para forçar o download do arquivo
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="mapa_mental.pdf"'
-        
         return response
 
     except Exception as e:
         messages.error(request, f"Ocorreu um erro ao converter o mapa para PDF: {e}")
         return redirect('mapa_mental')
-    
 
-
-
-
-# A view `enviar_resposta_vendedor` será ajustada na próxima etapa, caso você precise.
-# A view `reiniciar_simulacao` também pode ser ajustada para finalizar a simulação no banco.
 
 @require_POST
 def enviar_resposta_vendedor(request):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    # Recupera o histórico para exibição na UI e o histórico INTERNO do Gemini
     chat_display = request.session.get('chat_display', [])
     gemini_chat_internal_history = request.session.get('gemini_chat_internal_history', [])
-    
-    # 1. Recupera o ID da simulação atual da sessão
+
     current_simulacao_id = request.session.get('current_simulacao_id')
 
-    # Validações iniciais
     if not current_simulacao_id:
-        # Se não há ID de simulação, algo deu errado ou a sessão expirou/foi reiniciada incorretamente
         return JsonResponse({'error': 'Simulação não encontrada. Por favor, reinicie a simulação.'}, status=400)
-    
+
     try:
-        # 2. Carrega a instância de SimulacaoAtendimento do banco de dados
         simulacao_atual = SimulacaoAtendimento.objects.get(id=current_simulacao_id)
     except SimulacaoAtendimento.DoesNotExist:
-        # Se o ID existe na sessão mas a simulação não existe no DB, é um erro grave
         return JsonResponse({'error': 'Simulação inválida. Por favor, reinicie a simulação.'}, status=400)
 
-    # Valida a entrada do vendedor (mensagem do usuário)
     data = json.loads(request.body)
     vendedor_message = data.get('message', '').strip()
 
@@ -618,61 +524,46 @@ def enviar_resposta_vendedor(request):
         return JsonResponse({'error': 'Mensagem do vendedor não pode estar vazia.'}, status=400)
 
     try:
-        # 3. Salva a mensagem do vendedor (Usuário) no banco de dados
         MensagemSimulacao.objects.create(
             simulacao=simulacao_atual,
             sender='vendedor_usuario',
             message_content=vendedor_message
         )
 
-        # Adiciona a mensagem do vendedor ao histórico INTERNO do Gemini
-        gemini_chat_internal_history.append({'role': 'user', 'parts': [vendedor_message]})
-        
-        # Reinicia o objeto de chat do Gemini com o histórico interno completo
-        chat = model.start_chat(history=gemini_chat_internal_history)
-        
-        # Envia a mensagem do vendedor e obtém a resposta do cliente (Gemini)
+        gemini_chat_internal_history.append({'role': 'user', 'parts': [{'text': vendedor_message}]})
+
+        history_for_chat = _history_to_api(gemini_chat_internal_history[:-1])
+        chat = client.chats.create(model=GEMINI_MODEL, history=history_for_chat)
+
         response = chat.send_message(vendedor_message)
         customer_response_text = response.text.strip()
-        
-        # 4. Salva a resposta do Cliente (IA) no banco de dados
+
         MensagemSimulacao.objects.create(
             simulacao=simulacao_atual,
             sender='cliente_ia',
             message_content=customer_response_text
         )
-        
-        # Adiciona a mensagem do vendedor ao histórico para EXIBIÇÃO na UI
+
         chat_display.append({'role': 'user', 'parts': [vendedor_message]})
-        
-        # Adiciona a resposta do cliente (Gemini) ao histórico INTERNO do Gemini
-        gemini_chat_internal_history.append({'role': 'model', 'parts': [customer_response_text]})
-        
-        # Adiciona a resposta do cliente (Gemini) ao histórico para EXIBIÇÃO na UI
+
+        gemini_chat_internal_history.append({'role': 'model', 'parts': [{'text': customer_response_text}]})
+
         chat_display.append({'role': 'model', 'parts': [customer_response_text]})
-        
-        # Salva AMBOS os históricos atualizados na sessão
+
         request.session['chat_display'] = chat_display
         request.session['gemini_chat_internal_history'] = gemini_chat_internal_history
-        request.session.modified = True 
+        request.session.modified = True
 
-        # Retorna a resposta do cliente em JSON e o histórico completo para a UI atualizar
         return JsonResponse({
             'customer_response': customer_response_text,
-            'chat_history': chat_display 
+            'chat_history': chat_display
         })
 
     except Exception as e:
-        # Se houver um erro, ainda tenta retornar uma resposta JSON adequada
         return JsonResponse({'error': f"Ocorreu um erro na interação com o Gemini: {e}"}, status=500)
-
-# -----------------------------------------------------------------------------------
-# Opcional: Ajuste na view reiniciar_simulacao para marcar o fim da simulação no DB
-# -----------------------------------------------------------------------------------
 
 
 def reiniciar_simulacao(request):
-    # Antes de limpar a sessão, tentamos marcar a hora de término da simulação no DB
     if 'current_simulacao_id' in request.session:
         try:
             simulacao = SimulacaoAtendimento.objects.get(id=request.session['current_simulacao_id'])
@@ -680,7 +571,6 @@ def reiniciar_simulacao(request):
                 simulacao.end_time = timezone.now()
                 simulacao.save()
 
-                # Correção automática — só para salas do tipo Simulação
                 sala = simulacao.sala
                 if sala and sala.correcao_automatica and sala.tipo_atividade != 'prova':
                     try:
@@ -700,9 +590,9 @@ def reiniciar_simulacao(request):
 
     return redirect('bem_vindo')
 
+
 @login_required
 def performance(request):
-    """Página de performance individual do aluno (vendedor/cliente)."""
     import datetime as _dt
     from collections import Counter
 
@@ -716,7 +606,6 @@ def performance(request):
         simulacao__user=user, sender='vendedor_usuario'
     ).count()
 
-    # Auditorias do aluno — apenas de salas que liberaram as notas
     auditorias = AuditoriaSimulacao.objects.filter(
         simulacao__user=user,
         simulacao__sala__notas_liberadas=True,
@@ -727,7 +616,6 @@ def performance(request):
     melhor_nota = max(notas) if notas else None
     ultima_nota = notas[-1] if notas else None
 
-    # Evolução cronológica de notas (para gráfico)
     evolucao = [
         {
             'data': a.simulacao.start_time.strftime('%d/%m'),
@@ -737,7 +625,6 @@ def performance(request):
         for a in auditorias
     ]
 
-    # Médias por critério (para radar/barras)
     if auditorias:
         n = len(auditorias)
         criterios = {
@@ -759,7 +646,6 @@ def performance(request):
         criterios = {}
         criterios_pct = {}
 
-    # Erros ortográficos mais frequentes
     erros_counter = Counter()
     for a in auditorias:
         for e in (a.erros_ortografia or []):
@@ -767,7 +653,6 @@ def performance(request):
                 erros_counter[e['trecho']] += 1
     erros_frequentes = [{'trecho': t, 'count': c} for t, c in erros_counter.most_common(10)]
 
-    # Salas que o aluno participa + ranking dentro de cada sala
     salas_data = []
     for sala in user.salas_participando.all():
         sims_sala = sims.filter(sala=sala)
@@ -775,12 +660,9 @@ def performance(request):
         notas_sala = [a.nota_total for a in audits_sala]
         media_sala = round(sum(notas_sala) / len(notas_sala), 1) if notas_sala else None
 
-        # Posição no ranking da sala
         posicao = None
         if media_sala is not None:
-            # Médias de todos os participantes da sala
             from django.db.models import Avg
-            from django.db.models import FloatField
             medias_participantes = []
             for p in sala.participantes.all():
                 m = AuditoriaSimulacao.objects.filter(
@@ -803,10 +685,8 @@ def performance(request):
             'posicao': posicao,
         })
 
-    # Auditorias detalhadas para exibição ao aluno (mais recentes primeiro)
     auditorias_detalhes = list(auditorias.order_by('-simulacao__start_time'))
 
-    # Tempo médio de resposta global (todas as simulações concluídas)
     all_deltas = []
     for sim in SimulacaoAtendimento.objects.filter(
         user=user, end_time__isnull=False
@@ -824,7 +704,6 @@ def performance(request):
     else:
         media_tempo_resposta = None
 
-    # Últimas simulações com notas
     ultimas_sims = []
     for s in sims.order_by('-start_time').prefetch_related('mensagens')[:10]:
         try:
@@ -857,14 +736,11 @@ def performance(request):
 
 
 def historico(request):
-    # Verifica se o usuário tem um perfil e qual é a sua função
     if hasattr(request.user, 'profile') and request.user.profile.role == 'administrador':
-        # O administrador vê todas as simulações
         simulacoes = SimulacaoAtendimento.objects.all().prefetch_related('mensagens').order_by('-start_time')
     else:
-        # O cliente vê apenas as suas próprias simulações
         simulacoes = SimulacaoAtendimento.objects.filter(user=request.user).prefetch_related('mensagens').order_by('-start_time')
-    
+
     context = {
         'simulacoes': simulacoes,
         'views': {'id': 'historico_simulacoes', 'titulo': 'Histórico de Simulações de Atendimento'}
@@ -873,29 +749,25 @@ def historico(request):
 
 
 def historico_simulacoes(request):
-    # Verifica se o usuário tem um perfil e qual é a sua função
     if hasattr(request.user, 'profile') and request.user.profile.role == 'administrador':
-        # O administrador vê todas as simulações
         simulacoes = SimulacaoAtendimento.objects.all().prefetch_related('mensagens').order_by('-start_time')
     else:
-        # O cliente vê apenas as suas próprias simulações
         simulacoes = SimulacaoAtendimento.objects.filter(user=request.user).prefetch_related('mensagens').order_by('-start_time')
-    
+
     context = {
         'simulacoes': simulacoes,
         'views': {'id': 'historico_simulacoes', 'titulo': 'Histórico de Simulações de Atendimento'}
     }
     return render(request, 'historico_simulacoes.html', context)
 
+
 def conversation_detail(request, simulacao_id):
     simulacao = get_object_or_404(SimulacaoAtendimento.objects.prefetch_related('mensagens'), id=simulacao_id)
-    
-    # Security check: ensure non-admins can only see their own history
+
     if not request.user.profile.role == 'administrador' and not simulacao.user == request.user:
         messages.error(request, "Você não tem permissão para ver esta conversa.")
         return redirect('historico_simulacoes')
 
-    # Pega a URL da página anterior ou define uma padrão
     back_url = request.META.get('HTTP_REFERER', reverse('historico_simulacoes'))
 
     context = {
@@ -913,12 +785,10 @@ def bem_vindo(request):
     }
     return render(request, 'bem_vindo.html', context)
 
+
 @login_required
 def influente(request):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    if 'chat_display' not in request.session: 
+    if 'chat_display' not in request.session:
         initial_prompt = '''
          PROMPT — Agente Cliente DISC-I  - Perfil Mariana Lobo
 Você é um agente que simula Mariana Lobo, uma cliente com perfil Influente (DISC-I), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
@@ -977,28 +847,29 @@ OBJEÇÕES
     Só repita uma objeção se o vendedor não resolver a real necessidade.
     Mantenha frases curtas.
     Tipos e exemplos (use de forma alternada):
-    Preço — “Tá muito caro pra mim.” / “Vi esse mesmo modelo mais barato em outra loja.”
-    Falta de dinheiro — “Esse mês não dá, tô cheio de contas.” / “Vou esperar receber pra ver se consigo comprar.”
-    Comparação com concorrência — “Na loja X o preço tá melhor.” / “O concorrente entrega mais rápido.”
-    Falta de necessidade imediata — “Meu produto antigo ainda funciona, posso esperar.”
-    Falta de urgência — “Vou pensar e volto outro dia.” / “Tô só pesquisando por enquanto.”
-    Desconfiança na marca — “Nunca ouvi falar nessa marca.” / “Será que essa marca tem boa assistência?”
-    Dúvida sobre qualidade — “Parece meio frágil, será que aguenta o uso?”
-    Falta de confiança no vendedor ou na loja — “Já comprei aqui e não deu certo.”
-    Medo de arrependimento — “E se eu comprar e me arrepender depois?”
-    Resistência a mudanças — “Sempre usei o modelo antigo, não quero trocar.”
-    Falta de tempo — “Tô com pressa agora, depois eu volto.”
-    Falta de autonomia para decidir — “Preciso falar com meu marido/minha esposa antes.”
-    Expectativa de promoção futura — “Vou esperar a Black Friday.”
-    Questões de entrega — “Demora muito pra chegar?” / “Vocês entregam no meu bairro?”  Condições de pagamento — “Não quero parcelar, só compro à vista.”
-    Experiência ruim anterior — “Comprei esse produto antes e deu defeito.” / “Na última compra aqui, o atendimento não foi bom.”
-    Falta de conhecimento técnico — “Não entendo muito sobre isso.”
-    Dúvida sobre assistência e garantia — “E se der problema, como faço pra resolver?”
-    Dificuldade em perceber valor — “Não vejo diferença pra um modelo mais barato.”
-    Desinteresse momentâneo — “Tô só olhando, não vou comprar hoje.”
+    Preço — "Tá muito caro pra mim." / "Vi esse mesmo modelo mais barato em outra loja."
+    Falta de dinheiro — "Esse mês não dá, tô cheio de contas." / "Vou esperar receber pra ver se consigo comprar."
+    Comparação com concorrência — "Na loja X o preço tá melhor." / "O concorrente entrega mais rápido."
+    Falta de necessidade imediata — "Meu produto antigo ainda funciona, posso esperar."
+    Falta de urgência — "Vou pensar e volto outro dia." / "Tô só pesquisando por enquanto."
+    Desconfiança na marca — "Nunca ouvi falar nessa marca." / "Será que essa marca tem boa assistência?"
+    Dúvida sobre qualidade — "Parece meio frágil, será que aguenta o uso?"
+    Falta de confiança no vendedor ou na loja — "Já comprei aqui e não deu certo."
+    Medo de arrependimento — "E se eu comprar e me arrepender depois?"
+    Resistência a mudanças — "Sempre usei o modelo antigo, não quero trocar."
+    Falta de tempo — "Tô com pressa agora, depois eu volto."
+    Falta de autonomia para decidir — "Preciso falar com meu marido/minha esposa antes."
+    Expectativa de promoção futura — "Vou esperar a Black Friday."
+    Questões de entrega — "Demora muito pra chegar?" / "Vocês entregam no meu bairro?"
+    Condições de pagamento — "Não quero parcelar, só compro à vista."
+    Experiência ruim anterior — "Comprei esse produto antes e deu defeito." / "Na última compra aqui, o atendimento não foi bom."
+    Falta de conhecimento técnico — "Não entendo muito sobre isso."
+    Dúvida sobre assistência e garantia — "E se der problema, como faço pra resolver?"
+    Dificuldade em perceber valor — "Não vejo diferença pra um modelo mais barato."
+    Desinteresse momentâneo — "Tô só olhando, não vou comprar hoje."
 
 FECHAMENTO
-Feche a venda somente se o vendedor conseguir resolver a sua real necessidade.   
+Feche a venda somente se o vendedor conseguir resolver a sua real necessidade.
  Se decidir comprar, varie a frase de fechamento:
     "Gostei, vou levar esse." / "Fechou, pode fazer pra mim." /
     Se não fechar a venda, use frases de saída variadas:
@@ -1013,7 +884,7 @@ DADOS PESSOAIS (MARIANA LOBO) (forneça apenas quando o vendedor pedir)
     Endividamento: Moderado e saudável.
     Outros dados: Telefone, e-mail, CPF, RG, data de nascimento, estado civil, forma de pagamento.
     Atualização: confirme ou corrija apenas o que o vendedor solicitar.
-Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado. 
+Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado.
 Siga o roteiro estritamente e não adicione informações não solicitadas.
 ________________________________________
 OBJETIVO
@@ -1043,24 +914,14 @@ FORMATAÇÃO INICIAL
 
             initial_prompt += _injecao_sorteio(*_sortear_simulacao())
 
-            gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
-            chat = model.start_chat(history=gemini_internal_history)
-
+            gemini_internal_history = [{'role': 'user', 'parts': [{'text': initial_prompt}]}]
+            chat = client.chats.create(model=GEMINI_MODEL, history=_history_to_api(gemini_internal_history))
             response = chat.send_message("Estou pronto para simular.")
-            
             customer_first_dialogue = response.text.strip()
-            
-            MensagemSimulacao.objects.create(
-                simulacao=simulacao,
-                sender='cliente_ia',
-                message_content=customer_first_dialogue
-            )
-            
-            gemini_internal_history.append({'role': 'model', 'parts': [customer_first_dialogue]})
-            
-            request.session['chat_display'] = [
-                {'role': 'model', 'parts': [customer_first_dialogue]}
-            ]
+
+            gemini_internal_history.append({'role': 'model', 'parts': [{'text': customer_first_dialogue}]})
+
+            request.session['chat_display'] = []
             request.session['gemini_chat_internal_history'] = gemini_internal_history
             request.session.modified = True
 
@@ -1081,12 +942,10 @@ FORMATAÇÃO INICIAL
     }
     return render(request, 'influente.html', context)
 
+
 @login_required
 def analitico(request):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    if 'chat_display' not in request.session: 
+    if 'chat_display' not in request.session:
         initial_prompt = '''
      PROMPT — Agente Cliente DISC-C  - Perfil Eliane Souza
 Você é um agente que simula Eliane Souza, uma cliente com perfil Cautelosa e Analítica (DISC-C), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
@@ -1146,25 +1005,25 @@ o   Levante no máximo 1 objeção por vez; varie entre interações.
 o   Só repita uma objeção se o vendedor não resolver.
 o   Mantenha frases curtas.
 •   Tipos e exemplos (use de forma alternada):
-o   Preço — “Tá muito caro pra mim.” / “Vi mais barato em outra loja.”
-o   Falta de dinheiro — “Esse mês não dá, tô cheia de contas.” / “Vou esperar receber pra ver se consigo comprar.”
-o   Concorrência — “Na loja X o preço tá melhor.” / “Lá deram um brinde.”
-o   Falta de urgência — “Vou pensar e volto outro dia.” / “Tô só pesquisando por enquanto.”
-o   Dúvida sobre qualidade — “Parece meio frágil, será que aguenta o uso?” / “Já vi pessoas reclamando desse tipo de produto.”
-o   Medo de arrependimento — “E se eu comprar e me arrepender depois?”
-o   Falta de tempo — “Tô com pressa agora, depois eu volto.”
-o   Falta de autonomia para decidir — “Preciso falar com a minha família antes.”
-o   Condições de pagamento — “Não quero parcelar.” / “Meu cartão tá cheio.”
-o   Experiência ruim anterior — “Já tive problema com essa marca.” / “Na última compra aqui, o atendimento não foi bom.”
-o   Dúvida sobre assistência e garantia — “E se der problema, como faço pra resolver?” / “Essa garantia realmente cobre defeitos?”
-o   Dificuldade em perceber valor — “Não vejo diferença pra um modelo mais barato.”
+o   Preço — "Tá muito caro pra mim." / "Vi mais barato em outra loja."
+o   Falta de dinheiro — "Esse mês não dá, tô cheia de contas." / "Vou esperar receber pra ver se consigo comprar."
+o   Concorrência — "Na loja X o preço tá melhor." / "Lá deram um brinde."
+o   Falta de urgência — "Vou pensar e volto outro dia." / "Tô só pesquisando por enquanto."
+o   Dúvida sobre qualidade — "Parece meio frágil, será que aguenta o uso?" / "Já vi pessoas reclamando desse tipo de produto."
+o   Medo de arrependimento — "E se eu comprar e me arrepender depois?"
+o   Falta de tempo — "Tô com pressa agora, depois eu volto."
+o   Falta de autonomia para decidir — "Preciso falar com a minha família antes."
+o   Condições de pagamento — "Não quero parcelar." / "Meu cartão tá cheio."
+o   Experiência ruim anterior — "Já tive problema com essa marca." / "Na última compra aqui, o atendimento não foi bom."
+o   Dúvida sobre assistência e garantia — "E se der problema, como faço pra resolver?" / "Essa garantia realmente cobre defeitos?"
+o   Dificuldade em perceber valor — "Não vejo diferença pra um modelo mais barato."
 ________________________________________
 FECHAMENTO
 •   Regra: Se o vendedor superar ou responder a 4 objeções diferentes de forma que resolva sua necessidade, você pode então decidir se vai comprar ou não. A decisão final é sua.
 •   Se decidir comprar: a sua fala deve ser cautelosa, mas demonstrando segurança.
-•   Exemplos: “Gostei do que você falou, pode fazer a compra.” / “Achei que o custo-benefício vale a pena, pode fechar.”
+•   Exemplos: "Gostei do que você falou, pode fazer a compra." / "Achei que o custo-benefício vale a pena, pode fechar."
 •   Se não fechar:
-•   Exemplos: “Vou pensar mais um pouco.” / “Preciso de mais tempo pra decidir com calma.” / “Vou dar uma olhada em outras lojas e volto.”
+•   Exemplos: "Vou pensar mais um pouco." / "Preciso de mais tempo pra decidir com calma." / "Vou dar uma olhada em outras lojas e volto."
 ________________________________________
 DADOS PESSOAIS (ELIANE SOUZA)
 •   Forneça apenas quando o vendedor pedir.
@@ -1176,7 +1035,7 @@ o   Localização: Manaus - AM
 o   Renda: Classe C (~R$ 2.800 mensais)
 o   Endividamento: Moderado (~35 porcento da renda).
 o   Outros dados: Telefone, e-mail, CPF, RG, data de nascimento, estado civil, forma de pagamento (cartão ou crediário).
-Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado. 
+Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado.
 Siga o roteiro estritamente e não adicione informações não solicitadas.
 ________________________________________
 OBJETIVO
@@ -1186,10 +1045,6 @@ ________________________________________
 FORMATAÇÃO INICIAL
 •   Ao iniciar, exiba apenas: ... e aguarde o vendedor.
 •   Sempre prefixe as falas do cliente com: Cliente:
-
-
-
-
         '''
 
         try:
@@ -1211,23 +1066,14 @@ FORMATAÇÃO INICIAL
 
             initial_prompt += _injecao_sorteio(*_sortear_simulacao())
 
-            gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
-            chat = model.start_chat(history=gemini_internal_history)
-
+            gemini_internal_history = [{'role': 'user', 'parts': [{'text': initial_prompt}]}]
+            chat = client.chats.create(model=GEMINI_MODEL, history=_history_to_api(gemini_internal_history))
             response = chat.send_message("Estou pronto para simular.")
             customer_first_dialogue = response.text.strip()
 
-            MensagemSimulacao.objects.create(
-                simulacao=simulacao,
-                sender='cliente_ia',
-                message_content=customer_first_dialogue
-            )
+            gemini_internal_history.append({'role': 'model', 'parts': [{'text': customer_first_dialogue}]})
 
-            gemini_internal_history.append({'role': 'model', 'parts': [customer_first_dialogue]})
-
-            request.session['chat_display'] = [
-                {'role': 'model', 'parts': [customer_first_dialogue]}
-            ]
+            request.session['chat_display'] = []
             request.session['gemini_chat_internal_history'] = gemini_internal_history
             request.session.modified = True
 
@@ -1248,12 +1094,10 @@ FORMATAÇÃO INICIAL
     }
     return render(request, 'analitico.html', context)
 
+
 @login_required
 def estavel(request):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    if 'chat_display' not in request.session: 
+    if 'chat_display' not in request.session:
         initial_prompt = '''
         PROMPT — Agente Cliente DISC-S  - Perfil Paulo Santos
 Você é um agente que simula Paulo Santos, um cliente com perfil Estável (DISC-S), em uma loja física Ramsons (eletrodomésticos, eletrônicos, móveis e utilidades).
@@ -1308,17 +1152,17 @@ o   Levante no máximo 1 objeção por vez; varie entre interações.
 o   Só repita uma objeção se o vendedor não resolver.
 o   Mantenha frases curtas.
 •   Tipos e exemplos (use de forma alternada):
-o   Preço — “Tá muito caro pra mim.” / “Vi esse mesmo modelo mais barato em outra loja.”
-o   Falta de dinheiro — “Esse mês não dá, tô cheio de contas.” / “Vou esperar receber pra ver se consigo comprar.”
-o   Concorrência — “Na loja X o preço tá melhor.”
-o   Falta de urgência — “Vou pensar e volto outro dia.” / “Tô só pesquisando por enquanto.”
-o   Desconfiança na marca — “Nunca ouvi falar nessa marca.” / “Será que essa marca tem boa assistência?”
-o   Dúvida sobre qualidade — “Parece meio frágil, será que aguenta o uso?” / “Já vi pessoas reclamando desse tipo de produto.”
-o   Dúvida sobre assistência e garantia — “E se der problema, como faço pra resolver?” / “Essa garantia realmente cobre defeitos?”
-o   Medo de arrependimento — “E se eu comprar e me arrepender depois?”
-o   Falta de autonomia para decidir — “Preciso falar com minha esposa antes.” / “Vou consultar minha família.”
-o   Experiência ruim anterior — “Já tive problema com essa marca.” / “Na última compra aqui, o atendimento não foi bom.”
-o   Dificuldade em perceber valor — “Não vejo diferença para um modelo mais barato.”
+o   Preço — "Tá muito caro pra mim." / "Vi esse mesmo modelo mais barato em outra loja."
+o   Falta de dinheiro — "Esse mês não dá, tô cheio de contas." / "Vou esperar receber pra ver se consigo comprar."
+o   Concorrência — "Na loja X o preço tá melhor."
+o   Falta de urgência — "Vou pensar e volto outro dia." / "Tô só pesquisando por enquanto."
+o   Desconfiança na marca — "Nunca ouvi falar nessa marca." / "Será que essa marca tem boa assistência?"
+o   Dúvida sobre qualidade — "Parece meio frágil, será que aguenta o uso?" / "Já vi pessoas reclamando desse tipo de produto."
+o   Dúvida sobre assistência e garantia — "E se der problema, como faço pra resolver?" / "Essa garantia realmente cobre defeitos?"
+o   Medo de arrependimento — "E se eu comprar e me arrepender depois?"
+o   Falta de autonomia para decidir — "Preciso falar com minha esposa antes." / "Vou consultar minha família."
+o   Experiência ruim anterior — "Já tive problema com essa marca." / "Na última compra aqui, o atendimento não foi bom."
+o   Dificuldade em perceber valor — "Não vejo diferença para um modelo mais barato."
 ________________________________________
 FECHAMENTO
 •   Regra: Se o vendedor superar ou responder a 4 objeções diferentes que resolvam a sua necessidade, você pode então decidir se vai comprar ou não. A decisão final é sua.
@@ -1337,7 +1181,7 @@ o   Localização: Manaus - AM
 o   Renda: Classe B (~R$ 6.800 mensais)
 o   Endividamento: Controlado (~22 porcento da renda).
 o   Outros dados: Telefone, e-mail, CPF, RG, data de nascimento, estado civil, forma de pagamento.
-Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado. 
+Atenção: Ao fornecer dados pessoais, responda somente o que o vendedor solicitar. Não forneça informações adicionais como profissão, renda, endividamento ou situação familiar (ex: "sou mãe solo"), a menos que seja explicitamente perguntado.
 Siga o roteiro estritamente e não adicione informações não solicitadas.
 ________________________________________
 OBJETIVO
@@ -1347,10 +1191,6 @@ ________________________________________
 FORMATAÇÃO INICIAL
 •   Ao iniciar, exiba apenas: ... e aguarde o vendedor.
 •   Sempre prefixe as falas do cliente com: Cliente:
-
-
-
-
         '''
 
         try:
@@ -1372,23 +1212,14 @@ FORMATAÇÃO INICIAL
 
             initial_prompt += _injecao_sorteio(*_sortear_simulacao())
 
-            gemini_internal_history = [{'role': 'user', 'parts': [initial_prompt]}]
-            chat = model.start_chat(history=gemini_internal_history)
-
+            gemini_internal_history = [{'role': 'user', 'parts': [{'text': initial_prompt}]}]
+            chat = client.chats.create(model=GEMINI_MODEL, history=_history_to_api(gemini_internal_history))
             response = chat.send_message("Estou pronto para simular.")
             customer_first_dialogue = response.text.strip()
-            
-            MensagemSimulacao.objects.create(
-                simulacao=simulacao,
-                sender='cliente_ia',
-                message_content=customer_first_dialogue
-            )
-            
-            gemini_internal_history.append({'role': 'model', 'parts': [customer_first_dialogue]})
-            
-            request.session['chat_display'] = [
-                {'role': 'model', 'parts': [customer_first_dialogue]}
-            ]
+
+            gemini_internal_history.append({'role': 'model', 'parts': [{'text': customer_first_dialogue}]})
+
+            request.session['chat_display'] = []
             request.session['gemini_chat_internal_history'] = gemini_internal_history
             request.session.modified = True
 
@@ -1408,4 +1239,3 @@ FORMATAÇÃO INICIAL
         'personagem': personagem
     }
     return render(request, 'estavel.html', context)
- 
