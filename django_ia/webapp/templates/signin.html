@@ -39,6 +39,16 @@
                 <p>Entre na sua conta para continuar treinando</p>
             </div>
 
+            {% if messages %}
+            <div style="margin-bottom:1rem">
+              {% for message in messages %}
+              <div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:.7rem 1rem;font-size:.85rem;color:#f87171;display:flex;align-items:center;gap:.5rem">
+                <i class="fas fa-times-circle"></i> {{ message }}
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
             <form action="{% url 'signin' %}" method="post" class="signin-form">
                 {% csrf_token %}
 

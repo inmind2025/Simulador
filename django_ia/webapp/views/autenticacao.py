@@ -8,6 +8,11 @@ from django.contrib.auth import authenticate, login, logout
 from webapp.forms import SignUpForm # Importa o formulário de registro
 
 def signin(request):
+    if request.user.is_authenticated:
+        if request.user.profile.role == 'administrador':
+            return redirect("lista_salas_admin")
+        return redirect("bem_vindo")
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -21,14 +26,14 @@ def signin(request):
                 return redirect("bem_vindo")
         else:
             messages.error(request, "Falha ao efetuar login !!")
-            return redirect("correcao")
+            return redirect("signin")
 
     return render(request, "correcao.html")
 
 def signout(request):
     logout(request)
     messages.success(request, "Você efetuou logout")
-    return redirect("correcao")
+    return redirect("signin")
 
 def signup(request):
     contexto = {
