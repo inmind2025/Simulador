@@ -73,6 +73,13 @@ body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%
     background: rgba(106,17,203,.1);
     box-shadow: 0 0 0 3px rgba(106,17,203,.2);
 }
+/* Remove o olhinho nativo do Edge/Chrome para evitar sobreposição com o ícone customizado */
+.input-box input[type="password"]::-ms-reveal,
+.input-box input[type="password"]::-ms-clear { display: none; }
+.input-box input::-webkit-credentials-auto-fill-button { display: none !important; }
+
+.input-box:has(.toggle-pw) input { padding-right: 2.6rem; }
+
 .toggle-pw {
     position: absolute; right: .85rem;
     background: none; border: none;
